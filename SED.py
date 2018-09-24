@@ -14,7 +14,7 @@ class McfostSED:
 
     def __init__(self, dir=None, **kwargs):
         # Correct path if needed
-        dir = os.path.normpath(dir)
+        dir = os.path.normpath(os.path.expanduser(dir))
         if (dir[-7:] != "data_th"):
             dir = os.path.join(dir,"data_th")
         self.dir = dir

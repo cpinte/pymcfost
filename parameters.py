@@ -300,14 +300,25 @@ class McfostParams:
             self.stars[k].slope_UV = float(line[1])
 
 
-    def write():
+    def write(self):
         pass
 
+    def calc_inclinations(self):
+        # Calculate the inclinations for the ray-traced SEDs and images
+        if (self.map.RT_ntheta == 1):
+            return self.map.RT_imin
+        else:
+            cos_min = cos(self.map.RT_imin / 180. * np.pi) ;
+            cos_max = cos(self.map.RT_imax / 180. * np.pi) ;
+            if (self.map.lRT_i_centered):
+                return np.acos(  cos_min + (np.arange(self.map.RT_ntheta) + 0.5)/P.map.RT_ntheta * (cos_max - cos_min) ) /np.pi * 180.
+            else:
+                return np.acos(  cos_min + (np.arange(self.map.RT_ntheta))/(P.map.RT_ntheta-1) * (cos_max - cos_min) ) /np.pi * 180.
 
 
 def find_parameter_file(directory="./"):
-    list = glob.glob(directory+"/*.par*")
 
+    list = glob.glob(directory+"/*.par*")
     if len(list) == 1:
         return list[0]
     elif len(list) > 1:
