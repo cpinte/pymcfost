@@ -1,3 +1,5 @@
+import glob
+
 class McfostPhotons:
     pass
 
@@ -48,7 +50,6 @@ class McfostParams:
     zones = []
     mol = McfostMol()
     stars = []
-
 
     def __init__(self, filename=None, **kwargs):
         self.filename = filename
@@ -292,3 +293,16 @@ class McfostParams:
             line = next(f).split()
             self.stars[k].fUV = float(line[0])
             self.stars[k].slope_UV = float(line[1])
+
+
+def find_parameter_file(directory="./"):
+    list = glob.glob(directory+"/*.par*")
+
+    print(len(list))
+
+    if len(list) == 1:
+        return list[0]
+    elif len(list) > 1:
+        raise ValueError("Multiple parameter files found in "+directory)
+    else:
+        raise ValueError("No parameter files found in "+directory)
