@@ -1,5 +1,7 @@
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+import numpy as np
+import os
 
 from parameters import McfostParams, find_parameter_file
 
@@ -11,11 +13,14 @@ class McfostSED:
     _temperature_file = "Temperature.fits.gz";
 
     def __init__(self, dir=None, **kwargs):
+        # Correct path if needed
+        dir = os.path.normpath(dir)
+        if (dir[-7:] != "data_th"):
+            dir = os.path.join(dir,"data_th")
         self.dir = dir
 
         # Search for parameter file
         para_file = find_parameter_file(dir)
-        print(para_file)
 
         # Read parameter file
         self.P = McfostParams(para_file)
@@ -25,7 +30,7 @@ class McfostSED:
 
 
     def _read(self):
-        # Read sed files
+        # Read SED files
         try:
             hdu = fits.open(self.dir+"/"+self._sed_th_file)
         except OSError:
@@ -62,7 +67,7 @@ class McfostSED:
         # todo :
         # - add extinction
         # - separate contribution
-        # - change units
+        # - change units ?
 
         if (MC):
             _sed = self._sed_mc[0,0,i,]
@@ -71,7 +76,12 @@ class McfostSED:
 
         plt.loglog(self.wl, _sed, **kwargs)
         plt.xlabel("$\lambda$ [$\mu$m]")
-        plt.ylabel("$\lambda.F_{\lambda}$ [W.m$^{-2}$]")
+        plt.ylabel("$\lambda$.F$_{\lambda}$ [W.m$^{-2}$]")
 
     def verif(self):
-        pass
+        # Compares the SED from step 1 and step 2 to check if energy is properly conserved
+        current_fig = plt.gcf().number
+        plt.figure(20)
+        plt.loglog(self._wl_th, np.sum(self._sed_th[0,:,:],axis=0), color="black")
+        plt.loglog(self.wl, np.sum(self._sed_mc[0,0,:,:],axis=0), color="red")
+        plt.figure(current_fig)

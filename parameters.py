@@ -51,6 +51,8 @@ class McfostParams:
     mol = McfostMol()
     stars = []
 
+    _minimum_version = 3.0
+
     def __init__(self, filename=None, **kwargs):
         self.filename = filename
         self._read(**kwargs)
@@ -68,6 +70,9 @@ class McfostParams:
         #-- Version of the parameter file --
         line = next(f).split()
         self.simu.version = float(line[0])
+        if (self.simu.version < self._minimum_version):
+            raise Exception('Parameter file version must be at least {ver:.2f}'.format(ver=self._minimum_version))
+
 
         #-- Number of photon packages --
         line = next(f).split()
@@ -295,10 +300,13 @@ class McfostParams:
             self.stars[k].slope_UV = float(line[1])
 
 
+    def write():
+        pass
+
+
+
 def find_parameter_file(directory="./"):
     list = glob.glob(directory+"/*.par*")
-
-    print(len(list))
 
     if len(list) == 1:
         return list[0]
