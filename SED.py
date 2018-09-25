@@ -1,5 +1,6 @@
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import numpy as np
 import os
 
@@ -67,7 +68,6 @@ class McfostSED:
         # todo :
         # - add extinction
         # - separate contribution
-        # - change units ?
 
         if (MC):
             _sed = self._sed_mc[0,0,i,]
@@ -85,3 +85,29 @@ class McfostSED:
         plt.loglog(self._wl_th, np.sum(self._sed_th[0,:,:],axis=0), color="black")
         plt.loglog(self.wl, np.sum(self._sed_mc[0,0,:,:],axis=0), color="red")
         plt.figure(current_fig)
+
+
+    def plot_T(self,grid,log=False):
+        # For a cylindrical or spherical grid only at the moment
+        # Todo:
+        #  - add Voronoi grid
+        #  - automatically compute/read the grid as required
+        #  - add functions for radial and vertical cuts
+
+        plt.clf()
+
+        r = grid[0,0,:,:]
+        z = grid[1,0,:,:]
+        T = self.T
+
+        if (log):
+            plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+            plt.xscale('log')
+            plt.xlabel("r [au]")
+            plt.ylabel("z/r")
+        else:
+            plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+            plt.xlabel("r [au]")
+            plt.ylabel("z [au]")
+        cb = plt.colorbar()
+        cb.set_label('T [K]')
