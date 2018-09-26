@@ -36,34 +36,35 @@ class McfostSED:
         # Read SED files
         try:
             hdu = fits.open(self.dir+"/"+self._sed_th_file)
+            self._sed_th = hdu[0].data
+            self._wl_th = hdu[1].data
+            hdu.close()
         except OSError:
-            print('cannot open', _sed_th_file)
-        self._sed_th = hdu[0].data
-        self._wl_th = hdu[1].data
-        hdu.close()
+            print('cannot open', self._sed_th_file)
 
         try:
             hdu = fits.open(self.dir+"/"+self._sed_mc_file)
+            self._sed_mc = hdu[0].data
+            hdu.close()
         except OSError:
             print('cannot open', self._sed_mc_file)
-        self._sed_mc = hdu[0].data
-        hdu.close()
 
         try:
             hdu = fits.open(self.dir+"/"+self._sed_rt_file)
+            self.sed = hdu[0].data
+            self.wl = hdu[1].data
+            hdu.close()
         except OSError:
-            print('cannot open', _sed_rt_file)
-        self.sed = hdu[0].data
-        self.wl = hdu[1].data
-        hdu.close()
+            print('cannot open', self._sed_rt_file)
+
 
         # Read temperature file
         try:
             hdu = fits.open(self.dir+"/"+self._temperature_file)
+            self.T = hdu[0].data
+            hdu.close()
         except OSError:
             print('cannot open', _temperature_file)
-        self.T = hdu[0].data
-        hdu.close()
 
 
     def plot(self, i, MC=False, **kwargs):
@@ -97,7 +98,6 @@ class McfostSED:
         #  - add functions for radial and vertical cuts
 
         # We test if the grid structure already exist, if not we try to read it
-
         try:
             grid = self.disc.grid
         except:
@@ -110,17 +110,30 @@ class McfostSED:
 
         plt.clf()
 
-        r = grid[0,0,:,:]
-        z = grid[1,0,:,:]
         T = self.T
 
+        if (grid.ndim > 2):
+            Voronoi = False
+            r = grid[0,0,:,:]
+            z = grid[1,0,:,:]
+        else:
+            Voronoi = True
+            r = np.sqrt(grid[0,:]**2 + grid[1,:]**2)
+            z = grid[2,:]
+
         if (log):
-            plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+            if (Voronoi):
+                plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+            else:
+                plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
             plt.xscale('log')
             plt.xlabel("r [au]")
             plt.ylabel("z/r")
         else:
-            plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+            if (Voronoi):
+                plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+            else:
+                plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
             plt.xlabel("r [au]")
             plt.ylabel("z [au]")
         cb = plt.colorbar()
