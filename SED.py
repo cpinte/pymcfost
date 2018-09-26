@@ -5,6 +5,7 @@ import numpy as np
 import os
 
 from parameters import McfostParams, find_parameter_file
+from disc_structure import McfostDisc
 
 class McfostSED:
 
@@ -19,6 +20,7 @@ class McfostSED:
         if (dir[-7:] != "data_th"):
             dir = os.path.join(dir,"data_th")
         self.dir = dir
+        self.basedir = dir[:-8]
 
         # Search for parameter file
         para_file = find_parameter_file(dir)
@@ -87,12 +89,24 @@ class McfostSED:
         plt.figure(current_fig)
 
 
-    def plot_T(self,grid,log=False):
+    def plot_T(self,log=False):
         # For a cylindrical or spherical grid only at the moment
         # Todo:
         #  - add Voronoi grid
         #  - automatically compute/read the grid as required
         #  - add functions for radial and vertical cuts
+
+        # We test if the grid structure already exist, if not we try to read it
+
+        try:
+            grid = self.disc.grid
+        except:
+            try:
+                print("Trying to read grid structure")
+                self.disc = McfostDisc(self.basedir)
+                grid = self.disc.grid
+            except AttributeError:
+                print("Cannot read grid in "+self.basedir)
 
         plt.clf()
 
