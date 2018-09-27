@@ -35,7 +35,10 @@ class McfostImage:
             self.pixelscale =  hdu[0].header['CDELT2'] * 3600. # arcsec
             self.unit     =  hdu[0].header['BUNIT']
             self.wl       =  hdu[0].header['WAVE'] # micron
-
+            self.cx       =  hdu[0].header['CRPIX1']
+            self.cy       =  hdu[0].header['CRPIX2']
+            self.nx       =  hdu[0].header['NAXIS1']
+            self.ny       =  hdu[0].header['NAXIS2']
             hdu.close()
         except OSError:
             print('cannot open', self._RT_file)
@@ -46,25 +49,86 @@ class McfostImage:
         #  - option for color_bar
         #  - superpose polarization vector
         #  - plot a selected contribution
+        #  - add convolution
+        #  - add a mask on the star
+
+        pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA']
+        contrib_needed = type in ['star','scatt','em_th','scatt_em_th']
+
+        if pola_needed and contrib_needed:
+            raise ValueError('Cannot separate both polarisation and contributions')
 
         # We first check if the requested image is present in the mcfost fits file
         ntype_flux = self.image.shape[0]
-        if (ntype_flux != 4 and ntype_flux != 8): # there is no pola
-            if (type in ['Q','U','Qphi','Uphi','P','PI']):
+        if ntype_flux != 4 and ntype_flux != 8: # there is no pola
+            if pola_needed:
                 raise ValueError('The model does not have polarisation data')
-        elif (ntype_flux != 5 and ntype_flux != 8): # there is no contribution
-            if (type in ['star','scatt','em_th','scatt_em_th']):
+        elif ntype_flux != 5 and ntype_flux != 8: # there is no contribution
+            if contrib_needed:
                 raise ValueError('The model does not have contribution data')
 
-        # Compute pixel scale and extent of image
+        #-- Intermediate images
+        if pola_needed:
+            I = self.image[0,i,iaz,:,:]
+            Q = self.image[1,i,iaz,:,:]
+            U = self.image[2,i,iaz,:,:]
+        elif contrib_needed:
+            # todo
+            I = self.image[0,i,iaz,:,:]
+        else:
+            I = self.image[0,i,iaz,:,:]
+
+        #-- Convolution
+
+        #--- Selecting image to plot
+        unit = self.unit
+        flux_name = type
+        if type == 'I':
+            flux_name = 'Flux density'
+            im = I
+            _color_scale = 'log'
+        elif type == 'Q':
+            im = Q
+            _color_scale = 'log'
+        elif type == 'U':
+            im = U
+            _color_scale = 'log'
+        elif type == 'P':
+            I = I + (I == 0.)*1e-30
+            im = 100 * np.sqrt((Q/I)**2 + (U/I)**2)
+            unit = "%"
+            _color_scale = 'lin'
+        elif type == 'PI':
+            im = np.sqrt(Q**2 + U**2)
+            _color_scale = 'log'
+        elif type == 'Qphi' or type == 'Uphi':
+            X = np.arange(1,self.nx+1) - self.cx
+            Y = np.arange(1,self.ny+1) - self.cy
+            X, Y = np.meshgrid(X,Y)
+            two_phi = 2* np.arctan2(Y,X)
+            if type == 'Qphi':
+                im =  Q * np.cos(two_phi) + U * np.sin(two_phi)
+            else: # Uphi
+                im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
+
+        #--- Plot range and color map
+        if vmax is None: vmax = im.max()
+        if fpeak is not None : vmax = im.max() * fpeak
+        if vmin is None:
+            if (type in ["Q","U"]):
+                vmin = -vmax
+            else:
+                vmin= vmax/dynamic_range
+
+        #--- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
             pix_scale = self.pixelscale
             xlabel = '$\Delta$ Ra ["]'
             ylabel = '$\Delta$ Dec ["]'
         elif axes_unit.lower() == 'au':
             pix_scale = self.pixelscale * self.P.map.distance
-            xlabel = '$\Delta$ x [au]'
-            ylabel = '$\Delta$ y [au]'
+            xlabel = 'Distance from star [au]'
+            ylabel = 'Distance from star [au]'
         elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
             pix_scale = 1
             xlabel = '$\Delta$ x [pix]'
@@ -74,48 +138,15 @@ class McfostImage:
         halfsize = np.asarray(self.image.shape[-2:])/2 * pix_scale
         extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
 
-        # Selecting image to plot
-        unit = self.unit
-        flux_name = type
-        if type == 'I':
-            flux_name = 'Flux density'
-            im = self.image[0,i,iaz,:,:]
-            _color_scale = 'log'
-        elif type == 'Q':
-            im = self.image[1,i,iaz,:,:]
-            _color_scale = 'log'
-        elif type == 'U':
-            im = self.image[2,i,iaz,:,:]
-            _color_scale = 'log'
-        elif type == 'P':
-            I = self.image[0,i,iaz,:,:]
-            I = I + (I == 0.)*1e-30
-            im = 100 * np.sqrt((self.image[1,i,iaz,:,:]/I)**2 + (self.image[2,i,iaz,:,:]/I)**2)
-            unit = "%"
-            _color_scale = 'lin'
-        elif type == 'PI':
-            im = np.sqrt(self.image[1,i,iaz,:,:]**2 + self.image[2,i,iaz,:,:]**2)
-            _color_scale = 'log'
-
-        # Plot range
-        if vmax is None: vmax = im.max()
-        if fpeak is not None : vmax = im.max() * fpeak
-        if vmin is None:
-            if (type in ["Q","U"]):
-                vmin = -vmax
-            else:
-                vmin= vmax/dynamic_range
-
-        # Color map
         if color_scale is None : color_scale = _color_scale
         if color_scale == 'log':
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif color_scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
         else:
-            raise ValueError("Unknown color scale")
+            raise ValueError("Unknown color scale: "+color_scale)
 
-        # Making the actual plot
+        #--- Making the actual plot
         plt.clf()
         plt.imshow(im, norm = norm, extent=extent, origin='lower')
 
