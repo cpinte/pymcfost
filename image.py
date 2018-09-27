@@ -105,7 +105,7 @@ class McfostImage:
             X = np.arange(1,self.nx+1) - self.cx
             Y = np.arange(1,self.ny+1) - self.cy
             X, Y = np.meshgrid(X,Y)
-            two_phi = 2* np.arctan2(Y,X)
+            two_phi = 2 * np.arctan2(Y,X)
             if type == 'Qphi':
                 im =  Q * np.cos(two_phi) + U * np.sin(two_phi)
             else: # Uphi
@@ -156,3 +156,16 @@ class McfostImage:
             cb = plt.colorbar()
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
             cb.set_label(flux_name+" ["+formatted_unit+"]")
+
+        #--- Overplotting polarisation vectors
+        if pola_vector:
+            X = np.arange(1,self.nx+1) - self.cx
+            Y = np.arange(1,self.ny+1) - self.cy
+            X, Y = np.meshgrid(X,Y) * pix_scale
+
+            pola = 100 * np.sqrt((Q/I)**2 + (U/I)**2)
+            theta = 0.5 * np.arctan2(U,Q)
+            pola_X = - pola * sin(theta) # Ref is N (vertical axis) --> sin,  and Est is toward left --> -
+            pola_Y = pola * cos(theta)
+
+            # Todo: write a bit of code to undersample
