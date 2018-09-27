@@ -40,18 +40,23 @@ class McfostImage:
         except OSError:
             print('cannot open', self._RT_file)
 
-    def plot(self,i=0,iaz=0,log=True,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True):
+    def plot(self,i=0,iaz=0,log=True,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None):
         # Todo:
         #  - plot Q, U, P, PI, Qphi, Uphi
         #  - option for color_bar
         #  - superpose polarization vector
         #  - plot a selected contribution
 
-        if vmax is None: vmax = self.image.max()
-        if fpeak is not None : vmax = self.image.max() * fpeak
-        if vmin is None: vmin= vmax/dynamic_range
+        # We first check if the requested image is present in the mcfost fits file
+        ntype_flux = self.image.shape[0]
+        if (ntype_flux != 4 and ntype_flux != 8): # there is no pola
+            if (type in ['Q','U','Qphi','Uphi','P','PI']):
+                raise ValueError('The model does not have polarisation data')
+        elif (ntype_flux != 5 and ntype_flux != 8): # there is no contribution
+            if (type in ['star','scatt','em_th','scatt_em_th']):
+                raise ValueError('The model does not have contribution data')
 
-        # Compute pixel scakle and extent of image
+        # Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
             pix_scale = self.pixelscale
             xlabel = '$\Delta$ Ra ["]'
@@ -69,13 +74,54 @@ class McfostImage:
         halfsize = np.asarray(self.image.shape[-2:])/2 * pix_scale
         extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
 
-        plt.clf()
-        plt.imshow(self.image[0,i,iaz,:,:], norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True), extent=extent, origin='lower')
+        # Selecting image to plot
+        unit = self.unit
+        flux_name = type
+        if type == 'I':
+            flux_name = 'Flux density'
+            im = self.image[0,i,iaz,:,:]
+            _color_scale = 'log'
+        elif type == 'Q':
+            im = self.image[1,i,iaz,:,:]
+            _color_scale = 'log'
+        elif type == 'U':
+            im = self.image[2,i,iaz,:,:]
+            _color_scale = 'log'
+        elif type == 'P':
+            I = self.image[0,i,iaz,:,:]
+            I = I + (I == 0.)*1e-30
+            im = 100 * np.sqrt((self.image[1,i,iaz,:,:]/I)**2 + (self.image[2,i,iaz,:,:]/I)**2)
+            unit = "%"
+            _color_scale = 'lin'
+        elif type == 'PI':
+            im = np.sqrt(self.image[1,i,iaz,:,:]**2 + self.image[2,i,iaz,:,:]**2)
+            _color_scale = 'log'
 
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        # Plot range
+        if vmax is None: vmax = im.max()
+        if fpeak is not None : vmax = im.max() * fpeak
+        if vmin is None:
+            if (type in ["Q","U"]):
+                vmin = -vmax
+            else:
+                vmin= vmax/dynamic_range
+
+        # Color map
+        if color_scale is None : color_scale = _color_scale
+        if color_scale == 'log':
+            norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
+        elif color_scale == 'lin':
+            norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+        else:
+            raise ValueError("Unknown color scale")
+
+        # Making the actual plot
+        plt.clf()
+        plt.imshow(im, norm = norm, extent=extent, origin='lower')
+
+        plt.xlabel(xlabel) ; plt.ylabel(ylabel)
 
         if (colorbar):
             cb = plt.colorbar()
-            formatted_unit = self.unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
-            cb.set_label("Flux density ["+formatted_unit+"]")
+            formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
+            cb.set_label(flux_name+" ["+formatted_unit+"]")
