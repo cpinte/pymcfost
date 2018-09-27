@@ -90,7 +90,7 @@ class McfostSED:
         plt.figure(current_fig)
 
 
-    def plot_T(self,log=False):
+    def plot_T(self,log=False, Tmin=None, Tmax=None):
         # For a cylindrical or spherical grid only at the moment
         # Todo:
         #  - add Voronoi grid
@@ -119,21 +119,29 @@ class McfostSED:
         else:
             Voronoi = True
             r = np.sqrt(grid[0,:]**2 + grid[1,:]**2)
-            z = grid[2,:]
+            ou = (r > 1e-6) # Removing star
+            T = T[ou]
+            r = r[ou]
+            z = grid[2,ou]
+
+        if (Tmin is None):
+            Tmin = T.min()
+        if (Tmax is None):
+            Tmax = T.max()
 
         if (log):
             if (Voronoi):
-                plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+                plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
             else:
-                plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+                plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
             plt.xscale('log')
             plt.xlabel("r [au]")
             plt.ylabel("z/r")
         else:
             if (Voronoi):
-                plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+                plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
             else:
-                plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=T.min(), vmax=T.max()))
+                plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
             plt.xlabel("r [au]")
             plt.ylabel("z [au]")
         cb = plt.colorbar()
