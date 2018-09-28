@@ -6,6 +6,7 @@ import os
 
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
+from utils import bin_image
 
 class McfostImage:
 
@@ -43,16 +44,13 @@ class McfostImage:
         except OSError:
             print('cannot open', self._RT_file)
 
-    def plot(self,i=0,iaz=0,log=True,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None):
+    def plot(self,i=0,iaz=0,log=True,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5):
         # Todo:
-        #  - plot Q, U, P, PI, Qphi, Uphi
-        #  - option for color_bar
-        #  - superpose polarization vector
         #  - plot a selected contribution
         #  - add convolution
-        #  - add a mask on the star
+        #  - add a mask on the star ?
 
-        pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA']
+        pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA'] or pola_vector
         contrib_needed = type in ['star','scatt','em_th','scatt_em_th']
 
         if pola_needed and contrib_needed:
@@ -110,6 +108,7 @@ class McfostImage:
                 im =  Q * np.cos(two_phi) + U * np.sin(two_phi)
             else: # Uphi
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
+            _color_scale = 'log'
 
         #--- Plot range and color map
         if vmax is None: vmax = im.max()
@@ -159,13 +158,19 @@ class McfostImage:
 
         #--- Overplotting polarisation vectors
         if pola_vector:
-            X = np.arange(1,self.nx+1) - self.cx
-            Y = np.arange(1,self.ny+1) - self.cy
-            X, Y = np.meshgrid(X,Y) * pix_scale
+            X = (np.arange(1,self.nx+1) - self.cx) * pix_scale
+            Y = (np.arange(1,self.ny+1) - self.cy) * pix_scale
+            X, Y = np.meshgrid(X,Y)
 
-            pola = 100 * np.sqrt((Q/I)**2 + (U/I)**2)
-            theta = 0.5 * np.arctan2(U,Q)
-            pola_X = - pola * sin(theta) # Ref is N (vertical axis) --> sin,  and Est is toward left --> -
-            pola_Y = pola * cos(theta)
+            Xb = bin_image(X,nbin,func=np.mean)
+            Yb = bin_image(Y,nbin,func=np.mean)
+            Ib = bin_image(I,nbin) ;
+            Qb = bin_image(Q,nbin)
+            Ub = bin_image(U,nbin)
 
-            # Todo: write a bit of code to undersample
+            pola = 100 * np.sqrt((Qb/Ib)**2 + (Ub/Ib)**2)
+            theta = 0.5 * np.arctan2(Ub,Qb)
+            pola_x = - pola * np.sin(theta) # Ref is N (vertical axis) --> sin,  and Est is toward left --> -
+            pola_y = pola  * np.cos(theta)
+
+            plt.quiver(Xb,Yb,pola_x,pola_y, headwidth=0, headlength=0, headaxislength=0.0, pivot='middle', color=vector_color)
