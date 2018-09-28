@@ -47,11 +47,12 @@ class McfostImage:
             print('cannot open', self._RT_file)
 
     def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None,
-             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,bmaj=None,bmin=None,bpa=None,conv=None):
+             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,bmaj=None,bmin=None,bpa=None,conv=None,plot_beam=False):
         # Todo:
         #  - plot a selected contribution
-        #  - add convolution
         #  - add a mask on the star ?
+
+        ax = plt.gca()
 
         pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA'] or pola_vector
         contrib_needed = type in ['star','scatt','em_th','scatt_em_th']
@@ -93,6 +94,9 @@ class McfostImage:
             sigma = psf_FWHM / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
             beam = Gaussian2DKernel(sigma)
             i_convolve = True
+            bmin = psf_FWHM
+            bmaj = psf_FWHM
+            bpa=0
 
         if bmaj is not None:
             sigma_x = bmin / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
@@ -171,13 +175,8 @@ class McfostImage:
         else:
             raise ValueError("Unknown color scale: "+color_scale)
 
-        print(norm)
-
         #--- Making the actual plot
         plt.clf()
-
-        print(im[0,0])
-
         plt.imshow(im, norm = norm, extent=extent, origin='lower')
 
         plt.xlabel(xlabel) ; plt.ylabel(ylabel)
@@ -205,3 +204,13 @@ class McfostImage:
             pola_y = pola  * np.cos(theta)
 
             plt.quiver(Xb,Yb,pola_x,pola_y, headwidth=0, headlength=0, headaxislength=0.0, pivot='middle', color=vector_color)
+
+        #--- Adding beam
+        if plot_beam:
+            from matplotlib.patches import Ellipse
+            dx = 0.125
+            dy = 0.125
+            beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
+                           width=bmin, height=bmaj, angle=-bpa,
+                           fill=True,  color="grey")
+            ax.add_patch(beam)
