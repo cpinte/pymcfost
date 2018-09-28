@@ -4,6 +4,8 @@ import matplotlib.colors as colors
 import numpy as np
 import os
 
+from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
 from utils import bin_image
@@ -44,7 +46,8 @@ class McfostImage:
         except OSError:
             print('cannot open', self._RT_file)
 
-    def plot(self,i=0,iaz=0,log=True,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5):
+    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None,
+             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,bmaj=None,bmin=None,bpa=None,conv=None):
         # Todo:
         #  - plot a selected contribution
         #  - add convolution
@@ -65,20 +68,61 @@ class McfostImage:
             if contrib_needed:
                 raise ValueError('The model does not have contribution data')
 
+
+        #--- Compute pixel scale and extent of image
+        if axes_unit.lower() == 'arcsec':
+            pix_scale = self.pixelscale
+            xlabel = '$\Delta$ Ra ["]'
+            ylabel = '$\Delta$ Dec ["]'
+        elif axes_unit.lower() == 'au':
+            pix_scale = self.pixelscale * self.P.map.distance
+            xlabel = 'Distance from star [au]'
+            ylabel = 'Distance from star [au]'
+        elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
+            pix_scale = 1
+            xlabel = '$\Delta$ x [pix]'
+            ylabel = '$\Delta$ y [pix]'
+        else:
+            raise ValueError("Unknown unit for axes_units: "+axes_unit)
+        halfsize = np.asarray(self.image.shape[-2:])/2 * pix_scale
+        extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
+
+        #-- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
+        i_convolve = False
+        if psf_FWHM is not None:
+            sigma = psf_FWHM / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            beam = Gaussian2DKernel(sigma)
+            i_convolve = True
+
+        if bmaj is not None:
+            sigma_x = bmin / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_y = bmaj / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
+            i_convolve = True
+
+        #-- Selecting convolution function
+        if conv is None:
+            conv = convolve
+
         #-- Intermediate images
         if pola_needed:
             I = self.image[0,i,iaz,:,:]
             Q = self.image[1,i,iaz,:,:]
             U = self.image[2,i,iaz,:,:]
+            if i_convolve:
+                Q = conv(Q,beam)
+                U = conv(U,beam)
         elif contrib_needed:
             # todo
             I = self.image[0,i,iaz,:,:]
         else:
             I = self.image[0,i,iaz,:,:]
 
-        #-- Convolution
+        if i_convolve:
+            I = conv(I,beam)
 
-        #--- Selecting image to plot
+
+        #--- Selecting image to plot & convolution
         unit = self.unit
         flux_name = type
         if type == 'I':
@@ -118,26 +162,8 @@ class McfostImage:
                 vmin = -vmax
             else:
                 vmin= vmax/dynamic_range
-
-        #--- Compute pixel scale and extent of image
-        if axes_unit.lower() == 'arcsec':
-            pix_scale = self.pixelscale
-            xlabel = '$\Delta$ Ra ["]'
-            ylabel = '$\Delta$ Dec ["]'
-        elif axes_unit.lower() == 'au':
-            pix_scale = self.pixelscale * self.P.map.distance
-            xlabel = 'Distance from star [au]'
-            ylabel = 'Distance from star [au]'
-        elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
-            pix_scale = 1
-            xlabel = '$\Delta$ x [pix]'
-            ylabel = '$\Delta$ y [pix]'
-        else:
-            raise ValueError("Unknown unit for axes_units: "+axes_unit)
-        halfsize = np.asarray(self.image.shape[-2:])/2 * pix_scale
-        extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
-
-        if color_scale is None : color_scale = _color_scale
+        if color_scale is None :
+            color_scale = _color_scale
         if color_scale == 'log':
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif color_scale == 'lin':
@@ -145,8 +171,13 @@ class McfostImage:
         else:
             raise ValueError("Unknown color scale: "+color_scale)
 
+        print(norm)
+
         #--- Making the actual plot
         plt.clf()
+
+        print(im[0,0])
+
         plt.imshow(im, norm = norm, extent=extent, origin='lower')
 
         plt.xlabel(xlabel) ; plt.ylabel(ylabel)
