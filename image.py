@@ -117,8 +117,18 @@ class McfostImage:
                 Q = conv(Q,beam)
                 U = conv(U,beam)
         elif contrib_needed:
-            # todo
-            I = self.image[0,i,iaz,:,:]
+            if pola_needed:
+                n_pola=4
+            else:
+                n_pola=1
+            if type == "star":
+                I = self.image[n_pola,i,iaz,:,:]
+            elif type == "scatt":
+                I = self.image[n_pola+1,i,iaz,:,:]
+            elif type == "em_th":
+                I = self.image[n_pola+2,i,iaz,:,:]
+            elif type == "scatt_em_th":
+                I = self.image[n_pola+3,i,iaz,:,:]
         else:
             I = self.image[0,i,iaz,:,:]
 
