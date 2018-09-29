@@ -67,19 +67,34 @@ class McfostSED:
             print('cannot open', _temperature_file)
 
 
-    def plot(self, i, MC=False, **kwargs):
+    def plot(self, i, iaz=0, MC=False, contrib=False, color="black",**kwargs):
         # todo :
         # - add extinction
-        # - separate contribution
 
         if (MC):
-            _sed = self._sed_mc[0,0,i,]
+            sed = self._sed_mc[:,iaz,i,]
         else:
-            _sed = self.sed[0,0,i,]
+            sed = self.sed[:,iaz,i,:]
 
-        plt.loglog(self.wl, _sed, **kwargs)
+        plt.loglog(self.wl, sed[0,:], color=color, **kwargs)
         plt.xlabel("$\lambda$ [$\mu$m]")
         plt.ylabel("$\lambda$.F$_{\lambda}$ [W.m$^{-2}$]")
+
+        if contrib:
+            n_type_flux = sed.shape[0]
+            if  n_type_flux in [5,8,9]:
+                if n_type_flux > 5:
+                    n_pola = 4
+                else:
+                    n_pola = 1
+                linewidth=0.5
+                plt.loglog(self.wl, sed[n_pola,:],   linewidth=linewidth, color="magenta")
+                plt.loglog(self.wl, sed[n_pola+1,:], linewidth=linewidth, color="blue")
+                plt.loglog(self.wl, sed[n_pola+2,:], linewidth=linewidth, color="red")
+                plt.loglog(self.wl, sed[n_pola+3,:], linewidth=linewidth, color="green")
+            else:
+                ValueError("There is no contribution data")
+
 
     def verif(self):
         # Compares the SED from step 1 and step 2 to check if energy is properly conserved
@@ -93,8 +108,7 @@ class McfostSED:
     def plot_T(self,log=False, Tmin=None, Tmax=None):
         # For a cylindrical or spherical grid only at the moment
         # Todo:
-        #  - add Voronoi grid
-        #  - automatically compute/read the grid as required
+        #  - automatically compute call mcfost to compute the grid as required
         #  - add functions for radial and vertical cuts
 
         # We test if the grid structure already exist, if not we try to read it
