@@ -6,6 +6,7 @@ import os
 
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
+from utils import DustExtinction
 
 class McfostSED:
 
@@ -67,14 +68,19 @@ class McfostSED:
             print('cannot open', _temperature_file)
 
 
-    def plot(self, i, iaz=0, MC=False, contrib=False, color="black",**kwargs):
-        # todo :
-        # - add extinction
+    def plot(self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1, color="black",**kwargs):
+
+        # extinction
+        if Av > 0:
+            ext = DustExtinction(Rv=Rv)
+            redenning = ext.redenning(self.wl, Av)
+        else:
+            redenning = 1.0
 
         if (MC):
-            sed = self._sed_mc[:,iaz,i,]
+            sed = self._sed_mc[:,iaz,i,] * redenning
         else:
-            sed = self.sed[:,iaz,i,:]
+            sed = self.sed[:,iaz,i,:] * redenning
 
         plt.loglog(self.wl, sed[0,:], color=color, **kwargs)
         plt.xlabel("$\lambda$ [$\mu$m]")
