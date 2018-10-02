@@ -1,4 +1,5 @@
 import glob
+import numpy as np
 
 class McfostPhotons:
     pass
@@ -414,12 +415,12 @@ class McfostParams:
         if (self.map.RT_ntheta == 1):
             return self.map.RT_imin
         else:
-            cos_min = cos(self.map.RT_imin / 180. * np.pi) ;
-            cos_max = cos(self.map.RT_imax / 180. * np.pi) ;
+            cos_min = np.cos(self.map.RT_imin / 180. * np.pi) ;
+            cos_max = np.cos(self.map.RT_imax / 180. * np.pi) ;
             if (self.map.lRT_i_centered):
-                return np.acos(  cos_min + (np.arange(self.map.RT_ntheta) + 0.5)/P.map.RT_ntheta * (cos_max - cos_min) ) /np.pi * 180.
+                return np.acos( cos_min + (np.arange(self.map.RT_ntheta) + 0.5)/self.P.map.RT_ntheta * (cos_max - cos_min) ) /np.pi * 180.
             else:
-                return np.acos(  cos_min + (np.arange(self.map.RT_ntheta))/(P.map.RT_ntheta-1) * (cos_max - cos_min) ) /np.pi * 180.
+                return np.acos( cos_min + (np.arange(self.map.RT_ntheta))/(self.P.map.RT_ntheta-1) * (cos_max - cos_min) ) /np.pi * 180.
 
 
 def find_parameter_file(directory="./"):
