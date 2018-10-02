@@ -28,26 +28,27 @@ class McfostDisc:
         # Read grid file
         try:
             hdu = fits.open(self.dir+"/grid.fits.gz")
+            self.grid = hdu[0].data
+            hdu.close()
         except OSError:
             print('cannot open grid.fits.gz')
-        self.grid = hdu[0].data
-        hdu.close()
 
         # Read gas density file
         try:
             hdu = fits.open(self.dir+"/gas_density.fits.gz")
+            self.gas_density = hdu[0].data
+            hdu.close()
         except OSError:
             print('cannot open gas_density.fits.gz')
-        self.gas_density = hdu[0].data
-        hdu.close()
 
         # Read volume file
         try:
             hdu = fits.open(self.dir+"/volume.fits.gz")
+            self.volume = hdu[0].data
+            hdu.close()
         except OSError:
             print('cannot open volume.fits.gz')
-        self.volume = hdu[0].data
-        hdu.close()
+
 
     def r(self):
         if (self.grid.ndim > 2):

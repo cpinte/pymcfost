@@ -12,8 +12,8 @@ from utils import bin_image
 
 class McfostImage:
 
-    _RT_file = "RT.fits.gz";
-    _MC_file = "MC.fits.gz";
+    _RT_file = "RT.fits.gz"
+    _MC_file = "MC.fits.gz"
 
     def __init__(self, dir=None, **kwargs):
         # Correct path if needed

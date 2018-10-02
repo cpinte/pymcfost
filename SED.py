@@ -1,27 +1,28 @@
+import os
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
-import os
 
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
 from utils import DustExtinction
 
+
 class McfostSED:
 
-    _sed_th_file = ".sed_th.fits.gz";
-    _sed_mc_file = "sed_mc.fits.gz";
-    _sed_rt_file = "sed_rt.fits.gz";
-    _temperature_file = "Temperature.fits.gz";
+    _sed_th_file = ".sed_th.fits.gz"
+    _sed_mc_file = "sed_mc.fits.gz"
+    _sed_rt_file = "sed_rt.fits.gz"
+    _temperature_file = "Temperature.fits.gz"
 
     def __init__(self, dir=None, **kwargs):
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
-        if (dir[-7:] != "data_th"):
-            dir = os.path.join(dir,"data_th")
-        self.dir = dir
-        self.basedir = dir[:-8]
+        if dir[-7:] != "data_th":
+            dir = os.path.join(dir, "data_th")
+            self.dir = dir
+            self.basedir = dir[:-8]
 
         # Search for parameter file
         para_file = find_parameter_file(dir)
@@ -31,7 +32,6 @@ class McfostSED:
 
         # Read model results
         self._read(**kwargs)
-
 
     def _read(self):
         # Read SED files
@@ -58,17 +58,16 @@ class McfostSED:
         except OSError:
             print('cannot open', self._sed_rt_file)
 
-
         # Read temperature file
         try:
             hdu = fits.open(self.dir+"/"+self._temperature_file)
             self.T = hdu[0].data
             hdu.close()
         except OSError:
-            print('cannot open', _temperature_file)
+            print('cannot open', self._temperature_file)
 
-
-    def plot(self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1, color="black",**kwargs):
+    def plot(self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1,
+             color="black", **kwargs):
 
         # extinction
         if Av > 0:
@@ -78,7 +77,7 @@ class McfostSED:
             redenning = 1.0
 
         if (MC):
-            sed = self._sed_mc[:,iaz,i,] * redenning
+            sed = self._sed_mc[:,iaz,i,:] * redenning
         else:
             sed = self.sed[:,iaz,i,:] * redenning
 
@@ -88,12 +87,12 @@ class McfostSED:
 
         if contrib:
             n_type_flux = sed.shape[0]
-            if  n_type_flux in [5,8,9]:
+            if n_type_flux in [5,8,9]:
                 if n_type_flux > 5:
                     n_pola = 4
                 else:
                     n_pola = 1
-                linewidth=0.5
+                linewidth = 0.5
                 plt.loglog(self.wl, sed[n_pola,:],   linewidth=linewidth, color="magenta")
                 plt.loglog(self.wl, sed[n_pola+1,:], linewidth=linewidth, color="blue")
                 plt.loglog(self.wl, sed[n_pola+2,:], linewidth=linewidth, color="red")
@@ -101,23 +100,23 @@ class McfostSED:
             else:
                 ValueError("There is no contribution data")
 
-
     def verif(self):
         # Compares the SED from step 1 and step 2 to check if energy is properly conserved
         current_fig = plt.gcf().number
         plt.figure(20)
         plt.loglog(self._wl_th, np.sum(self._sed_th[0,:,:],axis=0), color="black")
-        plt.loglog(self.wl, np.sum(self._sed_mc[0,0,:,:],axis=0), color="red")
+        plt.loglog(self.wl, np.sum(self._sed_mc[0,0,:,:],
+                                   axis=0), color="red")
         plt.figure(current_fig)
 
-
-    def plot_T(self,log=False, Tmin=None, Tmax=None):
+    def plot_T(self, log=False, Tmin=None, Tmax=None):
         # For a cylindrical or spherical grid only at the moment
         # Todo:
-        #  - automatically compute call mcfost to compute the grid as required
+        #  - automatically compute call mcfost to compute the grid
+        # as required
         #  - add functions for radial and vertical cuts
-
         # We test if the grid structure already exist, if not we try to read it
+
         try:
             grid = self.disc.grid
         except:
@@ -139,7 +138,7 @@ class McfostSED:
         else:
             Voronoi = True
             r = np.sqrt(grid[0,:]**2 + grid[1,:]**2)
-            ou = (r > 1e-6) # Removing star
+            ou = (r > 1e-6)  # Removing star
             T = T[ou]
             r = r[ou]
             z = grid[2,ou]
