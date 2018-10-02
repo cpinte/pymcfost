@@ -165,3 +165,42 @@ class McfostSED:
             plt.ylabel("z [au]")
         cb = plt.colorbar()
         cb.set_label('T [K]')
+
+
+    def plot_Tz(self, r=100., dr=5., log=False, **kwargs):
+
+        try:
+            grid = self.disc.grid
+        except:
+            try:
+                print("Trying to read grid structure")
+                self.disc = McfostDisc(self.basedir)
+                grid = self.disc.grid
+            except AttributeError:
+                print("Cannot read grid in "+self.basedir)
+
+        T = self.T
+        if (grid.ndim > 2):
+            Voronoi = False
+            r_mcfost = grid[0,0,:,:]
+            z_mcfost = grid[1,0,:,:]
+        else:
+            Voronoi = True
+            r_mcfost = np.sqrt(grid[0,:]**2 + grid[1,:]**2)
+            ou = (r_mcfost > 1e-6)  # Removing star
+            T = T[ou]
+            r_mcfost = r_mcfost[ou]
+            z_mcfost = grid[2,ou]
+
+        # Selecting data points
+        ou = (r_mcfost > r-dr) & (r_mcfost < r+dr)
+
+        # If we have cylindrical grid, we search for closest grid point
+        # Todo
+
+        z_mcfost = z_mcfost[ou]
+        T = T[ou]
+
+        plt.plot(z_mcfost,T,"o",**kwargs)
+        plt.xlabel("z [au]")
+        plt.ylabel("T [K]")
