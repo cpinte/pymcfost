@@ -79,8 +79,6 @@ class McfostDisc:
             n_az = self.grid.shape[1]
         phi = np.linspace(0,2*np.pi,n_az,endpoint=False)
 
-        print(self.gas_density.shape)
-
         r = self.grid[0,0,0,:]
 
         if rmin is None:
