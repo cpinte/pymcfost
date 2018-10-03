@@ -1,5 +1,6 @@
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 import numpy as np
 import os
 
@@ -62,7 +63,7 @@ class McfostDisc:
         else:
             return self.grid[2,:]
 
-    def add_spiral(self, a=3, sigma=10, f=1, theta0=0, rmin=None, rmax=None, n_az=None):
+    def add_spiral(self, a=30, sigma=10, f=1, theta0=0, rmin=None, rmax=None, n_az=None):
         """ Add a geometrucal spiral on a 2D (or 3D) mcfost density grid
         and return a 3D array which can be directly written as a fits
         file for mcfost to read
@@ -115,5 +116,7 @@ class McfostDisc:
                 d2 = np.min( (x_spiral - x[i,j])**2 + (y_spiral - y[i,j])**2 )
                 correct[i,j] += f * np.exp(-0.5 * d2/sigma2)
 
+        triang = tri.Triangulation(x.flatten(), y.flatten())
+        plt.tripcolor(triang, correct.flatten(), shading='flat')
 
         return self.gas_density[np.newaxis,:,:] * correct[:,np.newaxis,:]
