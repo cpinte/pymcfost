@@ -47,7 +47,7 @@ class McfostImage:
             print('cannot open', self._RT_file)
 
     def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None,
-             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,bmaj=None,bmin=None,bpa=None,conv=None,plot_beam=False):
+             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
