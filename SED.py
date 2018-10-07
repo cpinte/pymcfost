@@ -3,6 +3,7 @@ import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
+import mpl_scatter_density
 
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
@@ -150,21 +151,32 @@ class McfostSED:
 
         if (log):
             if (Voronoi):
-                plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                #plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                fig = plt.figure()
+                ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+                density = ax.scatter_density(r, z/r, c=T, cmap=plt.cm.RdYlBu, dpi=None, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                fig.colorbar(density, label = "T [K]")
             else:
                 plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                cb = plt.colorbar()
+                cb.set_label('T [K]')
             plt.xscale('log')
             plt.xlabel("r [au]")
             plt.ylabel("z/r")
         else:
             if (Voronoi):
-                plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                #plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                fig = plt.figure()
+                ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+                density = ax.scatter_density(r, z, c=T, cmap=plt.cm.RdYlBu, dpi=None, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                fig.colorbar(density, label = "T [K]")
             else:
                 plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                cb = plt.colorbar()
+                cb.set_label('T [K]')
             plt.xlabel("r [au]")
             plt.ylabel("z [au]")
-        cb = plt.colorbar()
-        cb.set_label('T [K]')
+
 
 
     def plot_Tz(self, r=100., dr=5., log=False, **kwargs):
