@@ -4,8 +4,9 @@ import matplotlib.colors as colors
 import numpy as np
 import os
 
-from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+from matplotlib.patches import Ellipse
 
+from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
 from utils import bin_image
@@ -46,11 +47,15 @@ class McfostImage:
         except OSError:
             print('cannot open', self._RT_file)
 
-    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',colorbar=True,type='I',color_scale=None,
-             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False):
+    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',
+             colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5,
+             psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
+
+
+        # bmin and bamj in arcsec
 
         ax = plt.gca()
 
@@ -91,7 +96,7 @@ class McfostImage:
         #-- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
         if psf_FWHM is not None:
-            sigma = psf_FWHM / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma = psf_FWHM / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
             beam = Gaussian2DKernel(sigma)
             i_convolve = True
             bmin = psf_FWHM
@@ -99,14 +104,14 @@ class McfostImage:
             bpa=0
 
         if bmaj is not None:
-            sigma_x = bmin / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
-            sigma_y = bmaj / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_x = bmin / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_y = bmaj / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
             beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
             i_convolve = True
 
         #-- Selecting convolution function
-        if conv is None:
-            conv = convolve
+        if conv_method is None:
+            conv_method = convolve
 
         #-- Intermediate images
         if pola_needed:
@@ -133,7 +138,7 @@ class McfostImage:
             I = self.image[0,i,iaz,:,:]
 
         if i_convolve:
-            I = conv(I,beam)
+            I = conv_method(I,beam)
 
 
         #--- Selecting image to plot & convolution
@@ -217,7 +222,7 @@ class McfostImage:
 
         #--- Adding beam
         if plot_beam:
-            from matplotlib.patches import Ellipse
+            ax = plt.gca()
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),

@@ -1,9 +1,12 @@
 import astropy.io.fits as fits
 import astropy.constants as SI
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import numpy as np
 import os
 
+from matplotlib.patches import Ellipse
+from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
 
@@ -51,7 +54,6 @@ class McfostLine:
                     self.velocity = self.CRVAL3 + self.CDELT3 * (np.arange(1,self.nv+1) - self.CRPIX3) # km/s
                     #self.velocity = (self.nu - self.restfreq)/SI.c.value
 
-
             else:
                 self.is_casa = False
                 self.cont = hdu[1].data
@@ -64,8 +66,18 @@ class McfostLine:
         except OSError:
             print('cannot open', self._line_file)
 
-    def plot_map(self, i=0, iTrans=0, insert=False, substract_cont=False, moment=None, v=None,
-        psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False):
+    def plot_map(self, i=0, iTrans=0, iv=None, insert=False, substract_cont=False, moment=None, v=None,
+                 psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,axes_unit="arcsec",conv_method=None,
+                 vmax=None,vmin=None,fpeak=None,dynamic_range=1e3,color_scale=None,colorbar=True):
+        # Todo:
+        # - allow user to change brightness unit : W.m-1, Jy, Tb
+        # - plot moment maps
+        # - print velocity when plotting a channel map
+        # - print molecular info (eg CO J=3-2)
+        # - add continnum subtraction
+
+        # bmin and bamj in arcsec
+
 
         ax = plt.gca()
 
@@ -84,29 +96,81 @@ class McfostLine:
             ylabel = '$\Delta$ y [pix]'
         else:
             raise ValueError("Unknown unit for axes_units: "+axes_unit)
-            halfsize = np.asarray(self.image.shape[-2:])/2 * pix_scale
-            extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
+        halfsize = np.asarray(self.lines.shape[-2:])/2 * pix_scale
+        extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
 
         #-- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
 
         if bmaj is not None:
-            sigma_x = bmin / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
-            sigma_y = bmaj / pix_scale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_x = bmin / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_y = bmaj / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
             beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
             i_convolve = True
 
         #-- Selecting convolution function
-        if conv is None:
-            conv = convolve
+        if conv_method is None:
+            conv_method = convolve
+
+        #-- Selection of image to plot
+        if (self.is_casa):
+            im = self.lines[iv,:,:]
+        else:
+            im = self.lines[iaz,i,iTrans,iv,:,:]
+
+        #-- Convolve image
+        if i_convolve:
+            im = conv_method(im,beam)
+            if plot_beam is None:
+                plot_beam = True
+
+        #--- Plot range and color map
+        _color_scale = 'lin'
+        if vmax is None: vmax = im.max()
+        if fpeak is not None : vmax = im.max() * fpeak
+        if vmin is None:
+            if (type in ["Q","U"]):
+                vmin = -vmax
+            else:
+                vmin= vmax/dynamic_range
+        if color_scale is None :
+            color_scale = _color_scale
+        if color_scale == 'log':
+            norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
+        elif color_scale == 'lin':
+            norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+        else:
+            raise ValueError("Unknown color scale: "+color_scale)
+
+        #-- Make the plot
+        plt.clf()
+        plt.imshow(im, norm = norm, extent=extent, origin='lower')
+        plt.xlabel(xlabel) ; plt.ylabel(ylabel)
+
+        unit = self.unit
+        if colorbar:
+            cb = plt.colorbar()
+            formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
+            cb.set_label("Flux ["+formatted_unit+"]")
+
+        #--- Adding beam
+        ax = plt.gca()
+        if plot_beam:
+            dx = 0.125
+            dy = 0.125
+            beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
+                           width=bmin, height=bmaj, angle=-bpa,
+                           fill=True,  color="grey")
+            ax.add_patch(beam)
+
 
     def plot_line(self, i=0, iaz=0, iTrans=0, psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,plot_cont=True):
 
         if (self.is_casa):
-            line = np.sum(np.sum(self.lines[:,:,:], axis=2), axis=1)
+            line = np.sum(self.lines[:,:,:], axis=(1,2))
             ylabel = "Flux [Jy]"
         else:
-            line = np.sum(np.sum(self.lines[iaz,i,iTrans,:,:,:], axis=2), axis=1)
+            line = np.sum(self.lines[iaz,i,iTrans,:,:,:], axis=(1,2))
             ylabel = "Flux [W.m$^{-2}$]"
 
         plt.plot(self.velocity, line)
