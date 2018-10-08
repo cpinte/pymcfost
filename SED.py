@@ -152,7 +152,7 @@ class McfostSED:
         if (log):
             if (Voronoi):
                 #plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
-                fig = plt.figure()
+                fig = plt.gcf()
                 ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
                 density = ax.scatter_density(r, z/r, c=T, cmap=plt.cm.RdYlBu, dpi=None, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig.colorbar(density, label = "T [K]")
@@ -166,7 +166,7 @@ class McfostSED:
         else:
             if (Voronoi):
                 #plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
-                fig = plt.figure()
+                fig = plt.gcf()
                 ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
                 density = ax.scatter_density(r, z, c=T, cmap=plt.cm.RdYlBu, dpi=None, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig.colorbar(density, label = "T [K]")
@@ -218,7 +218,7 @@ class McfostSED:
         plt.ylabel("T [K]")
 
 
-    def plot_Tr(self, h_r=0.05, log=True, **kwargs):
+    def plot_Tr(self, h_r=0.05, log=True, symbol=None, **kwargs):
 
         try:
             grid = self.disc.grid
@@ -253,8 +253,8 @@ class McfostSED:
         T = T[ou]
 
         if (log):
-            plt.loglog(r_mcfost,T,"o",**kwargs)
+            plt.loglog(r_mcfost,T,"o",linewidth=0.2,**kwargs)
         else:
-            plt.plot(r_mcfost,T,"o",**kwargs)
+            plt.plot(r_mcfost,T,"o",linewidth=0.2,**kwargs)
         plt.xlabel("z [au]")
         plt.ylabel("T [K]")
