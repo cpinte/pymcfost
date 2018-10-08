@@ -45,7 +45,7 @@ class McfostLine:
 
             if (self.unit == "JY/PIXEL"):
                 self.is_casa = True
-                self.restfreq = hdu[0].header['RESTFREQ']
+                self.restfreq = hdu[0].header['RESTFRQ']
                 self.velocity_type = hdu[0].header['CTYPE3']
                 if (self.velocity_type == "VELO-LSR"):
                     self.CRPIX3 = hdu[0].header['CRPIX3']
