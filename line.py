@@ -66,7 +66,7 @@ class McfostLine:
         except OSError:
             print('cannot open', self._line_file)
 
-    def plot_map(self, i=0, iTrans=0, iv=None, insert=False, substract_cont=False, moment=None, v=None,
+    def plot_map(self,i=0,iaz=0,iTrans=0,iv=None,insert=False,substract_cont=False,moment=None,v=None,
                  psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,axes_unit="arcsec",conv_method=None,
                  vmax=None,vmin=None,fpeak=None,dynamic_range=1e3,color_scale=None,colorbar=True):
         # Todo:
