@@ -1,12 +1,12 @@
-import astropy.io.fits as fits
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import numpy as np
 import os
 
-from matplotlib.patches import Ellipse
-
+import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+import matplotlib.colors as colors
+from matplotlib.patches import Ellipse
+import matplotlib.pyplot as plt
+import numpy as np
+
 from parameters import McfostParams, find_parameter_file
 from disc_structure import McfostDisc
 from utils import bin_image
@@ -36,13 +36,14 @@ class McfostImage:
             hdu = fits.open(self.dir+"/"+self._RT_file)
             self.image = hdu[0].data
             # Read a few keywords in header
-            self.pixelscale =  hdu[0].header['CDELT2'] * 3600. # arcsec
-            self.unit     =  hdu[0].header['BUNIT']
-            self.wl       =  hdu[0].header['WAVE'] # micron
-            self.cx       =  hdu[0].header['CRPIX1']
-            self.cy       =  hdu[0].header['CRPIX2']
-            self.nx       =  hdu[0].header['NAXIS1']
-            self.ny       =  hdu[0].header['NAXIS2']
+            self.pixelscale = hdu[0].header['CDELT2'] * 3600. # arcsec
+            self.unit       = hdu[0].header['BUNIT']
+            self.wl         = hdu[0].header['WAVE'] # micron
+            self.cx         = hdu[0].header['CRPIX1']
+            self.cy         = hdu[0].header['CRPIX2']
+            self.nx         = hdu[0].header['NAXIS1']
+            self.ny         = hdu[0].header['NAXIS2']
+            self.is_casa    = (self.unit == "JY/PIXEL")
             hdu.close()
         except OSError:
             print('cannot open', self._RT_file)
@@ -54,7 +55,6 @@ class McfostImage:
         #  - plot a selected contribution
         #  - add a mask on the star ?
 
-
         # bmin and bamj in arcsec
 
         ax = plt.gca()
@@ -65,35 +65,34 @@ class McfostImage:
         if pola_needed and contrib_needed:
             raise ValueError('Cannot separate both polarisation and contributions')
 
-        # We first check if the requested image is present in the mcfost fits file
+        #--- We first check if the requested image is present in the mcfost fits file
         ntype_flux = self.image.shape[0]
-        if ntype_flux != 4 and ntype_flux != 8: # there is no pola
+        if ntype_flux not in (4,8): # there is no pola
             if pola_needed:
                 raise ValueError('The model does not have polarisation data')
-        elif ntype_flux != 5 and ntype_flux != 8: # there is no contribution
+        elif ntype_flux not in (5,8): # there is no contribution
             if contrib_needed:
                 raise ValueError('The model does not have contribution data')
-
 
         #--- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
             pix_scale = self.pixelscale
-            xlabel = '$\Delta$ Ra ["]'
-            ylabel = '$\Delta$ Dec ["]'
+            xlabel = r'$\Delta$ Ra ["]'
+            ylabel = r'$\Delta$ Dec ["]'
         elif axes_unit.lower() == 'au':
             pix_scale = self.pixelscale * self.P.map.distance
             xlabel = 'Distance from star [au]'
             ylabel = 'Distance from star [au]'
         elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
             pix_scale = 1
-            xlabel = '$\Delta$ x [pix]'
-            ylabel = '$\Delta$ y [pix]'
+            xlabel = r'$\Delta$ x [pix]'
+            ylabel = r'$\Delta$ y [pix]'
         else:
             raise ValueError("Unknown unit for axes_units: "+axes_unit)
         halfsize = np.asarray(self.image.shape[-2:])/2 * pix_scale
         extent = [-halfsize[0], halfsize[0], -halfsize[1], halfsize[1]]
 
-        #-- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
+        #--- Beam or psf: psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
         if psf_FWHM is not None:
             sigma = psf_FWHM / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
@@ -109,11 +108,11 @@ class McfostImage:
             beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
             i_convolve = True
 
-        #-- Selecting convolution function
+        #--- Selecting convolution function
         if conv_method is None:
             conv_method = convolve
 
-        #-- Intermediate images
+        #--- Intermediate images
         if pola_needed:
             I = self.image[0,i,iaz,:,:]
             Q = self.image[1,i,iaz,:,:]
@@ -135,11 +134,13 @@ class McfostImage:
             elif type == "scatt_em_th":
                 I = self.image[n_pola+3,i,iaz,:,:]
         else:
-            I = self.image[0,i,iaz,:,:]
+            if self.is_casa:
+                I = self.image[i,iaz,:,:]
+            else:
+                I = self.image[0,i,iaz,:,:]
 
         if i_convolve:
             I = conv_method(I,beam)
-
 
         #--- Selecting image to plot & convolution
         unit = self.unit
@@ -162,7 +163,7 @@ class McfostImage:
         elif type == 'PI':
             im = np.sqrt(Q**2 + U**2)
             _color_scale = 'log'
-        elif type == 'Qphi' or type == 'Uphi':
+        elif type in ('Qphi','Uphi'):
             X = np.arange(1,self.nx+1) - self.cx
             Y = np.arange(1,self.ny+1) - self.cy
             X, Y = np.meshgrid(X,Y)
@@ -174,14 +175,16 @@ class McfostImage:
             _color_scale = 'log'
 
         #--- Plot range and color map
-        if vmax is None: vmax = im.max()
-        if fpeak is not None : vmax = im.max() * fpeak
+        if vmax is None:
+            vmax = im.max()
+        if fpeak is not None:
+            vmax = im.max() * fpeak
         if vmin is None:
             if (type in ["Q","U"]):
                 vmin = -vmax
             else:
-                vmin= vmax/dynamic_range
-        if color_scale is None :
+                vmin = vmax/dynamic_range
+        if color_scale is None:
             color_scale = _color_scale
         if color_scale == 'log':
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
@@ -192,11 +195,11 @@ class McfostImage:
 
         #--- Making the actual plot
         plt.clf()
-        plt.imshow(im, norm = norm, extent=extent, origin='lower')
+        plt.imshow(im, norm=norm, extent=extent, origin='lower')
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
 
-        plt.xlabel(xlabel) ; plt.ylabel(ylabel)
-
-        if (colorbar):
+        if colorbar:
             cb = plt.colorbar()
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
             cb.set_label(flux_name+" ["+formatted_unit+"]")
@@ -209,16 +212,17 @@ class McfostImage:
 
             Xb = bin_image(X,nbin,func=np.mean)
             Yb = bin_image(Y,nbin,func=np.mean)
-            Ib = bin_image(I,nbin) ;
+            Ib = bin_image(I,nbin)
             Qb = bin_image(Q,nbin)
             Ub = bin_image(U,nbin)
 
             pola = 100 * np.sqrt((Qb/Ib)**2 + (Ub/Ib)**2)
             theta = 0.5 * np.arctan2(Ub,Qb)
-            pola_x = - pola * np.sin(theta) # Ref is N (vertical axis) --> sin,  and Est is toward left --> -
+            pola_x = - pola * np.sin(theta) # Ref is N (vertical axis) --> sin, and Est is toward left --> -
             pola_y = pola  * np.cos(theta)
 
-            plt.quiver(Xb,Yb,pola_x,pola_y, headwidth=0, headlength=0, headaxislength=0.0, pivot='middle', color=vector_color)
+            plt.quiver(Xb, Yb, pola_x, pola_y, headwidth=0, headlength=0,
+                       headaxislength=0.0, pivot='middle', color=vector_color)
 
         #--- Adding beam
         if plot_beam:
