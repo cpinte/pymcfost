@@ -114,7 +114,7 @@ class McfostParams:
         line = next(f).split()
         self.map.nx = int(line[0])
         self.map.ny = int(line[1])
-        self.map.size = float(line[0])
+        self.map.size = float(line[2])
 
         line = next(f).split()
         self.map.RT_imin = float(line[0])
