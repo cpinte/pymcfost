@@ -50,7 +50,8 @@ class McfostImage:
 
     def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',
              colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5,
-             psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None):
+             psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
+             mask=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
@@ -218,8 +219,8 @@ class McfostImage:
 
             pola = 100 * np.sqrt((Qb/Ib)**2 + (Ub/Ib)**2)
             theta = 0.5 * np.arctan2(Ub,Qb)
-            pola_x = - pola * np.sin(theta) # Ref is N (vertical axis) --> sin, and Est is toward left --> -
-            pola_y = pola  * np.cos(theta)
+            pola_x = -pola * np.sin(theta) # Ref is N (vertical axis) --> sin, and Est is toward left --> -
+            pola_y =  pola * np.cos(theta)
 
             plt.quiver(Xb, Yb, pola_x, pola_y, headwidth=0, headlength=0,
                        headaxislength=0.0, pivot='middle', color=vector_color)
@@ -231,5 +232,15 @@ class McfostImage:
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
                            width=bmin, height=bmaj, angle=-bpa,
-                           fill=True,  color="grey")
+                           fill=True, color="grey")
             ax.add_patch(beam)
+
+        #--- Adding mask
+        if mask is not None:
+            ax = plt.gca()
+            dx = 0.5
+            dy = 0.5
+            mask = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
+                           width=2*mask, height=2*mask,
+                           fill=True, color='grey')
+            ax.add_patch(mask)
