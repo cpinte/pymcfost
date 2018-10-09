@@ -128,7 +128,7 @@ class McfostSED:
             except AttributeError:
                 print("Cannot read grid in "+self.basedir)
 
-        plt.clf()
+        plt.cla()
 
         T = self.T
 
@@ -154,7 +154,7 @@ class McfostSED:
                 #plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig = plt.gcf()
                 ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
-                density = ax.scatter_density(r, z/r, c=T, cmap=plt.cm.RdYlBu, dpi=None, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                density = ax.scatter_density(r, z/r, c=T, cmap=plt.cm.RdYlBu_r, dpi=100, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig.colorbar(density, label = "T [K]")
             else:
                 plt.pcolormesh(r,z/r,T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
@@ -168,7 +168,7 @@ class McfostSED:
                 #plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig = plt.gcf()
                 ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
-                density = ax.scatter_density(r, z, c=T, cmap=plt.cm.RdYlBu, dpi=None, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                density = ax.scatter_density(r, z, c=T, cmap=plt.cm.RdYlBu_r, dpi=100, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig.colorbar(density, label = "T [K]")
             else:
                 plt.pcolormesh(r,z,T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
