@@ -4,7 +4,7 @@ import matplotlib.tri as tri
 import numpy as np
 import os
 
-from parameters import McfostParams, find_parameter_file
+from .parameters import McfostParams, find_parameter_file
 
 
 class McfostDisc:

@@ -7,8 +7,9 @@ import os
 
 from matplotlib.patches import Ellipse
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
-from parameters import McfostParams, find_parameter_file
-from disc_structure import McfostDisc
+
+from .parameters import McfostParams, find_parameter_file
+from .disc_structure import McfostDisc
 
 class McfostLine:
 

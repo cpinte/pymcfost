@@ -7,9 +7,9 @@ from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 import numpy as np
 
-from parameters import McfostParams, find_parameter_file
-from disc_structure import McfostDisc
-from utils import bin_image
+from .parameters import McfostParams, find_parameter_file
+from .disc_structure import McfostDisc
+from .utils import bin_image
 
 class McfostImage:
 

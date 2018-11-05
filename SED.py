@@ -5,9 +5,9 @@ import matplotlib.colors as colors
 import numpy as np
 import mpl_scatter_density
 
-from parameters import McfostParams, find_parameter_file
-from disc_structure import McfostDisc
-from utils import DustExtinction
+from .parameters import McfostParams, find_parameter_file
+from .disc_structure import McfostDisc
+from .utils import DustExtinction
 
 
 class McfostSED:
