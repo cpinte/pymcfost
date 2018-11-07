@@ -8,11 +8,11 @@ import os
 from matplotlib.patches import Ellipse
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
 
-from .parameters import McfostParams, find_parameter_file
-from .disc_structure import McfostDisc
+from .parameters import Params, find_parameter_file
+from .disc_structure import Disc
 from .utils import FWHM_to_sigma
 
-class McfostLine:
+class Line:
 
     _line_file = "lines.fits.gz"
 
@@ -26,7 +26,7 @@ class McfostLine:
         para_file = find_parameter_file(dir)
 
         # Read parameter file
-        self.P = McfostParams(para_file)
+        self.P = Params(para_file)
 
         # Read model results
         self._read(**kwargs)

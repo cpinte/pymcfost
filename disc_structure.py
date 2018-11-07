@@ -4,10 +4,10 @@ import matplotlib.tri as tri
 import numpy as np
 import os
 
-from .parameters import McfostParams, find_parameter_file
+from .parameters import Params, find_parameter_file
 
 
-class McfostDisc:
+class Disc:
 
     def __init__(self, dir=None, **kwargs):
         # Correct path if needed
@@ -20,7 +20,7 @@ class McfostDisc:
         para_file = find_parameter_file(dir)
 
         # Read parameter file
-        self.P = McfostParams(para_file)
+        self.P = Params(para_file)
 
         # Read model results
         self._read(**kwargs)

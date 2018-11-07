@@ -5,12 +5,12 @@ import matplotlib.colors as colors
 import numpy as np
 import mpl_scatter_density
 
-from .parameters import McfostParams, find_parameter_file
-from .disc_structure import McfostDisc
+from .parameters import Params, find_parameter_file
+from .disc_structure import Disc
 from .utils import DustExtinction
 
 
-class McfostSED:
+class SED:
 
     _sed_th_file = ".sed_th.fits.gz"
     _sed_mc_file = "sed_mc.fits.gz"
@@ -29,7 +29,7 @@ class McfostSED:
         para_file = find_parameter_file(dir)
 
         # Read parameter file
-        self.P = McfostParams(para_file)
+        self.P = Params(para_file)
 
         # Read model results
         self._read(**kwargs)
@@ -123,7 +123,7 @@ class McfostSED:
         except:
             try:
                 print("Trying to read grid structure")
-                self.disc = McfostDisc(self.basedir)
+                self.disc = Disc(self.basedir)
                 grid = self.disc.grid
             except AttributeError:
                 print("Cannot read grid in "+self.basedir)
@@ -186,7 +186,7 @@ class McfostSED:
         except:
             try:
                 print("Trying to read grid structure")
-                self.disc = McfostDisc(self.basedir)
+                self.disc = Disc(self.basedir)
                 grid = self.disc.grid
             except AttributeError:
                 print("Cannot read grid in "+self.basedir)
@@ -225,7 +225,7 @@ class McfostSED:
         except:
             try:
                 print("Trying to read grid structure")
-                self.disc = McfostDisc(self.basedir)
+                self.disc = Disc(self.basedir)
                 grid = self.disc.grid
             except AttributeError:
                 print("Cannot read grid in "+self.basedir)

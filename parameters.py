@@ -1,55 +1,55 @@
 import glob
 import numpy as np
 
-class McfostPhotons:
+class Photons:
     pass
 
-class McfostWavelengths:
+class Wavelengths:
     pass
 
-class McfostPhysics:
+class Physics:
     pass
 
-class McfostDust:
+class Dust:
     component = []
     pass
 
-class McfostDustComponent:
+class DustComponent:
     pass
 
-class McfostGrid:
+class Grid:
     pass
 
-class McfostMap:
+class Map:
     pass
 
-class McfostZone:
+class Zone:
     dust = []
     pass
 
-class McfostMol:
+class Mol:
     molecule = []
     pass
 
-class McfostMolecule:
+class Molecule:
     pass
 
-class McfostStar:
+class Star:
     pass
 
-class McfostSimu:
+class Simu:
     version = float()
     pass
 
-class McfostParams:
+class Params:
 
-    simu = McfostSimu()
-    phot = McfostPhotons()
-    wavelengths = McfostWavelengths()
-    map = McfostMap()
-    grid = McfostGrid()
+    simu = Simu()
+    phot = Photons()
+    wavelengths = Wavelengths()
+    map = Map()
+    grid = Grid()
     zones = []
-    mol = McfostMol()
+    mol = Mol()
     stars = []
 
     _minimum_version = 3.0
@@ -173,7 +173,7 @@ class McfostParams:
         self.simu.n_zones = n_zones
 
         #-- Density structure --
-        z = McfostZone()
+        z = Zone()
         for k in range(n_zones):
             self.zones.append(z)
 
@@ -203,7 +203,7 @@ class McfostParams:
             self.zones[k].m_gamma_exp = float(line[1])
 
         #-- Grain properties --
-        d = McfostDust
+        d = Dust
         for k in range(n_zones):
             line = next(f).split()
             n_species = int(line[0])
@@ -221,7 +221,7 @@ class McfostParams:
                 self.zones[k].dust[j].mass_fraction = float(line[4])
                 self.zones[k].dust[j].DHS_Vmax = float(line[5])
 
-                c = McfostDustComponent()
+                c = DustComponent()
                 for l in range(n_components):
                     self.zones[k].dust[j].component.append(c)
 
@@ -252,7 +252,7 @@ class McfostParams:
         n_mol = int(line[0])
         self.mol.n_mol = n_mol
 
-        m = McfostMolecule()
+        m = Molecule()
         for k in range(n_mol):
             self.mol.molecule.append(m)
 
@@ -281,7 +281,7 @@ class McfostParams:
         line = next(f).split()
         n_stars = int(line[0])
         self.simu.n_stars = n_stars
-        s = McfostStar()
+        s = Star()
         for k in range(n_stars):
             self.stars.append(s)
 
