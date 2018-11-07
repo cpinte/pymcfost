@@ -9,7 +9,7 @@ import numpy as np
 
 from .parameters import McfostParams, find_parameter_file
 from .disc_structure import McfostDisc
-from .utils import bin_image
+from .utils import bin_image, FWHM_to_sigma
 
 class McfostImage:
 
@@ -104,8 +104,8 @@ class McfostImage:
             bpa=0
 
         if bmaj is not None:
-            sigma_x = bmin / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
-            sigma_y = bmaj / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_x = bmin / self.pixelscale * FWHM_to_sigma # in pixels
+            sigma_y = bmaj / self.pixelscale * FWHM_to_sigma # in pixels
             beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
             i_convolve = True
 

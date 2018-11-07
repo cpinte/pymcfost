@@ -10,6 +10,7 @@ from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
 
 from .parameters import McfostParams, find_parameter_file
 from .disc_structure import McfostDisc
+from .utils import FWHM_to_sigma
 
 class McfostLine:
 
@@ -104,8 +105,8 @@ class McfostLine:
         i_convolve = False
 
         if bmaj is not None:
-            sigma_x = bmin / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
-            sigma_y = bmaj / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
+            sigma_x = bmin / self.pixelscale * FWHM_to_sigma # in pixels
+            sigma_y = bmaj / self.pixelscale * FWHM_to_sigma # in pixels
             beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
             i_convolve = True
 
@@ -130,13 +131,12 @@ class McfostLine:
         if vmax is None: vmax = im.max()
         if fpeak is not None : vmax = im.max() * fpeak
         if vmin is None:
-            if (type in ["Q","U"]):
-                vmin = -vmax
-            else:
-                vmin= vmax/dynamic_range
+                vmin= 0.
         if color_scale is None :
             color_scale = _color_scale
         if color_scale == 'log':
+            if (vmin == 0.):
+                vmin = vmax/dynamic_range
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif color_scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
@@ -145,6 +145,8 @@ class McfostLine:
 
         #-- Make the plot
         plt.clf()
+        im.shape
+
         plt.imshow(im, norm = norm, extent=extent, origin='lower')
         plt.xlabel(xlabel) ; plt.ylabel(ylabel)
 
@@ -155,8 +157,8 @@ class McfostLine:
             cb.set_label("Flux ["+formatted_unit+"]")
 
         #--- Adding beam
-        ax = plt.gca()
         if plot_beam:
+            ax = plt.gca()
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
