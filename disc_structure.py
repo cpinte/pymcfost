@@ -53,13 +53,13 @@ class Disc:
 
     def r(self):
         if (self.grid.ndim > 2):
-            return self.grid[0,0,:,:]
+            return self.grid[0,:,:,:]
         else:
             return np.sqrt(self.grid[0,:]**2 + self.grid[1,:]**2)
 
     def z(self):
         if (self.grid.ndim > 2):
-            return self.grid[1,0,:,:]
+            return self.grid[1,:,:,:]
         else:
             return self.grid[2,:]
 

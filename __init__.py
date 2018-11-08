@@ -5,3 +5,4 @@ from .disc_structure import *
 from .SED import *
 from .image import *
 from .line import *
+from .fargo2mcfost import *

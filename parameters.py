@@ -71,7 +71,8 @@ class Params:
         #-- Version of the parameter file --
         line = next(f).split()
         self.simu.version = float(line[0])
-        if (self.simu.version < self._minimum_version):
+        if (self.simu.version < self._minimum_version-1e-3):
+            print("Parameter file version is ", self.simu.version)
             raise Exception('Parameter file version must be at least {ver:.2f}'.format(ver=self._minimum_version))
 
 
