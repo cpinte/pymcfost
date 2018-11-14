@@ -71,7 +71,7 @@ class Line:
         except OSError:
             print('cannot open', self._line_file)
 
-    def plot_map(self,i=0,iaz=0,iTrans=0,iv=None,insert=False,substract_cont=False,moment=None,v=None,
+    def plot_map(self,i=0,iaz=0,iTrans=0,v=None,iv=None,insert=False,substract_cont=False,moment=None,
                  psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=None,axes_unit="arcsec",conv_method=None,
                  fmax=None,fmin=None,fpeak=None,dynamic_range=1e3,color_scale=None,colorbar=True,cmap=None):
         # Todo:
@@ -82,8 +82,12 @@ class Line:
         # - add continnum subtraction
 
         # bmin and bamj in arcsec
-
         ax = plt.gca()
+
+        #-- Selecting channel corresponding to a given velocity
+        if (v is not None):
+            iv = np.abs(self.velocity - v).argmin()
+            print("Selecting channel #", iv)
 
         #--- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
