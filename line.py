@@ -164,6 +164,7 @@ class Line:
         plt.imshow(im, norm = norm, extent=extent, origin='lower',cmap=cmap)
         plt.xlabel(xlabel) ; plt.ylabel(ylabel)
 
+        #-- Color bar
         unit = self.unit
         if colorbar:
             cb = plt.colorbar()
@@ -177,6 +178,12 @@ class Line:
                 cb.set_label("Velocity dispersion [km.s$^{-1}$]")
             else:
                 cb.set_label("Flux ["+formatted_unit+"]")
+
+        #-- Adding velocity
+        if (moment is None):
+            ax = plt.gca()
+            plt.text(0.5,0.9,f"v={self.velocity[iv]:<4.2f}$\,$km/s",horizontalalignment='center',color="white",transform=ax.transAxes)
+
 
         #--- Adding beam
         if plot_beam:
