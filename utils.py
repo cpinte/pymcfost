@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
+default_cmap = "inferno"
+
+FWHM_to_sigma = 1./(2.*np.sqrt(2.*np.log(2)))
 
 def bin_image(im, n, func=np.sum):
     # bin an image in blocks of n x n pixels
@@ -16,7 +19,6 @@ def bin_image(im, n, func=np.sum):
 
     return np.reshape(np.array([func(im[x0+k1*n:(k1+1)*n,y0+k2*n:(k2+1)*n]) for k1 in range(nx_new) for k2 in range(ny_new)]),(nx_new,ny_new))
 
-FWHM_to_sigma = 1./(2.*np.sqrt(2.*np.log(2)))
 
 class DustExtinction:
 
