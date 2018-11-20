@@ -1,7 +1,7 @@
 import astropy.io.fits as fits
-import astropy.constants as SI
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib as mpl
 import numpy as np
 import os
 
@@ -10,7 +10,7 @@ from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
 
 from .parameters import Params, find_parameter_file
 from .disc_structure import Disc
-from .utils import FWHM_to_sigma, default_cmap
+from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Wm2_to_Jy
 
 import progressbar
 
@@ -50,13 +50,14 @@ class Line:
             if (self.unit == "JY/PIXEL"):
                 self.is_casa = True
                 self.restfreq = hdu[0].header['RESTFRQ']
+                self.freq = [self.restfreq]
                 self.velocity_type = hdu[0].header['CTYPE3']
                 if (self.velocity_type == "VELO-LSR"):
                     self.CRPIX3 = hdu[0].header['CRPIX3']
                     self.CRVAL3 = hdu[0].header['CRVAL3']
                     self.CDELT3 = hdu[0].header['CDELT3']
                     self.velocity = self.CRVAL3 + self.CDELT3 * (np.arange(1,self.nv+1) - self.CRPIX3) # km/s
-                    #self.velocity = (self.nu - self.restfreq)/SI.c.value
+
                 else:
                     raise ValueError("Velocity type is not recognised")
             else:
@@ -73,16 +74,16 @@ class Line:
 
     def plot_map(self,i=0,iaz=0,iTrans=0,v=None,iv=None,insert=False,substract_cont=False,moment=None,
                  psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=None,axes_unit="arcsec",conv_method=None,
-                 fmax=None,fmin=None,fpeak=None,dynamic_range=1e3,color_scale=None,colorbar=True,cmap=None):
+                 fmax=None,fmin=None,fpeak=None,dynamic_range=1e3,color_scale=None,colorbar=True,cmap=None,
+                 ax=None,no_xlabel=False,no_ylabel=False,title=None,limit=None,limits=None,Tb=False):
         # Todo:
         # - allow user to change brightness unit : W.m-1, Jy, Tb
-        # - plot moment maps
-        # - print velocity when plotting a channel map
         # - print molecular info (eg CO J=3-2)
         # - add continnum subtraction
-
         # bmin and bamj in arcsec
-        ax = plt.gca()
+
+        if ax is None:
+            ax = plt.gca()
 
         #-- Selecting channel corresponding to a given velocity
         if (v is not None):
@@ -146,12 +147,23 @@ class Line:
                 if plot_beam is None:
                     plot_beam = True
 
+            #-- Conversion to brightness temperature
+            if Tb:
+                if self.is_casa:
+                    im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
+                else:
+                    im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
+                print("Max Tb=",np.max(im), "K")
+
+
+
         #--- Plot range and color map
         _color_scale = 'lin'
         if fmax is None: fmax = im.max()
         if fpeak is not None : fmax = im.max() * fpeak
         if fmin is None:
             fmin= im.min()
+
         if color_scale is None :
             color_scale = _color_scale
         if color_scale == 'log':
@@ -164,14 +176,29 @@ class Line:
             raise ValueError("Unknown color scale: "+color_scale)
 
         #-- Make the plot
-        plt.clf()
-        plt.imshow(im, norm = norm, extent=extent, origin='lower',cmap=cmap)
-        plt.xlabel(xlabel) ; plt.ylabel(ylabel)
+        ax.cla()
+        image = ax.imshow(im, norm = norm, extent=extent, origin='lower',cmap=cmap)
+
+        if limit is not None:
+            limits = [-limit,limit,-limit,limit]
+
+        if limits is not None:
+            ax.set_xlim(limits[0],limits[1])
+            ax.set_ylim(limits[2],limits[3])
+
+        if (not no_xlabel):
+            ax.set_xlabel(xlabel)
+        if (not no_ylabel):
+            ax.set_ylabel(ylabel)
+
+        if (title is not None):
+            ax.set_title(title)
 
         #-- Color bar
         unit = self.unit
         if colorbar:
-            cb = plt.colorbar()
+            cax,kw = mpl.colorbar.make_axes(ax)
+            cb = plt.colorbar(image,cax=cax, **kw)
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
 
             if moment==0:
@@ -181,17 +208,17 @@ class Line:
             elif moment==2:
                 cb.set_label("Velocity dispersion [km.s$^{-1}$]")
             else:
-                cb.set_label("Flux ["+formatted_unit+"]")
+                if Tb:
+                    cb.set_label("T$_\mathrm{b}$ [K]")
+                else:
+                    cb.set_label("Flux ["+formatted_unit+"]")
 
         #-- Adding velocity
         if (moment is None):
-            ax = plt.gca()
-            plt.text(0.5,0.9,f"v={self.velocity[iv]:<4.2f}$\,$km/s",horizontalalignment='center',color="white",transform=ax.transAxes)
-
+            ax.text(0.5,0.1,f"$\Delta$v={self.velocity[iv]:<4.2f}$\,$km/s",horizontalalignment='center',color="white",transform=ax.transAxes)
 
         #--- Adding beam
         if plot_beam:
-            ax = plt.gca()
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
@@ -199,6 +226,7 @@ class Line:
                            fill=True,  color="grey")
             ax.add_patch(beam)
 
+        return image
 
     def plot_line(self, i=0, iaz=0, iTrans=0, psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,plot_cont=True):
 
