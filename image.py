@@ -2,6 +2,7 @@ import os
 
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
@@ -51,7 +52,7 @@ class Image:
     def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',
              colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5,
              psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
-             mask=None):
+             mask=None,cmap=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
@@ -193,10 +194,16 @@ class Image:
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
         else:
             raise ValueError("Unknown color scale: "+color_scale)
+        if cmap is None:
+            cmap = 'viridis'
+        try:
+            cm.get_cmap(cmap)
+        except:
+            raise ValueError("Unknown color map: "+cmap)
 
         #--- Making the actual plot
         plt.clf()
-        plt.imshow(im, norm=norm, extent=extent, origin='lower')
+        plt.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
