@@ -49,7 +49,7 @@ class Line:
 
             if (self.unit == "JY/PIXEL"):
                 self.is_casa = True
-                self.restfreq = hdu[0].header['RESTFRQ']
+                self.restfreq = hdu[0].header['RESTFREQ']
                 self.freq = [self.restfreq]
                 self.velocity_type = hdu[0].header['CTYPE3']
                 if (self.velocity_type == "VELO-LSR"):
