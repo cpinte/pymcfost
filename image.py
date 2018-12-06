@@ -56,7 +56,7 @@ class Image:
              pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,
              bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
              mask=None,cmap=None,ax=None,no_xlabel=False,no_ylabel=False,
-             title=None,limit=None,limits=None):
+             title=None,limit=None,limits=None,coronagraph=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
@@ -146,6 +146,19 @@ class Image:
             else:
                 I = self.image[0,i,iaz,:,:]
 
+        #--- Coronagraph: in mas
+        if coronagraph is not None:
+            halfsize = np.asarray(self.image.shape[-2:])/2
+            posx = np.linspace(-halfsize[0],halfsize[0],self.nx)
+            posy = np.linspace(-halfsize[1],halfsize[1],self.ny)
+            meshx, meshy = np.meshgrid(posx,posy)
+            radius_pixel = np.sqrt(meshx**2 + meshy**2)
+            radius_mas = radius_pixel * pix_scale * 1000
+            I[radius_mas < coronagraph] = 0.
+            Q[radius_mas < coronagraph] = 0.
+            U[radius_mas < coronagraph] = 0.
+
+        #--- Convolve with beam
         if i_convolve:
             I = conv_method(I,beam)
 
