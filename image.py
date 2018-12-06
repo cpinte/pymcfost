@@ -202,7 +202,6 @@ class Image:
             raise ValueError("Unknown color map: "+cmap)
 
         #--- Making the actual plot
-        plt.clf()
         plt.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
