@@ -1,3 +1,4 @@
+import copy
 import os
 
 import astropy.io.fits as fits
@@ -197,9 +198,16 @@ class Image:
         if cmap is None:
             cmap = 'viridis'
         try:
-            cm.get_cmap(cmap)
+            cmap = copy.copy(cm.get_cmap(cmap))
         except:
-            raise ValueError("Unknown color map: "+cmap)
+            raise ValueError("Unknown colormap: "+cmap)
+        try:
+            cmap.set_bad(cmap.colors[0])
+        except:
+            try:
+                cmap.set_bad(cmap(0.0))
+            except:
+                raise Warning("Can't set bad values from given colormap")
 
         #--- Making the actual plot
         plt.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
