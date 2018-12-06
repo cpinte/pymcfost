@@ -11,7 +11,7 @@ import numpy as np
 
 from .parameters import Params, find_parameter_file
 from .disc_structure import Disc
-from .utils import bin_image, FWHM_to_sigma
+from .utils import bin_image, FWHM_to_sigma, default_cmap
 
 class Image:
 
@@ -177,7 +177,7 @@ class Image:
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
             _color_scale = 'log'
 
-        #--- Plot range and color map
+        #--- Plot range and color scale
         if vmax is None:
             vmax = im.max()
         if fpeak is not None:
@@ -195,8 +195,10 @@ class Image:
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
         else:
             raise ValueError("Unknown color scale: "+color_scale)
+
+        #--- Set color map
         if cmap is None:
-            cmap = 'viridis'
+            cmap = default_cmap
         try:
             cmap = copy.copy(cm.get_cmap(cmap))
         except:
@@ -214,6 +216,7 @@ class Image:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
+        #--- Colorbar
         if colorbar:
             cb = plt.colorbar()
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
