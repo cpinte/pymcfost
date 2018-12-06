@@ -3,6 +3,7 @@ import os
 
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
@@ -50,17 +51,20 @@ class Image:
         except OSError:
             print('cannot open', self._RT_file)
 
-    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',
-             colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5,
-             psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
-             mask=None,cmap=None):
+    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,
+             axes_unit='arcsec',colorbar=True,type='I',color_scale=None,
+             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,
+             bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
+             mask=None,cmap=None,ax=None,no_xlabel=False,no_ylabel=False,
+             title=None,limit=None,limits=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
 
         # bmin and bamj in arcsec
 
-        ax = plt.gca()
+        if ax is None:
+            ax = plt.gca()
 
         pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA'] or pola_vector
         contrib_needed = type in ['star','scatt','em_th','scatt_em_th']
@@ -212,13 +216,27 @@ class Image:
                 raise Warning("Can't set bad values from given colormap")
 
         #--- Making the actual plot
-        plt.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        img = ax.imshow(im, norm=norm, extent=extent, origin='lower',cmap=cmap)
+
+        if limit is not None:
+            limits = [-limit,limit,-limit,limit]
+
+        if limits is not None:
+            ax.set_xlim(limits[0],limits[1])
+            ax.set_ylim(limits[2],limits[3])
+
+        if not no_xlabel:
+            ax.set_xlabel(xlabel)
+        if not no_ylabel:
+            ax.set_ylabel(ylabel)
+
+        if title is not None:
+            ax.set_title(title)
 
         #--- Colorbar
         if colorbar:
-            cb = plt.colorbar()
+            cax,kw = mpl.colorbar.make_axes(ax)
+            cb = plt.colorbar(img,cax=cax, **kw)
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
             cb.set_label(flux_name+" ["+formatted_unit+"]")
 
@@ -244,7 +262,6 @@ class Image:
 
         #--- Adding beam
         if plot_beam:
-            ax = plt.gca()
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
@@ -254,10 +271,12 @@ class Image:
 
         #--- Adding mask
         if mask is not None:
-            ax = plt.gca()
             dx = 0.5
             dy = 0.5
             mask = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
                            width=2*mask, height=2*mask,
                            fill=True, color='grey')
             ax.add_patch(mask)
+
+        #--- Return
+        return img
