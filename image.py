@@ -125,8 +125,8 @@ class Image:
             Q = self.image[1,i,iaz,:,:]
             U = self.image[2,i,iaz,:,:]
             if i_convolve:
-                Q = conv(Q,beam)
-                U = conv(U,beam)
+                Q = conv_method(Q,beam)
+                U = conv_method(U,beam)
         elif contrib_needed:
             if pola_needed:
                 n_pola=4
