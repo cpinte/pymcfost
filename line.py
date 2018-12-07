@@ -1,18 +1,17 @@
-import astropy.io.fits as fits
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib as mpl
-import numpy as np
 import os
 
+import astropy.io.fits as fits
+from astropy.convolution import Gaussian2DKernel, convolve_fft
+import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
-from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+import progressbar
 
 from .parameters import Params, find_parameter_file
-from .disc_structure import Disc
-from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Wm2_to_Jy
+from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb
 
-import progressbar
 
 class Line:
 
@@ -197,8 +196,9 @@ class Line:
         #-- Color bar
         unit = self.unit
         if colorbar:
-            cax,kw = mpl.colorbar.make_axes(ax)
-            cb = plt.colorbar(image,cax=cax, **kw)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cb = plt.colorbar(image,cax=cax)
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
 
             if moment==0:

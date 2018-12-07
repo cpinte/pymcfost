@@ -2,16 +2,15 @@ import copy
 import os
 
 import astropy.io.fits as fits
-from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
-import matplotlib as mpl
+from astropy.convolution import Gaussian2DKernel, convolve
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
 from .parameters import Params, find_parameter_file
-from .disc_structure import Disc
 from .utils import bin_image, FWHM_to_sigma, default_cmap
 
 class Image:
@@ -248,8 +247,9 @@ class Image:
 
         #--- Colorbar
         if colorbar:
-            cax,kw = mpl.colorbar.make_axes(ax)
-            cb = plt.colorbar(img,cax=cax, **kw)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cb = plt.colorbar(img,cax=cax)
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
             cb.set_label(flux_name+" ["+formatted_unit+"]")
 
