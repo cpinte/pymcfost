@@ -55,7 +55,8 @@ class Image:
              pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,
              bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
              mask=None,cmap=None,ax=None,no_xlabel=False,no_ylabel=False,
-             title=None,limit=None,limits=None,coronagraph=None):
+             no_xticks=False,no_yticks=False,title=None,limit=None,limits=None,
+             coronagraph=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
@@ -241,6 +242,11 @@ class Image:
             ax.set_xlabel(xlabel)
         if not no_ylabel:
             ax.set_ylabel(ylabel)
+
+        if no_xticks:
+            ax.get_xaxis().set_visible(False)
+        if no_yticks:
+            ax.get_yaxis().set_visible(False)
 
         if title is not None:
             ax.set_title(title)
