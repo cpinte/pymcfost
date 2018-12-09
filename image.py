@@ -2,7 +2,7 @@ import copy
 import os
 
 import astropy.io.fits as fits
-from astropy.convolution import Gaussian2DKernel, convolve
+from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
@@ -117,16 +117,13 @@ class Image:
 
         #--- Selecting convolution function
         if conv_method is None:
-            conv_method = convolve
+            conv_method = convolve_fft
 
         #--- Intermediate images
         if pola_needed:
             I = self.image[0,i,iaz,:,:]
             Q = self.image[1,i,iaz,:,:]
             U = self.image[2,i,iaz,:,:]
-            if i_convolve:
-                Q = conv_method(Q,beam)
-                U = conv_method(U,beam)
         elif contrib_needed:
             if pola_needed:
                 n_pola=4
@@ -146,6 +143,13 @@ class Image:
             else:
                 I = self.image[0,i,iaz,:,:]
 
+        #--- Convolve with beam
+        if i_convolve:
+            I = conv_method(I,beam)
+            if pola_needed:
+                Q = conv_method(Q,beam)
+                U = conv_method(U,beam)
+
         #--- Coronagraph: in mas
         if coronagraph is not None:
             halfsize = np.asarray(self.image.shape[-2:])/2
@@ -155,12 +159,9 @@ class Image:
             radius_pixel = np.sqrt(meshx**2 + meshy**2)
             radius_mas = radius_pixel * pix_scale * 1000
             I[radius_mas < coronagraph] = 0.
-            Q[radius_mas < coronagraph] = 0.
-            U[radius_mas < coronagraph] = 0.
-
-        #--- Convolve with beam
-        if i_convolve:
-            I = conv_method(I,beam)
+            if pola_needed:
+                Q[radius_mas < coronagraph] = 0.
+                U[radius_mas < coronagraph] = 0.
 
         #--- Selecting image to plot & convolution
         unit = self.unit
