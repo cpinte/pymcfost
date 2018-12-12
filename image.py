@@ -1,15 +1,17 @@
+import copy
 import os
 
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
 from .parameters import Params, find_parameter_file
-from .disc_structure import Disc
-from .utils import bin_image, FWHM_to_sigma
+from .utils import bin_image, FWHM_to_sigma, default_cmap
 
 class Image:
 
@@ -48,17 +50,21 @@ class Image:
         except OSError:
             print('cannot open', self._RT_file)
 
-    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',
-             colorbar=True,type='I',scale=None,pola_vector=False,vector_color="white",nbin=5,
-             psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
-             mask=None):
+    def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,
+             axes_unit='arcsec',colorbar=True,type='I',scale=None,
+             pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,
+             bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
+             mask=None,cmap=None,ax=None,no_xlabel=False,no_ylabel=False,
+             no_xticks=False,no_yticks=False,title=None,limit=None,limits=None,
+             coronagraph=None):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
 
         # bmin and bamj in arcsec
 
-        ax = plt.gca()
+        if ax is None:
+            ax = plt.gca()
 
         pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA'] or pola_vector
         contrib_needed = type in ['star','scatt','em_th','scatt_em_th']
@@ -111,16 +117,13 @@ class Image:
 
         #--- Selecting convolution function
         if conv_method is None:
-            conv_method = convolve
+            conv_method = convolve_fft
 
         #--- Intermediate images
         if pola_needed:
             I = self.image[0,i,iaz,:,:]
             Q = self.image[1,i,iaz,:,:]
             U = self.image[2,i,iaz,:,:]
-            if i_convolve:
-                Q = conv_method(Q,beam)
-                U = conv_method(U,beam)
         elif contrib_needed:
             if pola_needed:
                 n_pola=4
@@ -140,8 +143,25 @@ class Image:
             else:
                 I = self.image[0,i,iaz,:,:]
 
+        #--- Convolve with beam
         if i_convolve:
             I = conv_method(I,beam)
+            if pola_needed:
+                Q = conv_method(Q,beam)
+                U = conv_method(U,beam)
+
+        #--- Coronagraph: in mas
+        if coronagraph is not None:
+            halfsize = np.asarray(self.image.shape[-2:])/2
+            posx = np.linspace(-halfsize[0],halfsize[0],self.nx)
+            posy = np.linspace(-halfsize[1],halfsize[1],self.ny)
+            meshx, meshy = np.meshgrid(posx,posy)
+            radius_pixel = np.sqrt(meshx**2 + meshy**2)
+            radius_mas = radius_pixel * pix_scale * 1000
+            I[radius_mas < coronagraph] = 0.
+            if pola_needed:
+                Q[radius_mas < coronagraph] = 0.
+                U[radius_mas < coronagraph] = 0.
 
         #--- Selecting image to plot & convolution
         unit = self.unit
@@ -175,7 +195,7 @@ class Image:
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
             _scale = 'symlog'
 
-        #--- Plot range and color map
+        #--- Plot range and color scale
         if vmax is None:
             vmax = im.max()
         if fpeak is not None:
@@ -196,14 +216,49 @@ class Image:
         else:
             raise ValueError("Unknown color scale: "+scale)
 
-        #--- Making the actual plot
-        plt.clf()
-        plt.imshow(im, norm=norm, extent=extent, origin='lower')
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        #--- Set color map
+        if cmap is None:
+            cmap = default_cmap
+        try:
+            cmap = copy.copy(cm.get_cmap(cmap))
+        except:
+            raise ValueError("Unknown colormap: "+cmap)
+        try:
+            cmap.set_bad(cmap.colors[0])
+        except:
+            try:
+                cmap.set_bad(cmap(0.0))
+            except:
+                raise Warning("Can't set bad values from given colormap")
 
+        #--- Making the actual plot
+        img = ax.imshow(im, norm=norm, extent=extent, origin='lower',cmap=cmap)
+
+        if limit is not None:
+            limits = [-limit,limit,-limit,limit]
+
+        if limits is not None:
+            ax.set_xlim(limits[0],limits[1])
+            ax.set_ylim(limits[2],limits[3])
+
+        if not no_xlabel:
+            ax.set_xlabel(xlabel)
+        if not no_ylabel:
+            ax.set_ylabel(ylabel)
+
+        if no_xticks:
+            ax.get_xaxis().set_visible(False)
+        if no_yticks:
+            ax.get_yaxis().set_visible(False)
+
+        if title is not None:
+            ax.set_title(title)
+
+        #--- Colorbar
         if colorbar:
-            cb = plt.colorbar()
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cb = plt.colorbar(img,cax=cax)
             formatted_unit = unit.replace("-1","$^{-1}$").replace("-2","$^{-2}$")
             cb.set_label(flux_name+" ["+formatted_unit+"]")
 
@@ -229,7 +284,6 @@ class Image:
 
         #--- Adding beam
         if plot_beam:
-            ax = plt.gca()
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
@@ -239,10 +293,12 @@ class Image:
 
         #--- Adding mask
         if mask is not None:
-            ax = plt.gca()
             dx = 0.5
             dy = 0.5
             mask = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
                            width=2*mask, height=2*mask,
                            fill=True, color='grey')
             ax.add_patch(mask)
+
+        #--- Return
+        return img
