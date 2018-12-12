@@ -117,6 +117,7 @@ class Line:
 
         #-- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
+        beam = None
         if psf_FWHM is not None:
             sigma = psf_FWHM / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
             beam = Gaussian2DKernel(sigma)
