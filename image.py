@@ -49,7 +49,7 @@ class Image:
             print('cannot open', self._RT_file)
 
     def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,axes_unit='arcsec',
-             colorbar=True,type='I',color_scale=None,pola_vector=False,vector_color="white",nbin=5,
+             colorbar=True,type='I',scale=None,pola_vector=False,vector_color="white",nbin=5,
              psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
              mask=None):
         # Todo:
@@ -149,21 +149,21 @@ class Image:
         if type == 'I':
             flux_name = 'Flux density'
             im = I
-            _color_scale = 'log'
+            _scale = 'log'
         elif type == 'Q':
             im = Q
-            _color_scale = 'log'
+            _scale = 'symlog'
         elif type == 'U':
             im = U
-            _color_scale = 'log'
+            _scale = 'symlog'
         elif type == 'P':
             I = I + (I == 0.)*1e-30
             im = 100 * np.sqrt((Q/I)**2 + (U/I)**2)
             unit = "%"
-            _color_scale = 'lin'
+            _scale = 'lin'
         elif type == 'PI':
-            im = np.sqrt(Q**2 + U**2)
-            _color_scale = 'log'
+            im = np.sqrt(np.float64(Q)**2 + np.float64(U)**2)
+            _scale = 'log'
         elif type in ('Qphi','Uphi'):
             X = np.arange(1,self.nx+1) - self.cx
             Y = np.arange(1,self.ny+1) - self.cy
@@ -173,7 +173,7 @@ class Image:
                 im =  Q * np.cos(two_phi) + U * np.sin(two_phi)
             else: # Uphi
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
-            _color_scale = 'log'
+            _scale = 'log'
 
         #--- Plot range and color map
         if vmax is None:
@@ -185,14 +185,16 @@ class Image:
                 vmin = -vmax
             else:
                 vmin = vmax/dynamic_range
-        if color_scale is None:
-            color_scale = _color_scale
-        if color_scale == 'log':
+        if scale is None:
+            scale = _scale
+        if scale == 'symlog':
+            norm = colors.SymLogNorm(1e-24,vmin=vmin, vmax=vmax, clip=True)
+        elif scale == 'log':
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
-        elif color_scale == 'lin':
+        elif scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
         else:
-            raise ValueError("Unknown color scale: "+color_scale)
+            raise ValueError("Unknown color scale: "+scale)
 
         #--- Making the actual plot
         plt.clf()
