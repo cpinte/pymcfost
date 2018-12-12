@@ -119,8 +119,8 @@ class Image:
             Q = self.image[1,i,iaz,:,:]
             U = self.image[2,i,iaz,:,:]
             if i_convolve:
-                Q = conv(Q,beam)
-                U = conv(U,beam)
+                Q = conv_method(Q,beam)
+                U = conv_method(U,beam)
         elif contrib_needed:
             if pola_needed:
                 n_pola=4
@@ -173,7 +173,7 @@ class Image:
                 im =  Q * np.cos(two_phi) + U * np.sin(two_phi)
             else: # Uphi
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
-            _scale = 'log'
+            _scale = 'symlog'
 
         #--- Plot range and color map
         if vmax is None:
@@ -184,11 +184,11 @@ class Image:
             if (type in ["Q","U"]):
                 vmin = -vmax
             else:
-                vmin = vmax/dynamic_range
+                vmin = im.min()
         if scale is None:
             scale = _scale
         if scale == 'symlog':
-            norm = colors.SymLogNorm(1e-24,vmin=vmin, vmax=vmax, clip=True)
+            norm = colors.SymLogNorm(1e-6*vmax,vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'log':
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'lin':
