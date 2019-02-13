@@ -1,13 +1,14 @@
 import os
 
 import astropy.io.fits as fits
-from astropy.convolution import Gaussian2DKernel, convolve_fft
+from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import progressbar
+from scipy import interpolate
 
 from .parameters import Params, find_parameter_file
 from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb
@@ -68,6 +69,8 @@ class Line:
                 self.freq = hdu[3].data # frequencies of the transition
                 self.velocity = hdu[4].data / 1000 #km/s
 
+            self.dv = self.velocity[1]-self.velocity[0]
+
             hdu.close()
         except OSError:
             print('cannot open', self._line_file)
@@ -75,7 +78,7 @@ class Line:
     def plot_map(self,i=0,iaz=0,iTrans=0,v=None,iv=None,insert=False,substract_cont=False,moment=None,
                  psf_FWHM=None,bmaj=None,bmin=None,bpa=None,plot_beam=None,axes_unit="arcsec",conv_method=None,
                  fmax=None,fmin=None,fpeak=None,dynamic_range=1e3,color_scale=None,colorbar=True,cmap=None,
-                 ax=None,no_xlabel=False,no_ylabel=False,no_xticks=False,no_yticks=False,title=None,limit=None,limits=None,Tb=False):
+                 ax=None,no_xlabel=False,no_ylabel=False,no_xticks=False,no_yticks=False,title=None,limit=None,limits=None,Tb=False,Delta_v = None):
         # Todo:
         # - allow user to change brightness unit : W.m-1, Jy, Tb
         # - print molecular info (eg CO J=3-2)
@@ -125,6 +128,8 @@ class Line:
             bmin = psf_FWHM
             bmaj = psf_FWHM
             bpa=0
+            if plot_beam is None:
+                plot_beam = True
 
         if bmaj is not None:
             sigma_x = bmin / self.pixelscale * FWHM_to_sigma # in pixels
@@ -144,9 +149,28 @@ class Line:
         else:
             # individual channel
             if self.is_casa:
-                im = self.lines[iv,:,:]
+                cube = self.lines[:,:,:]
+                #im = self.lines[iv+1,:,:])
             else:
-                im = self.lines[iaz,i,iTrans,iv,:,:]
+                cube = self.lines[iaz,i,iTrans,:,:,:]
+                #im = self.lines[iaz,i,iTrans,iv,:,:]
+
+            # Convolve spectrally
+            print("Spectral convolution at ",Delta_v, "km/s")
+            if Delta_v is not None:
+                # Creating a Hanning function with 101 points
+                n_window = 101
+                w = np.hanning(n_window)
+
+                # For each pixel, resampling the spectrum between -FWHM to FWHM
+                # then integrating over convolution window
+                im = np.zeros([self.nx,self.ny])
+                for i in range(self.nx):
+                    for j in range(self.ny):
+                        f = interpolate.interp1d(self.velocity, cube[:,i,j])
+                        im[i,j] = np.average( f( self.velocity[iv] + np.linspace(-1,1,n_window) * Delta_v) )
+            else:
+                im = cube[iv,:,:]
 
             #-- Convolve image
             if i_convolve:
