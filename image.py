@@ -53,18 +53,22 @@ class Image:
     def plot(self,i=0,iaz=0,vmin=None,vmax=None,dynamic_range=1e6,fpeak=None,
              axes_unit='arcsec',colorbar=True,type='I',scale=None,
              pola_vector=False,vector_color="white",nbin=5,psf_FWHM=None,
-             bmaj=None,bmin=None,bpa=None,plot_beam=False,conv_method=None,
+             bmaj=None,bmin=None,bpa=None,plot_beam=None,conv_method=None,
              mask=None,cmap=None,ax=None,no_xlabel=False,no_ylabel=False,
              no_xticks=False,no_yticks=False,title=None,limit=None,limits=None,
-             coronagraph=None):
+             coronagraph=None,clear=False):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
 
         # bmin and bamj in arcsec
 
+        if clear:
+            plt.clf()
+
         if ax is None:
             ax = plt.gca()
+            ax.cla()
 
         pola_needed = type in ['Q','U','Qphi','Uphi','P','PI','PA'] or pola_vector
         contrib_needed = type in ['star','scatt','em_th','scatt_em_th']
@@ -101,6 +105,7 @@ class Image:
 
         #--- Beam or psf: psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
+        beam = None
         if psf_FWHM is not None:
             sigma = psf_FWHM / self.pixelscale * (2.*np.sqrt(2.*np.log(2))) # in pixels
             beam = Gaussian2DKernel(sigma)
@@ -108,12 +113,16 @@ class Image:
             bmin = psf_FWHM
             bmaj = psf_FWHM
             bpa=0
+            if plot_beam is None:
+                plot_beam = True
 
         if bmaj is not None:
             sigma_x = bmin / self.pixelscale * FWHM_to_sigma # in pixels
             sigma_y = bmaj / self.pixelscale * FWHM_to_sigma # in pixels
             beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
             i_convolve = True
+            if plot_beam is None:
+                plot_beam = True
 
         #--- Selecting convolution function
         if conv_method is None:
@@ -205,11 +214,15 @@ class Image:
                 vmin = -vmax
             else:
                 vmin = im.min()
+
         if scale is None:
             scale = _scale
         if scale == 'symlog':
             norm = colors.SymLogNorm(1e-6*vmax,vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'log':
+            if (vmin <= 0.0):
+                vmin = 1e-6 * vmax
+            print(vmin)
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
