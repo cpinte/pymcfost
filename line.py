@@ -164,11 +164,22 @@ class Line:
 
                 # For each pixel, resampling the spectrum between -FWHM to FWHM
                 # then integrating over convolution window
+                v_new = self.velocity[iv] + np.linspace(-1,1,n_window) * Delta_v
+
+                iv_min = int(iv - Delta_v/self.dv - 1)
+                iv_max = int(iv + Delta_v/self.dv + 2)
+
+                print(iv_min, iv_max, iv_max - iv_min)
+
+                print(self.velocity[iv_min:iv_max])
+
+                print(v_new)
+
                 im = np.zeros([self.nx,self.ny])
-                for i in range(self.nx):
-                    for j in range(self.ny):
-                        f = interpolate.interp1d(self.velocity, cube[:,i,j])
-                        im[i,j] = np.average( f( self.velocity[iv] + np.linspace(-1,1,n_window) * Delta_v) )
+                for j in range(self.ny):
+                    for i in range(self.nx):
+                        f = interpolate.interp1d(self.velocity[iv_min:iv_max], cube[iv_min:iv_max,i,j])
+                        im[i,j] = np.average(f(v_new))
             else:
                 im = cube[iv,:,:]
 
