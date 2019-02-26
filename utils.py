@@ -49,9 +49,9 @@ def Jybeam_to_Tb(Fnu, nu, bmaj, bmin):
 
      T [K]
     '''
-    beam_area = bmin * bmaj * arcsec**2 * np.pi/(4.*log(2.))
+    beam_area = bmin * bmaj * arcsec**2 * np.pi/(4.*np.log(2.))
     exp_m1 = 1e26 *  beam_area * 2.*sc.h/sc.c**2 * nu**3/Fnu
-    hnu_kT =  np.log1p(max(exp_m1,1e-10))
+    hnu_kT =  np.log1p(np.maximum(exp_m1,1e-10))
 
     Tb = sc.h * nu / (hnu_kT * sc.k)
 
