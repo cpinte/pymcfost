@@ -3,7 +3,10 @@ import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
-import mpl_scatter_density
+try:
+    import mpl_scatter_density
+except ImportError:
+    print('WARNING: mpl_scatter_density is not present')
 
 from .parameters import Params, find_parameter_file
 from .disc_structure import Disc
