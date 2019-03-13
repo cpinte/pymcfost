@@ -113,7 +113,7 @@ class SED:
                                    axis=0), color="red")
         plt.figure(current_fig)
 
-    def plot_T(self, log=False, Tmin=None, Tmax=None):
+    def plot_T(self, iaz=0, log=False, Tmin=None, Tmax=None):
         # For a cylindrical or spherical grid only at the moment
         # Todo:
         #  - automatically compute call mcfost to compute the grid
@@ -133,14 +133,18 @@ class SED:
 
         plt.cla()
 
-        T = self.T
-
         if (grid.ndim > 2):
             Voronoi = False
-            r = grid[0,0,:,:]
-            z = grid[1,0,:,:]
+
+            r = grid[0,iaz,:,:]
+            z = grid[1,iaz,:,:]
+            if (self.T.ndim > 2):
+                T = self.T[iaz,:,:]
+            else:
+                T = self.T[:,:]
         else:
             Voronoi = True
+            T = self.T
             r = np.sqrt(grid[0,:]**2 + grid[1,:]**2)
             ou = (r > 1e-6)  # Removing star
             T = T[ou]
