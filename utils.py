@@ -93,10 +93,13 @@ def Wm2_to_Tb(nuFnu, nu, pixelscale):
 
 class DustExtinction:
 
+    import os
+    __dirname__ = os.path.dirname(__file__)
+
     wl = []
     kext = []
 
-    _extinction_dir = "extinction_laws"
+    _extinction_dir = __dirname__+"/extinction_laws"
     _filename_start = "kext_albedo_WD_MW_"
     _filename_end = "_D03.all"
     V = 5.47e-1 # V band wavelength in micron
