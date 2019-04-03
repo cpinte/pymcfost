@@ -197,9 +197,7 @@ class Line:
                     im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
                 print("Max Tb=",np.max(im), "K")
 
-
-
-        #--- Plot range and color map
+        #--- Plot range and color map`
         _color_scale = 'lin'
         if fmax is None:
             fmax = im.max()
@@ -211,7 +209,7 @@ class Line:
         if color_scale is None :
             color_scale = _color_scale
         if color_scale == 'log':
-            if fmin == 0.:
+            if fmin <= 0.:
                 fmin = fmax/dynamic_range
             norm = colors.LogNorm(vmin=fmin, vmax=fmax, clip=True)
         elif color_scale == 'lin':
