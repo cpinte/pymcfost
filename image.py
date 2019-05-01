@@ -11,7 +11,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
 from .parameters import Params, find_parameter_file
-from .utils import bin_image, FWHM_to_sigma, default_cmap
+from .utils import bin_image, FWHM_to_sigma, default_cmap, Wm2_to_Jy
 
 class Image:
 
@@ -315,3 +315,94 @@ class Image:
 
         #--- Return
         return img
+
+    def calc_vis(self, i=0, iaz=0, hor=True, Jy=False, klambda=False, Mlambda=False, color='black'):
+
+# smoothing, christophe suggest I may need this later
+#   ou = 1;
+#   if (!is_void(champ)) {
+#     size=model.P.map.ny;
+#     x=indgen(size)(,-:1:size) - (size/2+1);
+#     y=indgen(size)(-:1:size,) - (size/2+1);
+#     distance = abs(x,y);
+
+#     ou = (distance * pix_size < 0.5 * champ) ;
+
+#     if (gauss==1) {
+#       FWHM = champ / pix_size; // OK : le FWHM est equivalent a la largeur de la porte !!! Cool !
+#       sigma = FWHM / (2*sqrt(2*log(2))); // en sec
+#       ou = gauss_kernel(size, sigma) ;
+#     }
+#     // write, "Applying a field of view of ", champ, "as" ;
+
+#     if (champ > 0.5 * im_size) {
+#       write, "WARNING : image seems small to aply the filed of view accurately" ;
+#       write, im_size, champ ;
+#     }
+#   }
+
+
+        # error message is k and M sccales are selected
+        if klambda and Mlambda:
+            raise Exception("Cannot plot visabilities on two different scales (k and M), set one to False")
+
+        # image  
+        im=self.image[0,i,iaz,:,:]
+
+        # padding the image for a smoother curve
+        def pad_with(vector, pad_width, iaxis, kwargs): 
+            pad_value = kwargs.get('padder', 0) 
+            vector[:pad_width[0]] = pad_value 
+            vector[-pad_width[1]:] = pad_value 
+            return vector
+
+        im = np.pad(im, 1000, pad_with)
+
+        # fft
+        fim = np.real(np.fft.fft2(np.fft.fftshift(im)))
+
+        #baselines
+        size = len(fim)
+        center = size/2;
+
+        # converting from arcsecond to radian
+        pix_size = self.pixelscale/3600. * np.pi/180.
+
+        # Rescaling the pixel lnegth
+        pix_fft = 1.0/pix_size
+
+        # pixel in wavelength (normalising in wavelength)
+        pix=self.wl*1e-6*pix_fft
+
+        #baseline for normailised plot
+        baseline=np.linspace(0,int(pix/2),int(size/2))
+        
+        # visabilities
+        if hor:
+            vis = fim[0,0:int(size/2)];
+        else:
+            vis = fim[0:int(size/2),0];
+
+        # convert to Jy
+        if Jy: 
+            Wm2_to_Jy(vis,sc.c/self.wl)
+
+        # converting baseline to k
+        if klambda: 
+            baseline = baseline / (self.wl * 1e-3) ;
+
+        # converting baseline to k
+        if Mlambda: 
+            baseline = baseline / (self.wl * 1e-6) ;
+        print('vis array')
+        print(len(vis))  
+        plt.plot(baseline, vis, color=color)
+        plt.ylabel("W.m$^{-2}$.Hz$^{-1}$")
+        plt.xlabel("$\lambda$ [m]")
+
+
+
+        return vis, fim, baseline
+
+
+
