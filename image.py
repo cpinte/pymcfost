@@ -342,7 +342,7 @@ class Image:
 #   }
 
 
-        # error message is k and M sccales are selected
+        # error message if k and M sccales are selected
         if klambda and Mlambda:
             raise Exception("Cannot plot visabilities on two different scales (k and M), set one to False")
 
@@ -394,8 +394,7 @@ class Image:
         # converting baseline to k
         if Mlambda: 
             baseline = baseline / (self.wl * 1e-6) ;
-        print('vis array')
-        print(len(vis))  
+
         plt.plot(baseline, vis, color=color)
         plt.ylabel("W.m$^{-2}$.Hz$^{-1}$")
         plt.xlabel("$\lambda$ [m]")
