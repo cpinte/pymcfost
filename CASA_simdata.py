@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import subprocess
 import scipy.constants as sc
 from .image import Image
@@ -224,7 +225,7 @@ async = False
     # Actual script
     txt += f"simalma()\n"
     #txt += "pl.savefig('"+simu_name+f".png')\n"
-    txt += "exportfits(imagename=project+'/'+project+'."+resol_name_script+f".noisy.image',fitsimage='"+simu_name+f".fits')\n"
+    txt += "exportfits(imagename=project+'/'+project+'."+resol_name_script+f".noisy.image',fitsimage='"+simu_name+f".fits',overwrite=True)\n"
     txt += "exit\n"
 
     # writing the script to disk
@@ -236,8 +237,39 @@ async = False
         return _run_CASA(simu_name)
 
 
-def _run_CASA(simu_name):
-    pass
+def _run_CASA(simu_name,node_dir=""):
+    print("Starting casa ...")
+
+    workdir = "CASA/"+node_dir+"/"
+    _CASA_clean(workdir)
+
+    #-- Do we run the simulator with phase noise ?
+    #fh = cfitsio_open(workdir+simu_name+".raw.fits","r");
+    #phase_noise = cfitsio_get(fh, "phase_noise") ;
+    #cfitsio_close,fh;
+
+    # Running the simulator
+    homedir = os.getcwd()
+    os.chdir(workdir)
+
+    #cmd="/Applications/CASA.app/./Contents/Resources/python/regressions/admin/runcasa_from_shell.sh 0 "+simu_name+".py"
+    cmd = "casa --nogui -c "+simu_name+".py" ;
+    subprocess.call(cmd.split())
+    os.chdir(homedir)
+
+    #system, "mv "+workdir+"ALMA_disk.png  "+workdir+simu_name+".png" ;
+    #system, "mv "+workdir+"ALMA_disk.fits "+workdir+simu_name+".fits" ;
+    #  system, "mv "+workdir+"casapy.log "+workdir+simu_name+".log" ;
+
+    #if (phase_noise) system, "mv "+workdir+"ALMA_disk_phase-noise.fits "+workdir+simu_name+"_phase-noise.fits" ;
+
+    _CASA_clean(workdir)
+
+    print("CASA simulation DONE")
+    #write, "Simulation done in ",tac(), " sec" ;
+
+    return simu_name
+
 
 def _CASA_clean(workdir):
     cmd = "rm -rf "+workdir+"DISK* "+workdir+"disk.fits "+workdir+"*.last "+workdir+"disk.py "+workdir+"ALMA_disk.png "+workdir+"ALMA_disk.fits "+workdir+"*.log*"
