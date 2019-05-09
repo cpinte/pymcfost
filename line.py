@@ -134,7 +134,7 @@ class Line:
         if bmaj is not None:
             sigma_x = bmin / self.pixelscale * FWHM_to_sigma # in pixels
             sigma_y = bmaj / self.pixelscale * FWHM_to_sigma # in pixels
-            beam = Gaussian2DKernel(sigma_x,sigma_y,bpa * np.pi/180)
+            beam = Gaussian2DKernel(sigma_x,sigma_y, bpa * np.pi/180)
             i_convolve = True
             if plot_beam is None:
                 plot_beam = True
@@ -152,8 +152,12 @@ class Line:
                 cube = self.lines[:,:,:]
                 #im = self.lines[iv+1,:,:])
             else:
-                cube = self.lines[iaz,i,iTrans,:,:,:]
-                #im = self.lines[iaz,i,iTrans,iv,:,:]
+                cube = self.lines[i,iaz,iTrans,:,:,:]
+                #im = self.lines[i,iaz,iTrans,iv,:,:]
+
+                #-- continuum substraction
+                if substract_cont:
+                    cube = np.maximum(cube - self.cont[i,iaz,iTrans,np.newaxis,:,:], 0.)
 
             # Convolve spectrally
             print("Spectral convolution at ",Delta_v, "km/s")
@@ -195,6 +199,7 @@ class Line:
                     im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
                 else:
                     im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
+                    im = np.nan_to_num(im)
                 print("Max Tb=",np.max(im), "K")
 
         #--- Plot range and color map`
@@ -282,7 +287,7 @@ class Line:
             line = np.sum(self.lines[:,:,:], axis=(1,2))
             ylabel = "Flux [Jy]"
         else:
-            line = np.sum(self.lines[iaz,i,iTrans,:,:,:], axis=(1,2))
+            line = np.sum(self.lines[i,iaz,iTrans,:,:,:], axis=(1,2))
             ylabel = "Flux [W.m$^{-2}$]"
 
         plt.plot(self.velocity, line)
@@ -291,7 +296,7 @@ class Line:
             if self.is_casa:
                 Fcont = 0.5 * (line[0]+line[-1]) # approx the continuum
             else:
-                Fcont = np.sum(self.cont[iaz,i,iTrans,:,:])
+                Fcont = np.sum(self.cont[i,iaz,iTrans,:,:])
             plt.plot([self.velocity[0],self.velocity[-1]],[Fcont,Fcont])
 
         xlabel = "v [m.s$^{-1}$]"
@@ -309,7 +314,7 @@ class Line:
         if self.is_casa:
             cube = np.copy(self.lines[:,:,:])
         else:
-            cube = np.copy(self.lines[iaz,i,iTrans,:,:,:])
+            cube = np.copy(self.lines[i,iaz,iTrans,:,:,:])
 
         dv = self.velocity[1] - self.velocity[0]
 
