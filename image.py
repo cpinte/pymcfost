@@ -318,90 +318,86 @@ class Image:
 
     def calc_vis(self, i=0, iaz=0, hor=True, Jy=False, klambda=False, Mlambda=False, color='black'):
 
-# smoothing, christophe suggest I may need this later
-#   ou = 1;
-#   if (!is_void(champ)) {
-#     size=model.P.map.ny;
-#     x=indgen(size)(,-:1:size) - (size/2+1);
-#     y=indgen(size)(-:1:size,) - (size/2+1);
-#     distance = abs(x,y);
+        # smoothing, christophe suggest I may need this later
+        #   ou = 1;
+        #   if (!is_void(champ)) {
+        #     size=model.P.map.ny;
+        #     x=indgen(size)(,-:1:size) - (size/2+1);
+        #     y=indgen(size)(-:1:size,) - (size/2+1);
+        #     distance = abs(x,y);
 
-#     ou = (distance * pix_size < 0.5 * champ) ;
+        #     ou = (distance * pix_size < 0.5 * champ) ;
 
-#     if (gauss==1) {
-#       FWHM = champ / pix_size; // OK : le FWHM est equivalent a la largeur de la porte !!! Cool !
-#       sigma = FWHM / (2*sqrt(2*log(2))); // en sec
-#       ou = gauss_kernel(size, sigma) ;
-#     }
-#     // write, "Applying a field of view of ", champ, "as" ;
+        #     if (gauss==1) {
+        #       FWHM = champ / pix_size; // OK : le FWHM est equivalent a la largeur de la porte !!! Cool !
+        #       sigma = FWHM / (2*sqrt(2*log(2))); // en sec
+        #       ou = gauss_kernel(size, sigma) ;
+        #     }
+        #     // write, "Applying a field of view of ", champ, "as" ;
 
-#     if (champ > 0.5 * im_size) {
-#       write, "WARNING : image seems small to aply the filed of view accurately" ;
-#       write, im_size, champ ;
-#     }
-#   }
+        #     if (champ > 0.5 * im_size) {
+        #       write, "WARNING : image seems small to aply the filed of view accurately" ;
+        #       write, im_size, champ ;
+        #     }
+        #   }
 
-
-        # error message if k and M sccales are selected
+        # error message if klambda and Mlambda sccales are selected
         if klambda and Mlambda:
             raise Exception("Cannot plot visabilities on two different scales (k and M), set one to False")
 
-        # image  
+        # Selecting image
         im=self.image[0,i,iaz,:,:]
 
         # padding the image for a smoother curve
-        def pad_with(vector, pad_width, iaxis, kwargs): 
-            pad_value = kwargs.get('padder', 0) 
-            vector[:pad_width[0]] = pad_value 
-            vector[-pad_width[1]:] = pad_value 
+        def pad_with(vector, pad_width, iaxis, kwargs):
+            pad_value = kwargs.get('padder', 0)
+            vector[:pad_width[0]] = pad_value
+            vector[-pad_width[1]:] = pad_value
             return vector
-
         im = np.pad(im, 1000, pad_with)
 
         # fft
         fim = np.real(np.fft.fft2(np.fft.fftshift(im)))
 
-        #baselines
+        # Baselines
         size = len(fim)
-        center = size/2;
+        center = size/2
 
         # converting from arcsecond to radian
         pix_size = self.pixelscale/3600. * np.pi/180.
 
-        # Rescaling the pixel lnegth
+        # pixel size in the uv plane
         pix_fft = 1.0/pix_size
 
         # pixel in wavelength (normalising in wavelength)
         pix=self.wl*1e-6*pix_fft
 
-        #baseline for normailised plot
-        baseline=np.linspace(0,int(pix/2),int(size/2))
-        
+        baselines=np.linspace(0,int(pix/2),int(size/2))
+
         # visabilities
         if hor:
-            vis = fim[0,0:int(size/2)];
+            vis = fim[0,0:int(size/2)]
         else:
-            vis = fim[0:int(size/2),0];
+            vis = fim[0:int(size/2),0]
 
         # convert to Jy
-        if Jy: 
+        if Jy:
             Wm2_to_Jy(vis,sc.c/self.wl)
+            ylabel="Correlated flux [Jy]"
+        else:
+            ylabel="Correlated flux [W.m$^{-2}$.Hz$^{-1}$]"
 
-        # converting baseline to k
-        if klambda: 
-            baseline = baseline / (self.wl * 1e-3) ;
+        if klambda:
+            baselines = baselines / (self.wl * 1e-3)
+            xlabel = "Baselines [k$\lambda$]"
+        elif Mlambda:
+            baselines = baselines / (self.wl * 1e-6)
+            xlabel = "Baselines [M$\lambda$]"
+        else:
+            xlabel = "Baselines [m]"
 
-        # converting baseline to k
-        if Mlambda: 
-            baseline = baseline / (self.wl * 1e-6) ;
+        plt.plot(baselines, vis, color=color)
+        plt.ylabel(ylabel)
+        plt.xlabel(xlabel)
 
-        plt.plot(baseline, vis, color=color)
-        plt.ylabel("W.m$^{-2}$.Hz$^{-1}$")
-        plt.xlabel("$\lambda$ [m]")
-
-
-
-        return vis, fim, baseline
-
-
-
+        return baselines, vis, fim
