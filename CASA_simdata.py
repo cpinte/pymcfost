@@ -67,19 +67,26 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
     if is_image:
         freq = sc.c/(model.wl*1e-6) * 1e-9 # [Ghz]
         inwidth = 8 # 8 Ghz par defaut en continu
+        print(f"Setting channel width to 8Ghz")
         inchan = 1 # 1 channel pour continu
     else: # cube
-        dv = self.dv * 1000. # [m/s]
+        dv = model.dv * 1000. # [m/s]
         freq = model.freq[iTrans] * 1e-9 # [Ghz]
 
         if width is None:
-            inwidth = dv/sc.c * model.freq[iTrans]
+            inwidth = dv/sc.c * model.freq[iTrans] * 1e-9 # [Ghz]
+            print(f"Setting channel width to {dv:f} m/s")
+        else:
+            inwidth = width
 
         if channels is None:
             inchan = 2*model.P.mol.nv+1
             channels = np.arrange(inchan)
         else:
-            inchan = channels.size()
+            if isinstance(channels,int):
+                inchan = 1
+            else:
+                inchan = len(channels)
 
     #-- Flux setup
     if is_image:
@@ -90,9 +97,12 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
             image = image[np.newaxis,np.newaxis,:,:] # Adding spectral & pola dimensions
     else: # cube
         if model.is_casa:
-            image = model.line[:,:,channels]
+            image = model.lines[channels,:,:]
         else:
-            image = Wm2_to_Jy(model.line[:,:,channels,iTrans,iaz,i],sc.c/ model.wl) # Convert to Jy
+            image = Wm2_to_Jy(model.lines[iaz,i,iTrans,channels,:,:],model.freq[iTrans]) # Convert to Jy
+    if image.ndim == 2: # Adding extra spectral dimension if there is only 1 channel selected
+        image = image[np.newaxis,:,:]
+
 
     #-- pixels
     incell = model.pixelscale
@@ -133,6 +143,7 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
        hdr["CDELT4"] = 2e9 # 2GHz by default
        hdr["CRPIX4"] = 0
     else:
+        # WARNING this is incorrect : the simulator will still work but the velocity axis in the output file will be off
         hdr["CTYPE3"] = "VELO-LSR"
         hdr["CRVAL3"] = 0. # line center
         hdr["CRPIX3"] = inchan
@@ -149,7 +160,7 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
     #---------------------------------------------
     #-- CASA script
     #---------------------------------------------
-    n_iter = 10000
+    n_iter = 1000000
     # spatial setup
     txt=f"""project = 'DISK'
 skymodel = '{simu_name}.raw.fits'
