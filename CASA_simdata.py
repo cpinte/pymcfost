@@ -7,21 +7,23 @@ from .utils import Wm2_to_Jy
 from astropy.io import fits
 
 
-def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling_time=None,pwv=0.,decl="-22d59m59.8",phase_noise=False,name="simu",iTrans=None,rt=True,only_prepare=False,interferometer='alma',mosaic=False,mapsize=None,channels=None,width=None,correct_flux=1.0,simu_name=None):
+def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling_time=None,pwv=0.,decl="-22d59m59.8",phase_noise=False,name="simu",iTrans=None,rt=True,only_prepare=False,interferometer='alma',mosaic=False,mapsize=None,channels=None,width=None,correct_flux=1.0,simu_name=None,ms=None):
     """
-    prepare un model pour le simulateur ALMA de CASA :
-    - taille des pixels
-    - Jy/pixels
-    - frequency
-    - width in Ghz
+    Prepare a MCFOST model for the CASA alma simulator
 
-    Si resol est donne (en arcsec), simdata calcule la configuration correspondante
+    Generates 2 files:
+      - a python CASA script
+      - a fits file with the required dimensions and  keywords
 
-    Genere un fichier fits et un script pour simdata
+    Then run the simulator and export a fits file with the results
+
+    Tested to work with CASA 5.4.0-68 on MacOS : command line ti call CASA is assumed to be "casa"
     """
 
     workdir="CASA/"
-    _CASA_clean, workdir
+    if not os.path.exists(workdir):
+        os.mkdir(workdir)
+    _CASA_clean(workdir)
 
     is_image = isinstance(model, Image)
 
