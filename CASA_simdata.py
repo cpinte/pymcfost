@@ -7,7 +7,7 @@ from .utils import Wm2_to_Jy
 from astropy.io import fits
 
 
-def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling_time=None,pwv=0.,decl="-22d59m59.8",phase_noise=False,name="simu",iTrans=None,rt=True,only_prepare=False,interferometer='alma',mosaic=False,mapsize=None,channels=None,width=None,correct_flux=1.0,simu_name=None,ms=None):
+def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling_time=None,pwv=0.,decl="-22d59m59.8",phase_noise=False,name="simu",iTrans=None,rt=True,only_prepare=False,interferometer='alma',mosaic=False,mapsize=None,channels=None,width=None,correct_flux=1.0,simu_name=None,ms=None,n_iter = 10000):
     """
     Prepare a MCFOST model for the CASA alma simulator
 
@@ -34,25 +34,35 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
 
         nTrans = model.freq.size
         if iTrans > nTrans-1:
-            raise Exception("ERROR: iTrans is not in the computed range")
+            raise Exception(f"ERROR: iTrans is not in the computed range : nTrans={nTrans}")
 
+    if ms is None:
+        #--- Setting a confiuration and observing time for simalma
+        simobs_custom = False
 
-    if obstime is None:
-        raise Exception("Missing obstime")
+        if obstime is None:
+            raise Exception("Missing obstime")
 
+        if sampling_time is None:
+            sampling_time  = obstime/100
 
-    if config is None:
-        if resol is None:
-            raise Exception("Missing config or resol")
-        else:
-            resol_name = f"_resol={resol:2.2f}"
-            resol_name_script = f"alma_={resol:6.6f}arcsec"
+            if config is None:
+                if resol is None:
+                    raise Exception("Missing config or resol")
+                else:
+                    resol_name = f"_resol={resol:2.2f}"
+                    resol_name_script = f"alma_={resol:6.6f}arcsec"
+            else:
+                if isinstance(config,int):
+                    config = f"alma.cycle6.{config}"
+                    resol_name = "_config="+config
+                resol_name_script = config
+
     else:
-        if isinstance(config,int):
-            config = f"alma.cycle6.{config}"
-        resol_name = "_config="+config
-        resol_name_script = config
+        #-- Setting up for simobs_custom
+        simobs_custom = True
 
+    #-- Thermal noise
     if pwv is None:
         print("pwv not specified --> No thermal noise" )
         th_noise = "''"
@@ -61,10 +71,6 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
         th_noise = "'tsys-atm'"
         spwv = f"{pwv:4.2f}"
         is_th_noise = True
-
-
-    if sampling_time is None:
-        sampling_time  = obstime/100
 
     #-- Frequency setup
     if is_image:
@@ -75,6 +81,8 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
     else: # cube
         dv = model.dv * 1000. # [m/s]
         freq = model.freq[iTrans] * 1e-9 # [Ghz]
+
+        freq = 345.75653
 
         if width is None:
             inwidth = dv/sc.c * model.freq[iTrans] * 1e-9 # [Ghz]
@@ -163,7 +171,6 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
     #---------------------------------------------
     #-- CASA script
     #---------------------------------------------
-    n_iter = 1000000
     # spatial setup
     txt=f"""project = 'DISK'
 skymodel = '{simu_name}.raw.fits'
@@ -177,32 +184,34 @@ pointingspacing = '1.0arcmin'
 setpointings = True
 predict = True
 complist = ''
+refdate = '2012/06/21/03:25:00'
 """
     # Spectral setup
     txt += f"""inchan = {inchan}
 incenter = '{freq:17.15e}Ghz'
 inwidth = '{inwidth:17.15e}Ghz'
 """
-
-    # Observing time
-    txt += f"""totaltime = '{obstime}s'
+    if simobs_custom:
+        txt += "vis = '"+ms+"'\n"
+    else:
+        # Observing time
+        txt += f"""totaltime = '{obstime}s'
 integration = '{sampling_time}s'
-refdate = '2012/06/21/03:25:00'
 """
 
-    # Configuration
-    txt += f"repodir=os.getenv(\"CASAPATH\").split(\' \')[0]\n"
-    if resol is None:
-        txt += f"antennalist = repodir+'/data/alma/simmos/"+config+".cfg'\n"
-    else:
-        txt += f"antennalist = \"alma;%farcsec\" \% "+resol_name+"\n"
+        # Configuration
+        txt += f"repodir=os.getenv(\"CASAPATH\").split(\' \')[0]\n"
+        if resol is None:
+            txt += f"antennalist = repodir+'/data/alma/simmos/"+config+".cfg'\n"
+        else:
+            txt += f"antennalist = \"alma;%farcsec\" \% "+resol_name+"\n"
 
     # Noise
     txt += f"thermalnoise = "+th_noise+"\n"
     if is_th_noise:
-        txt += f"""user_pwv = {pwv}
-vis = project+'.noisy.ms' # clean the data with *thermal noise added*
-"""
+        txt += f"user_pwv = {pwv}\n"
+        if not simobs_custom:
+            txt += "vis = project+'.noisy.ms' # clean the data with *thermal noise added*\n"
 
     # Imaging
     txt += f"""image = True
@@ -225,9 +234,18 @@ async = False
 """
 
     # Actual script
-    txt += f"simalma()\n"
+    if simobs_custom:
+        if is_image:
+            txt += f"mode = 'cont'\n"
+        else:
+            txt += f"mode = 'line'\n"
+        txt += f"simobs_custom()\n"
+        txt += "exportfits(imagename=project+'/'+project,fitsimage='"+simu_name+f".fits',overwrite=True)\n"
+    else:
+        txt += f"simalma()\n"
+        txt += "exportfits(imagename=project+'/'+project+'."+resol_name_script+f".noisy.image',fitsimage='"+simu_name+f".fits',overwrite=True)\n"
+
     #txt += "pl.savefig('"+simu_name+f".png')\n"
-    txt += "exportfits(imagename=project+'/'+project+'."+resol_name_script+f".noisy.image',fitsimage='"+simu_name+f".fits',overwrite=True)\n"
     txt += "exit\n"
 
     # writing the script to disk
