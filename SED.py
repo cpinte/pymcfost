@@ -25,8 +25,8 @@ class SED:
         dir = os.path.normpath(os.path.expanduser(dir))
         if dir[-7:] != "data_th":
             dir = os.path.join(dir, "data_th")
-            self.dir = dir
-            self.basedir = dir[:-8]
+        self.dir = dir
+        self.basedir = dir[:-8]
 
         # Search for parameter file
         para_file = find_parameter_file(dir)
