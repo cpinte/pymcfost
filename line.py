@@ -160,8 +160,8 @@ class Line:
                     cube = np.maximum(cube - self.cont[i,iaz,iTrans,np.newaxis,:,:], 0.)
 
             # Convolve spectrally
-            print("Spectral convolution at ",Delta_v, "km/s")
             if Delta_v is not None:
+                print("Spectral convolution at ",Delta_v, "km/s")
                 # Creating a Hanning function with 101 points
                 n_window = 101
                 w = np.hanning(n_window)
@@ -275,7 +275,7 @@ class Line:
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
-                           width=bmin, height=bmaj, angle=-bpa,
+                           width=bmin, height=bmaj, angle=bpa,
                            fill=True,  color="grey")
             ax.add_patch(beam)
 

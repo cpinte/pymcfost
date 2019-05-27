@@ -311,7 +311,7 @@ class Image:
             dx = 0.125
             dy = 0.125
             beam = Ellipse(ax.transLimits.inverted().transform((dx, dy)),
-                           width=bmin, height=bmaj, angle=-bpa,
+                           width=bmin, height=bmaj, angle=bpa,
                            fill=True, color="grey")
             ax.add_patch(beam)
 
