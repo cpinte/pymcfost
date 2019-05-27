@@ -7,7 +7,7 @@ from .utils import Wm2_to_Jy
 from astropy.io import fits
 
 
-def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling_time=None,pwv=0.,decl="-22d59m59.8",phase_noise=False,name="simu",iTrans=None,rt=True,only_prepare=False,interferometer='alma',mosaic=False,mapsize=None,channels=None,width=None,correct_flux=1.0,simu_name=None,ms=None,n_iter = 10000):
+def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling_time=None,pwv=0.,decl="-22d59m59.8",phase_noise=False,name="simu",iTrans=None,rt=True,only_prepare=False,interferometer='alma',mosaic=False,mapsize=None,channels=None,width=None,correct_flux=1.0,simu_name=None,ms=None,n_iter = 10000, hourangle="transit"):
     """
     Prepare a MCFOST model for the CASA alma simulator
 
@@ -17,7 +17,7 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
 
     Then run the simulator and export a fits file with the results
 
-    Tested to work with CASA 5.4.0-68 on MacOS : command line ti call CASA is assumed to be "casa"
+    Tested to work with CASA 5.4.0-68 on MacOS : command line to call CASA is assumed to be "casa"
     """
 
     workdir="CASA/"
@@ -44,19 +44,21 @@ def CASA_simdata(model, i=0, iaz=0, obstime=None,config=None,resol=None,sampling
             raise Exception("Missing obstime")
 
         if sampling_time is None:
-            sampling_time  = obstime/100
+            sampling_time  = obstime/1000
 
-            if config is None:
-                if resol is None:
-                    raise Exception("Missing config or resol")
-                else:
-                    resol_name = f"_resol={resol:2.2f}"
-                    resol_name_script = f"alma_={resol:6.6f}arcsec"
+        if config is None:
+            if resol is None:
+                raise Exception("Missing config or resol")
             else:
-                if isinstance(config,int):
-                    config = f"alma.cycle6.{config}"
-                    resol_name = "_config="+config
+                resol_name = f"_resol={resol:2.2f}"
+                resol_name_script = f"alma_={resol:6.6f}arcsec"
+        else:
+            if isinstance(config,int):
+                config = f"alma.cycle6.{config}"
+                resol_name = "_config="+config
                 resol_name_script = config
+            else:
+                resol_name_script = config[-1]
 
     else:
         #-- Setting up for simobs_custom
@@ -178,6 +180,7 @@ dryrun = False
 modifymodel = True
 inbright = 'unchanged'
 indirection = 'J2000 18h00m00.02 {decl}' # mosaic center, or list of pointings
+hourangle = '{hourangle}'
 incell = '{incell}arcsec'
 mapsize = ''
 pointingspacing = '1.0arcmin'
@@ -202,7 +205,15 @@ integration = '{sampling_time}s'
         # Configuration
         txt += f"repodir=os.getenv(\"CASAPATH\").split(\' \')[0]\n"
         if resol is None:
-            txt += f"antennalist = repodir+'/data/alma/simmos/"+config+".cfg'\n"
+            if isinstance(config,str):
+                txt += f"antennalist = repodir+'/data/alma/simmos/"+config+".cfg'\n"
+            elif isinstance(config,list):
+                txt += f"antennalist = ["
+                for i, c in enumerate(config):
+                    if i>0:
+                        txt += ","
+                    txt +="repodir+'/data/alma/simmos/"+c+".cfg'"
+                txt += "]\n"
         else:
             txt += f"antennalist = \"alma;%farcsec\" \% "+resol_name+"\n"
 

@@ -6,3 +6,4 @@ from .SED import *
 from .image import *
 from .line import *
 from .fargo2mcfost import *
+from .CASA_simdata import *
