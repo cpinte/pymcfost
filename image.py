@@ -9,9 +9,10 @@ from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+import scipy.constants as sc
 
 from .parameters import Params, find_parameter_file
-from .utils import bin_image, FWHM_to_sigma, default_cmap, Wm2_to_Jy
+from .utils import bin_image, FWHM_to_sigma, default_cmap, Wm2_to_Jy, Wm2_to_Tb, Jy_to_Tb
 
 class Image:
 
@@ -41,6 +42,7 @@ class Image:
             self.pixelscale = hdu[0].header['CDELT2'] * 3600. # arcsec
             self.unit       = hdu[0].header['BUNIT']
             self.wl         = hdu[0].header['WAVE'] # micron
+            self.freq       = sc.c/(self.wl*1e-6)
             self.cx         = hdu[0].header['CRPIX1']
             self.cy         = hdu[0].header['CRPIX2']
             self.nx         = hdu[0].header['NAXIS1']
@@ -56,7 +58,7 @@ class Image:
              bmaj=None,bmin=None,bpa=None,plot_beam=None,conv_method=None,
              mask=None,cmap=None,ax=None,no_xlabel=False,no_ylabel=False,
              no_xticks=False,no_yticks=False,title=None,limit=None,limits=None,
-             coronagraph=None,clear=False):
+             coronagraph=None,clear=False,Tb=False):
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
@@ -158,6 +160,15 @@ class Image:
             if pola_needed:
                 Q = conv_method(Q,beam)
                 U = conv_method(U,beam)
+
+        #-- Conversion to brightness temperature
+        if Tb:
+            if self.is_casa:
+                I = Jy_to_Tb(I, self.freq, self.pixelscale)
+            else:
+                I = Wm2_to_Tb(I, self.freq, self.pixelscale)
+                I = np.nan_to_num(I)
+                print("Max Tb=",np.max(I), "K")
 
         #--- Coronagraph: in mas
         if coronagraph is not None:
