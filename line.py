@@ -7,7 +7,10 @@ from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-import progressbar
+try:
+    import progressbar
+except ImportError:
+    print('WARNING: progressbar is not present')
 from scipy import interpolate
 
 from .parameters import Params, find_parameter_file
@@ -326,14 +329,23 @@ class Line:
                 M0 = conv_method(M0,beam)
             else: # We need to convolve each channel indidually
                 print("Convolving individual channel maps, this may take a bit of time ....")
-                bar = progressbar.ProgressBar(maxval=self.nv, widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
-                bar.start()
+                try:
+                    bar = progressbar.ProgressBar(maxval=self.nv, widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+                    bar.start()
+                except:
+                    pass
                 for iv in range(self.nv):
-                    bar.update(iv+1)
+                    try:
+                        bar.update(iv+1)
+                    except:
+                        pass
                     channel = np.copy(cube[iv,:,:])
                     cube[iv,:,:] = conv_method(channel,beam)
                     M0 = np.sum(cube,axis=0) * dv
-                bar.finish()
+                try:
+                    bar.finish()
+                except:
+                    pass
 
         if moment >=1:
             M1 = np.sum(cube[:,:,:] * self.velocity[:,np.newaxis,np.newaxis], axis=0) * dv / M0
