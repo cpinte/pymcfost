@@ -23,8 +23,18 @@ The fitting routines of the yorick interface are yet to be ported into pymcfost.
 An alternative python distribution is available at https://github.com/cpinte/mcfost-python . It is more tailored towards handling large grid of models and model fitting.
 
 
-Main structural differences with mcfost-python so far:
-------------------------------------------------------
+## Installation:
+
+```
+git clone https://github.com/cpinte/pymcfost.git
+cd pymcfost
+python3 setup.py install
+```
+
+If you don't have the `sudo` rights, use `python3 setup.py install --user`.
+
+
+## Main structural differences with mcfost-python so far:
 
 - python >= 3.6 vs python 2.x
 - only parameter file >= 3.0
