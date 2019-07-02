@@ -12,6 +12,7 @@ except ImportError:
 from .parameters import Params, find_parameter_file
 from .disc_structure import Disc
 from .utils import DustExtinction
+from .run import run
 
 
 class SED:
@@ -130,15 +131,7 @@ class SED:
         #  - add functions for radial and vertical cuts
         # We test if the grid structure already exist, if not we try to read it
 
-        try:
-            grid = self.disc.grid
-        except:
-            try:
-                print("Trying to read grid structure")
-                self.disc = Disc(self.basedir)
-                grid = self.disc.grid
-            except AttributeError:
-                print("Cannot read grid in " + self.basedir)
+        grid = self.check_grid()
 
         plt.cla()
 
@@ -209,15 +202,7 @@ class SED:
 
     def plot_Tz(self, r=100.0, dr=5.0, log=False, **kwargs):
 
-        try:
-            grid = self.disc.grid
-        except:
-            try:
-                print("Trying to read grid structure")
-                self.disc = Disc(self.basedir)
-                grid = self.disc.grid
-            except AttributeError:
-                print("Cannot read grid in " + self.basedir)
+        grid = self.check_grid()
 
         T = self.T
         if grid.ndim > 2:
@@ -247,15 +232,7 @@ class SED:
 
     def plot_Tr(self, h_r=0.05, log=True, symbol=None, **kwargs):
 
-        try:
-            grid = self.disc.grid
-        except:
-            try:
-                print("Trying to read grid structure")
-                self.disc = Disc(self.basedir)
-                grid = self.disc.grid
-            except AttributeError:
-                print("Cannot read grid in " + self.basedir)
+        grid = self.check_grid()
 
         T = self.T
         if grid.ndim > 2:
@@ -285,3 +262,30 @@ class SED:
             plt.plot(r_mcfost, T, "o", linewidth=0.2, **kwargs)
         plt.xlabel("z [au]")
         plt.ylabel("T [K]")
+
+
+    def check_grid(self):
+        """
+        We check if the disc structure already exists
+        if not, we check if it exists
+        if not, we try to compute it
+        """
+
+        try:
+            grid = self.disc.grid
+        except:
+            try:
+                print("Trying to read grid structure ...")
+                self.disc = Disc(self.basedir)
+                grid = self.disc.grid
+            except:
+                print("No grid structure, trying to create it ...")
+                run(self.P.filename, options=self.P.options+" -disk_struct")
+                try:
+                    print("Trying to read grid structure again ...")
+                    self.disc = Disc(self.basedir)
+                    grid = self.disc.grid
+                except AttributeError:
+                    print("Cannot read grid in " + self.basedir)
+
+        return grid

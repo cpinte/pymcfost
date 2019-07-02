@@ -77,9 +77,8 @@ class Params:
             f = []
             # Reading file and removing comments
             for line in file:
-                if (not line.startswith("#")) and (
-                    len(line) > 1
-                ):  # Skipping comments and empty lines
+                # Skipping comments and empty lines
+                if (not line.startswith("#")) and (len(line) > 1):
                     f += [line]
             f = iter(f)
 
@@ -321,6 +320,19 @@ class Params:
             line = next(f).split()
             self.stars[k].fUV = float(line[0])
             self.stars[k].slope_UV = float(line[1])
+
+        # -- Command line options --
+        for line in f:
+            if (len(line) > 0):
+                line = line.split()
+                if (len(line) > 0): # we test again in case there were only spaces
+                    if (line[0] == "Executed"):
+                        self.options = " ".join(line[6:])
+
+                        if (line[0] == "sha"):
+                            self.mcfost_sha = line[2]
+
+
 
     def __str__(self):
         """ Return a formatted parameter file. Currently returns v3.0 format

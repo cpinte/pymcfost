@@ -1,6 +1,8 @@
 import os
 import subprocess
 
+_mcfost_bin = "mcfost"
+
 def run(filename, options="", delete_previous=False):
 
     if not isinstance(filename, str):
@@ -12,6 +14,4 @@ def run(filename, options="", delete_previous=False):
     if delete_previous:
         subprocess.call("rm -rf data_* ", shell = True)
 
-
-
-    subprocess.call("mcfost "+filename+" "+options, shell = True)
+    subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True)
