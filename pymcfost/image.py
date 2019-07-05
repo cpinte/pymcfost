@@ -170,27 +170,27 @@ class Image:
 
         # --- Intermediate images
         if pola_needed:
-            I = self.image[0, i, iaz, :, :]
-            Q = self.image[1, i, iaz, :, :]
-            U = self.image[2, i, iaz, :, :]
+            I = self.image[0, iaz, i, :, :]
+            Q = self.image[1, iaz, i, :, :]
+            U = self.image[2, iaz, i, :, :]
         elif contrib_needed:
             if pola_needed:
                 n_pola = 4
             else:
                 n_pola = 1
             if type == "star":
-                I = self.image[n_pola, i, iaz, :, :]
+                I = self.image[n_pola, iaz, i, :, :]
             elif type == "scatt":
-                I = self.image[n_pola + 1, i, iaz, :, :]
+                I = self.image[n_pola + 1, iaz, i, :, :]
             elif type == "em_th":
-                I = self.image[n_pola + 2, i, iaz, :, :]
+                I = self.image[n_pola + 2, iaz, i, :, :]
             elif type == "scatt_em_th":
-                I = self.image[n_pola + 3, i, iaz, :, :]
+                I = self.image[n_pola + 3, iaz, i, :, :]
         else:
             if self.is_casa:
-                I = self.image[i, iaz, :, :]
+                I = self.image[iaz, i, :, :]
             else:
-                I = self.image[0, i, iaz, :, :]
+                I = self.image[0, iaz, i, :, :]
 
         # --- Convolve with beam
         if i_convolve:
@@ -426,7 +426,7 @@ class Image:
             )
 
         # Selecting image
-        im = self.image[0, i, iaz, :, :]
+        im = self.image[0, iaz, i, :, :]
 
         # padding the image for a smoother curve
         def pad_with(vector, pad_width, iaxis, kwargs):

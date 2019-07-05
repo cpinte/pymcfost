@@ -197,13 +197,13 @@ class Line:
                 cube = self.lines[:, :, :]
                 # im = self.lines[iv+1,:,:])
             else:
-                cube = self.lines[i, iaz, iTrans, :, :, :]
+                cube = self.lines[iaz, i, iTrans, :, :, :]
                 # im = self.lines[i,iaz,iTrans,iv,:,:]
 
                 # -- continuum substraction
                 if substract_cont:
                     cube = np.maximum(
-                        cube - self.cont[i, iaz, iTrans, np.newaxis, :, :], 0.0
+                        cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0
                     )
 
             # Convolve spectrally
@@ -359,7 +359,7 @@ class Line:
             line = np.sum(self.lines[:, :, :], axis=(1, 2))
             ylabel = "Flux [Jy]"
         else:
-            line = np.sum(self.lines[i, iaz, iTrans, :, :, :], axis=(1, 2))
+            line = np.sum(self.lines[iaz, i, iTrans, :, :, :], axis=(1, 2))
             ylabel = "Flux [W.m$^{-2}$]"
 
         plt.plot(self.velocity, line)
@@ -368,7 +368,7 @@ class Line:
             if self.is_casa:
                 Fcont = 0.5 * (line[0] + line[-1])  # approx the continuum
             else:
-                Fcont = np.sum(self.cont[i, iaz, iTrans, :, :])
+                Fcont = np.sum(self.cont[iaz, i, iTrans, :, :])
             plt.plot([self.velocity[0], self.velocity[-1]], [Fcont, Fcont])
 
         xlabel = "v [m.s$^{-1}$]"
@@ -387,7 +387,7 @@ class Line:
         if self.is_casa:
             cube = np.copy(self.lines[:, :, :])
         else:
-            cube = np.copy(self.lines[i, iaz, iTrans, :, :, :])
+            cube = np.copy(self.lines[iaz, i, iTrans, :, :, :])
 
         dv = self.velocity[1] - self.velocity[0]
 
