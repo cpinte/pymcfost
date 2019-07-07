@@ -3,7 +3,7 @@ import subprocess
 
 _mcfost_bin = "mcfost"
 
-def run(filename, options="", delete_previous=False):
+def run(filename, options="", delete_previous=False, notebook=False):
 
     if not isinstance(filename, str):
         raise TypeError("First argument to run must be a filename.")
@@ -14,4 +14,8 @@ def run(filename, options="", delete_previous=False):
     if delete_previous:
         subprocess.call("rm -rf data_* ", shell = True)
 
-    subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True)
+    print("pymcfost: Running mcfost ...")
+    r = subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True)
+    if r.returncode:
+        raise OSError("mcfost did not run as expected, check mcfost's output")
+    print("pymcfost: Done")
