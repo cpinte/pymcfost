@@ -2,7 +2,7 @@ import copy
 import os
 
 import astropy.io.fits as fits
-from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft
+from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft, AiryDisk2DKernel
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.patches import Ellipse
@@ -12,15 +12,7 @@ import numpy as np
 import scipy.constants as sc
 
 from .parameters import Params, find_parameter_file
-from .utils import (
-    bin_image,
-    FWHM_to_sigma,
-    default_cmap,
-    Wm2_to_Jy,
-    Wm2_to_Tb,
-    Jy_to_Tb,
-)
-
+from .utils import *
 
 class Image:
 
@@ -94,6 +86,10 @@ class Image:
         coronagraph=None,
         clear=False,
         Tb=False,
+        telescope_diameter=None,
+        Jy=False,
+        per_arcsec2=False,
+        per_beam=False
     ):
         # Todo:
         #  - plot a selected contribution
@@ -144,10 +140,16 @@ class Image:
         # --- Beam or psf: psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
         beam = None
+
+        if telescope_diameter is not None:
+            # sigma of Gaussian is ~ 0.42 lambda/D
+            psf_FWHM = 0.42 * self.wl*1e-6 /telescope_diameter * sigma_to_FWHM / arcsec
+            print(psf_FWHM)
+
         if psf_FWHM is not None:
-            sigma = (
-                psf_FWHM / self.pixelscale * (2.0 * np.sqrt(2.0 * np.log(2)))
-            )  # in pixels
+            print("test")
+            # sigma in pixels
+            sigma = psf_FWHM / (self.pixelscale * 2*np.sqrt(2*np.log(2)))
             beam = Gaussian2DKernel(sigma)
             i_convolve = True
             bmin = psf_FWHM
@@ -208,6 +210,12 @@ class Image:
                 I = np.nan_to_num(I)
                 print("Max Tb=", np.max(I), "K")
 
+
+        # -- Conversion to Jy
+        if Jy:
+            if not self.is_casa:
+                I = Wm2_to_Jy(I, self.freq)
+
         # --- Coronagraph: in mas
         if coronagraph is not None:
             halfsize = np.asarray(self.image.shape[-2:]) / 2
@@ -228,6 +236,7 @@ class Image:
             flux_name = 'Flux density'
             im = I
             _scale = 'log'
+
         elif type == 'Q':
             im = Q
             _scale = 'symlog'
@@ -252,6 +261,23 @@ class Image:
             else:  # Uphi
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
             _scale = 'symlog'
+
+        if Tb:
+            flux_name = "Tb"
+            _scale = "lin"
+            unit = "K"
+
+        if Jy:
+            unit = "Jy.pixel-1"
+
+        # -- Conversion to flux per arcsec2 or per beam
+        if per_arcsec2:
+            im = im / self.pixelscale**2
+            unit = unit.replace("pixel-1", "arcsec-2")
+
+        if per_beam:
+            im = im / self.pixelscale**2 * bmin * bmaj
+            unit = unit.replace("pixel-1", "beam-1")
 
         # --- Plot range and color scale
         if vmax is None:
@@ -336,7 +362,7 @@ class Image:
             Qb = bin_image(Q, nbin)
             Ub = bin_image(U, nbin)
 
-            pola = 100 * np.sqrt((Qb / (Ib+1e-300)) ** 2 + (Ub / (Ib+1e-300)) ** 2)
+            pola = 100 * np.sqrt((Qb / np.maximum(Ib,1e-300)) ** 2 + (Ub / np.maximum(Ib,1e-300)) ** 2)
             theta = 0.5 * np.arctan2(Ub, Qb)
             # Ref is N (vertical axis) --> sin, and Est is toward left --> -
             pola_x = -pola * np.sin(theta)

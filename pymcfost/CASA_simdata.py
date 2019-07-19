@@ -77,7 +77,7 @@ def CASA_simdata(
             if resol is None:
                 raise Exception("Missing config or resol")
             else:
-                resol_name = f"_resol={resol:2.2f}"
+                resol_name = f"{resol:2.2f}"
                 resol_name_script = f"alma_={resol:6.6f}arcsec"
         else:
             if isinstance(config, int):
@@ -248,7 +248,7 @@ integration = '{sampling_time}s'
                     txt += "repodir+'/data/alma/simmos/" + c + ".cfg'"
                 txt += "]\n"
         else:
-            txt += f"antennalist = \"alma;%farcsec\" \% " + resol_name + "\n"
+            txt += f"antennalist = \"alma;"+ resol_name +"arcsec\"\n"
 
     # Noise
     txt += f"thermalnoise = " + th_noise + "\n"

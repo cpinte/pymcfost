@@ -6,7 +6,8 @@ import astropy.units as u
 
 default_cmap = "inferno"
 
-FWHM_to_sigma = 1.0 / (2.0 * np.sqrt(2.0 * np.log(2)))
+sigma_to_FWHM = 2.0 * np.sqrt(2.0 * np.log(2))
+FWHM_to_sigma = 1.0 / sigma_to_FWHM
 arcsec = np.pi / 648000
 
 
@@ -95,7 +96,7 @@ def Wm2_to_Tb(nuFnu, nu, pixelscale):
         """
     pixel_area = (pixelscale * arcsec) ** 2
     exp_m1 = pixel_area * 2.0 * sc.h * nu ** 4 / (sc.c ** 2 * nuFnu)
-    hnu_kT = np.log1p(exp_m1 + 1e-10)
+    hnu_kT = np.log1p(exp_m1)
 
     Tb = sc.h * nu / (sc.k * hnu_kT)
 
