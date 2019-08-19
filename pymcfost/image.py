@@ -507,3 +507,14 @@ class Image:
         plt.xlabel(xlabel)
 
         return baselines, vis, fim
+
+
+
+def spectral_index(model1, model2, i=0, iaz=0):
+
+    log_nuFnu1 = np.log(np.maximum(model1.image[0, iaz, i, :, :], 1e-300))
+    log_nuFnu2 = np.log(np.maximum(model2.image[0, iaz, i, :, :], 1e-300))
+
+    dlog_nu = np.log(model1.wl) - np.log(model2.wl)
+
+    return (log_nuFnu2 - log_nuFnu1) / dlog_nu - 3

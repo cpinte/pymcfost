@@ -289,3 +289,6 @@ class SED:
                     print("Cannot read grid in " + self.basedir)
 
         return grid
+
+    def spectral_index(self, wl1, wl2, i=0, iaz=0):
+        pass
