@@ -111,8 +111,6 @@ def CASA_simdata(
         dv = model.dv * 1000.0  # [m/s]
         freq = model.freq[iTrans] * 1e-9  # [Ghz]
 
-        freq = 345.75653
-
         if width is None:
             inwidth = dv / sc.c * model.freq[iTrans] * 1e-9  # [Ghz]
             print(f"Setting channel width to {dv:f} m/s")
