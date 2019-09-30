@@ -85,7 +85,7 @@ def CASA_simdata(
                 resol_name = "_config=" + config
                 resol_name_script = config
             else:
-                resol_name_script = config[-1]
+                resol_name_script = config
 
     else:
         # -- Setting up for simobs_custom
