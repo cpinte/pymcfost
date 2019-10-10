@@ -31,8 +31,7 @@ def CASA_simdata(
     simu_name=None,
     ms=None,
     n_iter=10000,
-    hourangle="transit",
-):
+    hourangle="transit"):
     """
     Prepare a MCFOST model for the CASA alma simulator
 
@@ -64,7 +63,7 @@ def CASA_simdata(
             )
 
     if ms is None:
-        # --- Setting a confiuration and observing time for simalma
+        # --- Setting a configuration and observing time for simalma
         simobs_custom = False
 
         if obstime is None:
@@ -84,7 +83,7 @@ def CASA_simdata(
                 config = f"alma.cycle6.{config}"
                 resol_name = "_config=" + config
                 resol_name_script = config
-            else:
+            else: # we do not change config
                 resol_name_script = config
 
     else:
@@ -131,9 +130,7 @@ def CASA_simdata(
         if model.is_casa:
             image = model.image[:, :]
         else:
-            image = Wm2_to_Jy(
-                model.image[0, iaz, i, :, :], sc.c / model.wl
-            )  # Convert to Jy
+            image = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)  # Convert to Jy
             image = image[
                 np.newaxis, np.newaxis, :, :
             ]  # Adding spectral & pola dimensions
@@ -141,12 +138,8 @@ def CASA_simdata(
         if model.is_casa:
             image = model.lines[channels, :, :]
         else:
-            image = Wm2_to_Jy(
-                model.lines[iaz, i, iTrans, channels, :, :], model.freq[iTrans]
-            )  # Convert to Jy
-    if (
-        image.ndim == 2
-    ):  # Adding extra spectral dimension if there is only 1 channel selected
+            image = Wm2_to_Jy(model.lines[iaz, i, iTrans, channels, :, :], model.freq[iTrans])  # Convert to Jy
+    if (image.ndim == 2):  # Adding extra spectral dimension if there is only 1 channel selected
         image = image[np.newaxis, :, :]
 
     # -- pixels

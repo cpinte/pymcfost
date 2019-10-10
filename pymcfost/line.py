@@ -147,7 +147,7 @@ class Line:
         else:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
         halfsize = np.asarray(self.lines.shape[-2:]) / 2 * pix_scale
-        extent = [-halfsize[0]-shift_dx, halfsize[0]-dhift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
+        extent = [-halfsize[0]-shift_dx, halfsize[0]-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
 
         # -- set color map
         if cmap is None:
@@ -221,12 +221,6 @@ class Line:
 
                 iv_min = int(iv - Delta_v / self.dv - 1)
                 iv_max = int(iv + Delta_v / self.dv + 2)
-
-                print(iv_min, iv_max, iv_max - iv_min)
-
-                print(self.velocity[iv_min:iv_max])
-
-                print(v_new)
 
                 im = np.zeros([self.nx, self.ny])
                 for j in range(self.ny):
@@ -428,23 +422,12 @@ class Line:
                     pass
 
         if moment >= 1:
-            M1 = (
-                np.sum(cube[:, :, :] * self.velocity[:, np.newaxis, np.newaxis], axis=0)
-                * dv
-                / M0
-            )
+            M1 = np.sum(cube[:, :, :] * self.velocity[:, np.newaxis, np.newaxis], axis=0) * dv / M0
 
         if moment == 2:
-            M2 = np.sqrt(
-                np.sum(
-                    cube[:, :, :]
-                    * (self.velocity[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])
-                    ** 2,
-                    axis=0,
-                )
-                * dv
-                / M0
-            )
+            M2 = np.sqrt(np.sum(cube[:, :, :]
+                    * (self.velocity[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
+                    axis=0,) * dv / M0)
 
         if moment == 0:
             return M0
