@@ -63,9 +63,9 @@ class Line:
                     self.velocity = self.CRVAL3 + self.CDELT3 * (
                         np.arange(1, self.nv + 1) - self.CRPIX3
                     )  # km/s
-
                 else:
                     raise ValueError("Velocity type is not recognised")
+                self.star_positions = hdu[1].data
             else:
                 self.is_casa = False
                 self.cont = hdu[1].data
@@ -73,6 +73,7 @@ class Line:
                 self.ifreq = hdu[2].data
                 self.freq = hdu[3].data  # frequencies of the transition
                 self.velocity = hdu[4].data / 1000  # km/s
+                self.star_positions = hdu[5].data
 
             self.dv = self.velocity[1] - self.velocity[0]
 
@@ -160,9 +161,8 @@ class Line:
         i_convolve = False
         beam = None
         if psf_FWHM is not None:
-            sigma = (
-                psf_FWHM / self.pixelscale * (2.0 * np.sqrt(2.0 * np.log(2)))
-            )  # in pixels
+            # in pixels
+            sigma = psf_FWHM / self.pixelscale * FWHM_to_sigma
             beam = Gaussian2DKernel(sigma)
             i_convolve = True
             bmin = psf_FWHM
@@ -192,6 +192,7 @@ class Line:
                 moment=moment,
                 beam=beam,
                 conv_method=conv_method,
+                substract_cont=substract_cont
             )
         else:
             # individual channel
@@ -204,9 +205,7 @@ class Line:
 
                 # -- continuum substraction
                 if substract_cont:
-                    cube = np.maximum(
-                        cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0
-                    )
+                    cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
 
             # Convolve spectrally
             if Delta_v is not None:
@@ -373,7 +372,7 @@ class Line:
         plt.ylabel(ylabel)
 
     def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
-                       beam=None, conv_method=None):
+                       beam=None, conv_method=None,substract_cont=False):
         """
         This returns the moment maps in physical units, ie:
          - M1 is the average velocity [km/s]
@@ -383,6 +382,9 @@ class Line:
             cube = np.copy(self.lines[:, :, :])
         else:
             cube = np.copy(self.lines[iaz, i, iTrans, :, :, :])
+
+        if substract_cont:
+            cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
 
         dv = self.velocity[1] - self.velocity[0]
 
