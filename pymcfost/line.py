@@ -60,9 +60,8 @@ class Line:
                     self.CRPIX3 = hdu[0].header['CRPIX3']
                     self.CRVAL3 = hdu[0].header['CRVAL3']
                     self.CDELT3 = hdu[0].header['CDELT3']
-                    self.velocity = self.CRVAL3 + self.CDELT3 * (
-                        np.arange(1, self.nv + 1) - self.CRPIX3
-                    )  # km/s
+                    # velocity in km/s
+                    self.velocity = self.CRVAL3 + self.CDELT3 * (np.arange(1, self.nv + 1) - self.CRPIX3)
                 else:
                     raise ValueError("Velocity type is not recognised")
                 self.star_positions = hdu[1].data
@@ -116,7 +115,8 @@ class Line:
         Tb=False,
         Delta_v=None,
         shift_dx=0,
-        shift_dy=0
+        shift_dy=0,
+        plot_stars=False
     ):
         # Todo:
         # - allow user to change brightness unit : W.m-1, Jy, Tb
@@ -335,7 +335,11 @@ class Line:
             )
             ax.add_patch(beam)
 
-        return image
+        #-- Add stars
+        if plot_stars:
+            ax.scatter(self.star_positions[0,iaz,i,:], self.star_positions[1,iaz,i,:], color="cyan",s=8)
+
+        return im
 
     def plot_line(
         self,

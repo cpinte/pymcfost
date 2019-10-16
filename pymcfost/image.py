@@ -92,7 +92,8 @@ class Image:
         per_arcsec2=False,
         per_beam=False,
         shift_dx=0,
-        shift_dy=0
+        shift_dy=0,
+        plot_stars=False
     ):
         # Todo:
         #  - plot a selected contribution
@@ -409,6 +410,10 @@ class Image:
                 color='grey',
             )
             ax.add_patch(mask)
+
+        #-- Add stars
+        if plot_stars:
+            ax.scatter(self.star_positions[0,iaz,i,:], self.star_positions[1,iaz,i,:], color="cyan",s=8)
 
         # --- Return
         return img
