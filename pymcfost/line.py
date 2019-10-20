@@ -155,7 +155,7 @@ class Line:
         else:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
         halfsize = np.asarray(self.lines.shape[-2:]) / 2 * pix_scale
-        extent = [-halfsize[0]-shift_dx, halfsize[0]-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
+        extent = [halfsize[0]-shift_dx, -halfsize[0]-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
 
         # -- set color map
         if cmap is None:
