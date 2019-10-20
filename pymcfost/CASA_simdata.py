@@ -3,8 +3,122 @@ import os
 import subprocess
 import scipy.constants as sc
 from .image import Image
-from .utils import Wm2_to_Jy
+from .utils import Wm2_to_Jy, FWHM_to_sigma
 from astropy.io import fits
+from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
+
+
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,beam=None,bmaj=None,bmin=None,bpa=None):
+    """
+    Generate a fits file as if it was a CASA simdata output
+     - convolve with beam as required
+     - todo : convolve in frequency and resample as required
+     - bmin, bmaj in arsec
+
+    Basically generate a CASA fits file with perfect uv coverage and no noise
+    """
+
+    workdir = "CASA/"
+    if not os.path.exists(workdir):
+        os.mkdir(workdir)
+    _CASA_clean(workdir)
+
+    is_image = isinstance(model, Image)
+
+    # --- Checking arguments
+    if not is_image:
+        if iTrans is None:
+            raise Exception("Missing transition number iTrans")
+
+        nTrans = model.freq.size
+        if iTrans > nTrans - 1:
+            raise Exception(f"ERROR: iTrans is not in the computed range : nTrans={nTrans}")
+
+    if beam is not None:
+        bmaj = beam
+        bmin = beam
+        bpa = 0
+
+    if bmaj is None:
+        raise Exception("Missing beam")
+
+    # -- Flux setup : we want Jy/pixel first
+    if is_image:
+        if model.is_casa:
+            image = model.image[:, :]
+        else:
+            # Convert to Jy
+            image = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)
+    else:  # cube
+        if model.is_casa:
+            image = model.lines[:, :, :]
+        else:
+            # Convert to Jy
+            image = Wm2_to_Jy(model.lines[iaz, i, iTrans,:,:,:], model.freq[iTrans])
+
+    #-- writing fits file
+    hdr = fits.Header()
+    hdr["EXTEND"] = True
+    hdr["OBJECT"] = "mcfost"
+    hdr["CTYPE1"] = "RA---TAN"
+    hdr["CRVAL1"] = 0.0
+    hdr["CRPIX1"] = int(model.nx / 2 + 1)
+    hdr["CDELT1"] = -model.pixelscale / 3600.0
+    hdr["CUNIT1"] = "deg"
+
+    hdr["CTYPE2"] = "DEC--TAN"
+    hdr["CRVAL2"] = 0.0
+    hdr["CRPIX2"] = int(model.ny / 2 + 1)
+    hdr["CDELT2"] = model.pixelscale / 3600.0
+    hdr["CUNIT2"] = "deg"
+
+    if is_image:
+        # 3rd axis
+        hdr["CTYPE3"] = "STOKES"
+        hdr["CRVAL3"] = 1.0
+        hdr["CDELT3"] = 1.0
+        hdr["CRPIX3"] = 1
+
+        # 4th axis
+        hdr["CTYPE4"] = "FREQ"
+        hdr["CRVAL4"] = model.freq * 1e9  # Hz
+        hdr["CDELT4"] = 2e9  # 2GHz by default
+        hdr["CRPIX4"] = 0
+    else:
+        hdr["CTYPE3"] = "VELO-LSR"
+        hdr["CRVAL3"] = 0.0  # line center
+        hdr["CRPIX3"] = model.nv//2 + 1
+        hdr["CDELT3"] = model.dv
+
+    hdr["RESTFREQ"] = model.freq[iTrans] * 1e9  # Hz
+    hdr["BUNIT"] = "JY/BEAM"
+    hdr["BTYPE"] = "Intensity"
+    hdr["BMAJ"] = bmaj/3600.
+    hdr["BMIN"] = bmin/3600.
+    hdr["BPA"] = bpa
+
+    #-- Convolution by beam
+    sigma_x = bmin / model.pixelscale * FWHM_to_sigma  # in pixels
+    sigma_y = bmaj / model.pixelscale * FWHM_to_sigma  # in pixels
+    beam = Gaussian2DKernel(sigma_x, sigma_y, bpa * np.pi / 180)
+
+    if image.ndim == 2:
+        image = convolve_fft(image, beam)
+    else:
+        for iv in range(image.shape[0]):
+            image[iv,:,:] = convolve_fft(image[iv,:,:], beam)
+
+
+    #-- Jy/pixel to Jy/beamw
+    beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
+    pix_area = model.pixelscale**2
+    image *= beam_area/pix_area
+
+    hdu = fits.PrimaryHDU(image, header=hdr)
+    hdul = fits.HDUList(hdu)
+
+    simu_name = "pseudo_casa"
+    hdul.writeto(workdir + simu_name + ".fits", overwrite=True)
 
 
 def CASA_simdata(
@@ -58,9 +172,7 @@ def CASA_simdata(
 
         nTrans = model.freq.size
         if iTrans > nTrans - 1:
-            raise Exception(
-                f"ERROR: iTrans is not in the computed range : nTrans={nTrans}"
-            )
+            raise Exception(f"ERROR: iTrans is not in the computed range : nTrans={nTrans}")
 
     if ms is None:
         # --- Setting a configuration and observing time for simalma
