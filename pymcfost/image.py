@@ -48,7 +48,10 @@ class Image:
             self.nx = hdu[0].header['NAXIS1']
             self.ny = hdu[0].header['NAXIS2']
             self.is_casa = self.unit == "JY/PIXEL"
-            self.star_positions = hdu[1].data
+            try:
+                self.star_positions = hdu[1].data
+            except:
+                self.star_positions = []
             hdu.close()
         except OSError:
             print('cannot open', self._RT_file)

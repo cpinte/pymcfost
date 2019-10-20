@@ -64,7 +64,11 @@ class Line:
                     self.velocity = self.CRVAL3 + self.CDELT3 * (np.arange(1, self.nv + 1) - self.CRPIX3)
                 else:
                     raise ValueError("Velocity type is not recognised")
-                self.star_positions = hdu[1].data
+
+                try:
+                    self.star_positions = hdu[1].data
+                except:
+                    self.star_positions = []
             else:
                 self.is_casa = False
                 self.cont = hdu[1].data
@@ -72,7 +76,10 @@ class Line:
                 self.ifreq = hdu[2].data
                 self.freq = hdu[3].data  # frequencies of the transition
                 self.velocity = hdu[4].data / 1000  # km/s
-                self.star_positions = hdu[5].data
+                try:
+                    self.star_positions = hdu[5].data
+                except:
+                    self.star_positions = []
 
             self.dv = self.velocity[1] - self.velocity[0]
 
