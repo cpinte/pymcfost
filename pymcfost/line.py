@@ -159,8 +159,8 @@ class Line:
 
         # -- set color map
         if cmap is None:
-            if moment == 1:
-                cmap = "RdBu"
+            if moment in [1,9]:
+                cmap = "RdBu_r"
             else:
                 cmap = default_cmap
 
@@ -343,8 +343,10 @@ class Line:
             ax.add_patch(beam)
 
         #-- Add stars
-        if plot_stars:
-            ax.scatter(self.star_positions[0,iaz,i,:], self.star_positions[1,iaz,i,:], color="cyan",s=8)
+        if plot_stars: # todo : different units
+            x_star = self.star_positions[0,iaz,i,:]
+            y_stars = self.star_positions[1,iaz,i,:]
+            ax.scatter(x_star, y_stars, color="cyan",s=6)
 
         return im
 
@@ -399,6 +401,39 @@ class Line:
 
         dv = self.velocity[1] - self.velocity[0]
 
+        # Moment 9
+        if moment == 9:
+            vmax_index = np.argmax(cube, axis=0)
+            M9 = self.velocity[(vmax_index)]
+
+            #print(vmax_index.shape)
+            #
+            ## Extract the maximum and neighboring pixels
+            #print("test1")
+            #f_max = cube[(vmax_index)]
+            #print(f_max.shape)
+            #print("test2")
+            #f_minus = cube[(vmax_index-1)]
+            #print("test3")
+            #f_plus = cube[(vmax_index+1)]
+            #
+            ## Work out the polynomial coefficients
+            #print("test4")
+            #a0 = 13. * f_max / 12. - (f_plus + f_minus) / 24.
+            #print("test5")
+            #a1 = 0.5 * (f_plus - f_minus)
+            #print("test6")
+            #a2 = 0.5 * (f_plus + f_minus - 2*f_max)
+            #
+            ## Compute the maximum of the quadratic
+            #x_max = idx - 0.5 * a1 / a2
+            #y_max = a0 - 0.25 * a1**2 / a2
+            #
+            #M9 = xmax
+
+            return M9
+
+        # Moment 0, 1 and 2
         if beam is None:
             M0 = np.sum(cube, axis=0) * dv
         else:
@@ -406,9 +441,7 @@ class Line:
                 M0 = np.sum(cube, axis=0) * dv
                 M0 = conv_method(M0, beam)
             else:  # We need to convolve each channel indidually
-                print(
-                    "Convolving individual channel maps, this may take a bit of time ...."
-                )
+                print("Convolving individual channel maps, this may take a bit of time ....")
                 try:
                     bar = progressbar.ProgressBar(
                         maxval=self.nv,
