@@ -330,7 +330,7 @@ class Image:
         img = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
 
         if limit is not None:
-            limits = [-limit, limit, -limit, limit]
+            limits = [limit, -limit, -limit, limit]
 
         if limits is not None:
             ax.set_xlim(limits[0], limits[1])
@@ -356,6 +356,8 @@ class Image:
             cb = plt.colorbar(img, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
             cb.set_label(flux_name + " [" + formatted_unit + "]")
+            plt.sca(ax) # we reset the main axis
+
 
         # --- Overplotting polarisation vectors
         if pola_vector:
