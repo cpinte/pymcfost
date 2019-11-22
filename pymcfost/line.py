@@ -67,8 +67,10 @@ class Line:
 
                 try:
                     self.star_positions = hdu[1].data
+                    self.star_vr = hdu[2].data
                 except:
                     self.star_positions = []
+                    self.star_vr = []
             else:
                 self.is_casa = False
                 self.cont = hdu[1].data
@@ -78,8 +80,10 @@ class Line:
                 self.velocity = hdu[4].data / 1000  # km/s
                 try:
                     self.star_positions = hdu[5].data
+                    self.star_vr = hdu[6].data
                 except:
                     self.star_positions = []
+                    self.star_vr = []
 
             self.dv = self.velocity[1] - self.velocity[0]
 
@@ -123,7 +127,8 @@ class Line:
         Delta_v=None,
         shift_dx=0,
         shift_dy=0,
-        plot_stars=False
+        plot_stars=False,
+        s=5
     ):
         # Todo:
         # - allow user to change brightness unit : W.m-1, Jy, Tb
@@ -278,7 +283,7 @@ class Line:
         image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
 
         if limit is not None:
-            limits = [-limit, limit, -limit, limit]
+            limits = [limit, -limit, -limit, limit]
 
         if limits is not None:
             ax.set_xlim(limits[0], limits[1])
@@ -304,6 +309,8 @@ class Line:
             cax = divider.append_axes("right", size="5%", pad=0.05)
             cb = plt.colorbar(image, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
+            plt.sca(ax) # we reset the main axis
+
 
             if moment == 0:
                 cb.set_label("Flux [" + formatted_unit + "km.s$^{-1}$]")
@@ -343,10 +350,14 @@ class Line:
             ax.add_patch(beam)
 
         #-- Add stars
-        if plot_stars: # todo : different units
-            x_star = self.star_positions[0,iaz,i,:]
-            y_stars = self.star_positions[1,iaz,i,:]
-            ax.scatter(x_star, y_stars, color="cyan",s=6)
+        if plot_stars: # todo : must work too with different units than arsec
+            if isinstance(plot_stars,bool):
+                x_stars = self.star_positions[0,iaz,i,:]
+                y_stars = self.star_positions[1,iaz,i,:]
+            else: # int or list of int
+                x_stars = self.star_positions[0,iaz,i,plot_stars]
+                y_stars = self.star_positions[1,iaz,i,plot_stars]
+            ax.scatter(x_stars, y_stars, color="cyan",s=s)
 
         return im
 

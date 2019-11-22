@@ -50,8 +50,10 @@ class Image:
             self.is_casa = self.unit == "JY/PIXEL"
             try:
                 self.star_positions = hdu[1].data
+                self.star_vr = hdu[2].data
             except:
                 self.star_positions = []
+                self.star_vr = []
             hdu.close()
         except OSError:
             print('cannot open', self._RT_file)
@@ -96,7 +98,8 @@ class Image:
         per_beam=False,
         shift_dx=0,
         shift_dy=0,
-        plot_stars=False
+        plot_stars=False,
+        s=6
     ):
         # Todo:
         #  - plot a selected contribution
@@ -418,7 +421,7 @@ class Image:
 
         #-- Add stars
         if plot_stars:
-            ax.scatter(self.star_positions[0,iaz,i,:], self.star_positions[1,iaz,i,:], color="cyan",s=8)
+            ax.scatter(self.star_positions[0,iaz,i,:], self.star_positions[1,iaz,i,:], color="cyan",s=s)
 
         # --- Return
         return img
