@@ -317,7 +317,10 @@ class Line:
 
 
             if moment == 0:
-                cb.set_label("Flux [" + formatted_unit + "km.s$^{-1}$]")
+                if Tb:
+                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ [K.km.s$^{-1}$]")
+                else:
+                    cb.set_label("Flux [" + formatted_unit + "km.s$^{-1}$]")
             elif moment == 1:
                 cb.set_label("Velocity [km.s$^{-1}]$")
             elif moment == 2:
