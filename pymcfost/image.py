@@ -50,9 +50,11 @@ class Image:
             self.is_casa = self.unit == "JY/PIXEL"
             try:
                 self.star_positions = hdu[1].data
-                self.star_vr = hdu[2].data
             except:
                 self.star_positions = []
+            try:
+                self.star_vr = hdu[2].data
+            except:
                 self.star_vr = []
             hdu.close()
         except OSError:

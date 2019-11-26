@@ -67,9 +67,11 @@ class Line:
 
                 try:
                     self.star_positions = hdu[1].data
-                    self.star_vr = hdu[2].data
                 except:
                     self.star_positions = []
+                try:
+                    self.star_vr = hdu[2].data
+                except:
                     self.star_vr = []
             else:
                 self.is_casa = False
@@ -80,9 +82,11 @@ class Line:
                 self.velocity = hdu[4].data / 1000  # km/s
                 try:
                     self.star_positions = hdu[5].data
-                    self.star_vr = hdu[6].data
                 except:
                     self.star_positions = []
+                try:
+                    self.star_vr = hdu[6].data
+                except:
                     self.star_vr = []
 
             self.dv = self.velocity[1] - self.velocity[0]
