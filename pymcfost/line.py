@@ -363,7 +363,10 @@ class Line:
                 y_stars = self.star_positions[1,iaz,i,plot_stars]
             ax.scatter(x_stars, y_stars, color="cyan",s=s)
 
-        return im
+        #-- Saving the last plotted quantity
+        self.last_im = im
+
+        return image
 
     def plot_line(
         self,

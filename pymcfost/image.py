@@ -332,7 +332,7 @@ class Image:
                 raise Warning("Can't set bad values from given colormap")
 
         # --- Making the actual plot
-        img = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
+        image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
 
         if limit is not None:
             limits = [limit, -limit, -limit, limit]
@@ -358,7 +358,7 @@ class Image:
         if colorbar:
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="5%", pad=0.05)
-            cb = plt.colorbar(img, cax=cax)
+            cb = plt.colorbar(image, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
             cb.set_label(flux_name + " [" + formatted_unit + "]")
             plt.sca(ax) # we reset the main axis
@@ -423,10 +423,19 @@ class Image:
 
         #-- Add stars
         if plot_stars:
-            ax.scatter(self.star_positions[0,iaz,i,:], self.star_positions[1,iaz,i,:], color="cyan",s=s)
+            if isinstance(plot_stars,bool):
+                x_stars = self.star_positions[0,iaz,i,:]
+                y_stars = self.star_positions[1,iaz,i,:]
+            else: # int or list of int
+                x_stars = self.star_positions[0,iaz,i,plot_stars]
+                y_stars = self.star_positions[1,iaz,i,plot_stars]
+            ax.scatter(x_stars, y_stars, color="cyan",s=s)
+
+        #-- Saving the last plotted quantity
+        self.last_im = im
 
         # --- Return
-        return img
+        return image
 
     def calc_vis(
         self,
