@@ -402,7 +402,7 @@ class Image:
                 ax.transLimits.inverted().transform((dx, dy)),
                 width=bmin,
                 height=bmaj,
-                angle=bpa,
+                angle=-bpa,
                 fill=True,
                 color="grey",
             )
