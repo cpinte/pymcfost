@@ -151,7 +151,7 @@ class Line:
         # --- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
             pix_scale = self.pixelscale
-            xlabel = r'$\Delta$ Ra ["]'
+            xlabel = r'$\Delta$ RA ["]'
             ylabel = r'$\Delta$ Dec ["]'
         elif axes_unit.lower() == 'au':
             pix_scale = self.pixelscale * self.P.map.distance
