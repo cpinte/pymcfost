@@ -422,7 +422,11 @@ class Line:
 
         dv = self.velocity[1] - self.velocity[0]
 
-        # Moment 9
+        # Peak flux
+        if moment == 8:
+            return np.max(cube, axis=0)
+
+        # Velocity of the peak
         if moment == 9:
             vmax_index = np.argmax(cube, axis=0)
             M9 = self.velocity[(vmax_index)]
