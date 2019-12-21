@@ -110,6 +110,7 @@ class Line:
         bmin=None,
         bpa=None,
         plot_beam=None,
+        beam_position=(0.125, 0.125), # fraction of plot width and height
         axes_unit="arcsec",
         conv_method=None,
         fmax=None,
@@ -124,6 +125,8 @@ class Line:
         no_ylabel=False,
         no_xticks=False,
         no_yticks=False,
+        vlabel_position=(0.5, 0.1), # fraction of plot width and height
+        vlabel_size=10, # size in points
         title=None,
         limit=None,
         limits=None,
@@ -333,19 +336,19 @@ class Line:
 
         # -- Adding velocity
         if moment is None:
+            vlabx, vlaby = vlabel_position
             ax.text(
-                0.5,
-                0.1,
+                vlabx, vlaby,
                 f"$\Delta$v={self.velocity[iv]:<4.2f}$\,$km/s",
                 horizontalalignment='center',
+                size=vlabel_size,
                 color="white",
                 transform=ax.transAxes,
             )
 
         # --- Adding beam
         if plot_beam:
-            dx = 0.125
-            dy = 0.125
+            dx, dy = beam_position
             beam = Ellipse(
                 ax.transLimits.inverted().transform((dx, dy)),
                 width=bmin,
