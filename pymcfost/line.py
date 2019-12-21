@@ -165,6 +165,7 @@ class Line:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
         halfsize = np.asarray(self.lines.shape[-2:]) / 2 * pix_scale
         extent = [halfsize[0]-shift_dx, -halfsize[0]-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
+        self.extent = extent
 
         # -- set color map
         if cmap is None:
@@ -314,7 +315,6 @@ class Line:
             cb = plt.colorbar(image, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
             plt.sca(ax) # we reset the main axis
-
 
             if moment == 0:
                 if Tb:
