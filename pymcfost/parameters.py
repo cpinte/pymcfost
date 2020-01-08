@@ -10,22 +10,32 @@ def _word_to_bool(word):
 
 class ParafileSection:
     """writeme"""
-    def __init__(self, header: str, blocks: list):
-        if isinstance(blocks, AbstractParameterBlock):
-            # force iterability
-            blocks = [blocks]
-
-        for b in blocks[1:]:
-            assert isinstance(b, type(blocks[0]))
+    def __init__(self, header: str, blocks: list = None, subsections: list = None):
+        if blocks is not None:
+            if isinstance(blocks, AbstractParameterBlock):
+                # force iterability in case there is only one block
+                blocks = [blocks]
 
         self._header = header
         self._blocks = blocks
+        self._subsections = subsections
 
     def __str__(self):
         txt = "# -- " + self._header + " --\n"
-        txt += "\n".join([str(b) for b in self._blocks])
+        if self._subsections is not None:
+            txt += "\n".join([str(s) for s in self._subsections])
+        else:
+            txt += "\n".join([str(b) for b in self._blocks])
         return txt
 
+class ParafileSubsection(ParafileSection):
+    def __init__(self, header:str, blocks:list):
+        ParafileSection.__init__(self, header=header, blocks=blocks)
+
+    def __str__(self):
+        txt = "  " + self._header + "\n"
+        txt += "  ".join([str(b) for b in self._blocks])
+        return txt
 
 class AbstractParameterBlock(ABC):
     """writeme"""
@@ -203,25 +213,48 @@ class Zone(AbstractParameterBlock):
             "-gamma_exp (or alpha_in & alpha_out for debris disk)": f"{self.m_gamma_exp}"}
         ]
 
+class GrainSpeciesHeadlines(AbstractParameterBlock):
+    def __init__(self, species):
+        self._species = species
 
+    def __getattr__(self, attr):
+        return getattr(self._species, attr)
+
+    @property
+    def lines(self):
+        return [{
+            "Grain type (Mie or DHS)": f"Mie",
+            "N_components": f"{self.n_components}",
+            "mixing rule (1 = EMT or 2 = coating)": f"{self.mixing_rule}",
+            "porosity": f"{self.porosity:<5.2f}",
+            "mass fraction": f"{self.mass_fraction:<5.2f}",
+            "Vmax (for DHS)": f"{self.DHS_Vmax}",
+        }]
+
+class GrainSpeciesFootlines(AbstractParameterBlock):
+    def __init__(self, species):
+        self._species = species
+
+    def __getattr__(self, attr):
+        return getattr(self._species, attr)
+
+    @property
+    def lines(self):
+        return [{"Heating method : 1 = RE + LTE, 2 = RE + NLTE, 3 = NRE": f"{self.heating_method}"},
+                {"amin": f"{self.amin}",
+                "amax": f"{self.amax}",
+                "aexp": f"{self.aexp}",
+                "nbr_grains": f"{self.n_grains}"
+        }]
 
 class Dust:
     component = []
-
-
-class DustSpecies(AbstractParameterBlock):
-    """dust species is a particular block... writeme"""
-    @property
-    def lines(self):
-        res = []
-        for comp in self._components: # I don't know how this is supposed to be accessed...
-            res.append(comp.lines)
     
 class DustComponent(AbstractParameterBlock):
-
     @property
     def lines(self):
-        pass
+        return [{"Optical indices file": f"{self.file}",
+                 "volume fraction": f"{self.volume_fraction}"}]
 
 
 
@@ -570,17 +603,18 @@ class Params:
         txt += str(ParafileSection(header="Density structure", blocks=blocks)) + "\n"
 
         # -- Grain properties --
-        txt += f"#-- Grain properties --\n"
-        for k in range(self.simu.n_zones):
-            txt += (
-                f"  {self.zones[k].n_species}                      Number of species\n"
-            )
-            for j in range(self.zones[k].n_species):
-                txt += f"  Mie {self.zones[k].dust[j].n_components} {self.zones[k].dust[j].mixing_rule} {self.zones[k].dust[j].porosity:<5.2f} {self.zones[k].dust[j].mass_fraction:<5.2f} {self.zones[k].dust[j].DHS_Vmax}    Grain type (Mie or DHS), N_components, mixing rule (1 = EMT or 2 = coating),  porosity, mass fraction, Vmax (for DHS)\n"
-                for l in range(self.zones[k].dust[j].n_components):
-                    txt += f"  {self.zones[k].dust[j].component[l].file}  {self.zones[k].dust[j].component[l].volume_fraction}     Optical indices file, volume fraction\n"
-                txt += f"""  {self.zones[k].dust[j].heating_method}                          Heating method : 1 = RE + LTE, 2 = RE + NLTE, 3 = NRE
-  {self.zones[k].dust[j].amin} {self.zones[k].dust[j].amax}  {self.zones[k].dust[j].aexp} {self.zones[k].dust[j].n_grains}       amin, amax, aexp, nbr_grains\n\n"""
+        subsections = []
+        for zone in self.zones[:self.simu.n_zones]:
+            blocks = []
+            for species in zone.dust[:zone.n_species]:
+                blocks.append(GrainSpeciesHeadlines(species))
+                for component in species.component[:species.n_components]:
+                    blocks.append(component) # not sure this would work
+                blocks.append(GrainSpeciesFootlines(species))
+            assert all([isinstance(b, AbstractParameterBlock) for b in blocks])
+            subsections.append(ParafileSubsection(header=f"{zone.n_species} (Number of species)",
+                                              blocks=blocks))
+        txt += str(ParafileSection(header="Grain properties", subsections=subsections)) + "\n"
 
         # -- Molecular settings --
         txt += f"""#-- Molecular RT settings --
