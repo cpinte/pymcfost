@@ -8,12 +8,29 @@ def _word_to_bool(word):
     return word.upper().startswith(_accepted_bool_prefixes)
 
 
-class AbstractParameterBlock(ABC):
-    header = "A fake parameter block"
+class ParafileSection:
+    """writeme"""
+    def __init__(self, blocks: list):
+        if isinstance(blocks, AbstractParameterBlock):
+            # force iterability
+            blocks = [blocks]
+
+        for b in blocks[1:]:
+            assert isinstance(b, type(blocks[0]))
+
+        self._blocks = blocks
 
     def __str__(self):
-        txt = "# -- " + self.__class__.header + " --\n"
-        for line in self.block_lines:
+        txt = "# -- " + self._blocks[0].__class__.header + " --\n"
+        txt += "\n".join([str(b) for b in self._blocks])
+        return txt
+
+
+class AbstractParameterBlock(ABC):
+    """writeme"""
+    def __str__(self):
+        txt = ""
+        for line in self.lines:
             txt += (
                 "  "
                 + "  ".join(line.values()).ljust(36)
@@ -28,17 +45,18 @@ class AbstractParameterBlock(ABC):
 
     @property
     @abstractmethod
-    def block_lines(self):
+    def lines(self):
         """this method should return a list of lines in a parafile.
         A line is represented as a dictionnary where keys are comments and
         values are formatted strings representing the value of a parameter"""
         pass
 
+
 class Photons(AbstractParameterBlock):
     header = "Number of photon packages"
 
     @property
-    def block_lines(self):
+    def lines(self):
         return [
             {"nbr_photons_eq_th : T computation": f"{self.nphot_T:<10.5g}"},
             {"nbr_photons_lambda : SED computation": f"{self.nphot_SED:<10.5g}"},
@@ -50,7 +68,7 @@ class Wavelengths(AbstractParameterBlock):
     header = "Wavelengths"
 
     @property
-    def block_lines(self):
+    def lines(self):
         assert hasattr(self, "simu")
         return [
             {
@@ -75,7 +93,7 @@ class Grid(AbstractParameterBlock):
     header = "Grid geometry and size"
 
     @property
-    def block_lines(self):
+    def lines(self):
         return [
             {"1 = cylindrical, 2 = spherical": f"{self.type:>1d}"},
             {
@@ -91,10 +109,10 @@ class Map(AbstractParameterBlock):
     header = "Maps"
 
     @property
-    def block_lines(self):
+    def lines(self):
         return [
             {
-                "grid (nx)": f"{self.nx}",
+                "grid (nx)": f"{self.nx:d}",
                 "grid (ny)": f"{self.ny:d}",
                 "size [au]": f"{self.size:5.1f}",
             },
@@ -118,7 +136,7 @@ class Scattering(AbstractParameterBlock):
     header = "Scattering method"
 
     @property
-    def block_lines(self):
+    def lines(self):
         assert hasattr(self, "simu")
         return [
             {"0=auto, 1=grain prop, 2=cell prop": f"{self.simu.scattering_method}"},
@@ -132,7 +150,7 @@ class Symmetries(AbstractParameterBlock):
     header = "Symmetries"
 
     @property
-    def block_lines(self):
+    def lines(self):
         assert hasattr(self, "simu")
         return [
             {"image symmetry": f"{self.simu.image_symmetry}"},
@@ -147,7 +165,7 @@ class Physics(AbstractParameterBlock):
     header = "Disk physics"
 
     @property
-    def block_lines(self):
+    def lines(self):
         assert hasattr(self, "simu")
         return [
             {
@@ -169,7 +187,7 @@ class Nzone(AbstractParameterBlock):
     header = "Number of zones"
 
     @property
-    def block_lines(self):
+    def lines(self):
         assert hasattr(self, "simu")
         return [
             {
@@ -501,37 +519,37 @@ class Params:
         txt = "".join(["3.0", 23*" ", "mcfost version", "\n"])
 
         # -- Photon packets --
-        txt += str(self.phot) + "\n"
+        txt += str(ParafileSection(blocks=self.phot)) + "\n"
 
         # -- Wavelengths --
         self.wavelengths._link_simu_block(self.simu)
-        txt += str(self.wavelengths) + "\n"
+        txt += str(ParafileSection(blocks=self.wavelengths)) + "\n"
 
         # -- Grid --
-        txt += str(self.grid) + "\n"
+        txt += str(ParafileSection(blocks=self.grid)) + "\n"
 
         # -- Maps --
-        txt += str(self.map) + "\n"
+        txt += str(ParafileSection(blocks=self.map)) + "\n"
 
         # -- Scattering method --
         self.scattering = Scattering()
         self.scattering._link_simu_block(self.simu)
-        txt += str(self.scattering) + "\n"
+        txt += str(ParafileSection(blocks=self.scattering)) + "\n"
 
         # -- Symetries --
         self.symmetries = Symmetries()
         self.symmetries._link_simu_block(self.simu)
-        txt += str(self.symmetries) + "\n"
+        txt += str(ParafileSection(blocks=self.symmetries)) + "\n"
 
         # -- Disk physics --
         self.physics = Physics()
         self.physics._link_simu_block(self.simu)
-        txt += str(self.physics) + "\n"
+        txt += str(ParafileSection(blocks=self.physics)) + "\n"
 
         # -- Number of zones --
         self.n_zone = Nzone()
         self.n_zone._link_simu_block(self.simu)
-        txt += str(self.n_zone) + "\n"
+        txt += str(ParafileSection(blocks=self.n_zone)) + "\n"
 
         # -- Density structure --
         #self.structure = Structure()
