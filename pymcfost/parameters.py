@@ -94,12 +94,14 @@ class Params:
             )
 
         # -- Number of photon packages --
+        # to support float notations (e.g. "1.28e8" or "64000.0"),
+        # we read as float but convert to int
         line = next(f).split()
-        self.phot.nphot_T = float(line[0])
+        self.phot.nphot_T = int(float(line[0]))
         line = next(f).split()
-        self.phot.nphot_SED = float(line[0])
+        self.phot.nphot_SED = int(float(line[0]))
         line = next(f).split()
-        self.phot.nphot_image = float(line[0])
+        self.phot.nphot_image = int(float(line[0]))
 
         # -- Wavelengths --
         line = next(f).split()
