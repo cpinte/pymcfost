@@ -1,5 +1,6 @@
 import glob
 import numpy as np
+from abc import ABC, abstractmethod
 
 def _word_to_bool(word):
     """convert a string to boolean according the first 2 characters."""
@@ -7,10 +8,8 @@ def _word_to_bool(word):
     return word.upper().startswith(_accepted_bool_prefixes)
 
 
-class AbstractParameterBlock:
-    # todo : use ABC
+class AbstractParameterBlock(ABC):
     header = "A fake parameter block"
-    block_lines = []  # a list of ordered dictionaries
 
     def __str__(self):
         txt = "# -- " + self.__class__.header + " --\n"
@@ -27,6 +26,13 @@ class AbstractParameterBlock:
     def _link_simu_block(self, simu):
         self.simu = simu
 
+    @property
+    @abstractmethod
+    def block_lines(self):
+        """this method should return a list of lines in a parafile.
+        A line is represented as a dictionnary where keys are comments and
+        values are formatted strings representing the value of a parameter"""
+        pass
 
 class Photons(AbstractParameterBlock):
     header = "Number of photon packages"
