@@ -6,16 +6,170 @@ def _word_to_bool(word):
     _accepted_bool_prefixes = ("T", ".T")
     return word.upper().startswith(_accepted_bool_prefixes)
 
-class Photons:
-    pass
+
+class AbstractParameterBlock:
+    # todo : use ABC
+    header = "A fake parameter block"
+    block_lines = []  # a list of ordered dictionaries
+
+    def __str__(self):
+        txt = "# -- " + self.__class__.header + " --\n"
+        for line in self.block_lines:
+            txt += (
+                "  "
+                + "  ".join(line.values()).ljust(36)
+                + "  "
+                + ", ".join(line.keys())
+                + "\n"
+            )
+        return txt
+
+    def _link_simu_block(self, simu):
+        self.simu = simu
 
 
-class Wavelengths:
-    pass
+class Photons(AbstractParameterBlock):
+    header = "Number of photon packages"
+
+    @property
+    def block_lines(self):
+        return [
+            {"nbr_photons_eq_th : T computation": f"{self.nphot_T:<10.5g}"},
+            {"nbr_photons_lambda : SED computation": f"{self.nphot_SED:<10.5g}"},
+            {"nbr_photons_image : images computation": f"{self.nphot_image:<10.5g}"},
+        ]
 
 
-class Physics:
-    pass
+class Wavelengths(AbstractParameterBlock):
+    header = "Wavelengths"
+
+    @property
+    def block_lines(self):
+        assert hasattr(self, "simu")
+        return [
+            {
+                "n_lambda": f"{self.n_wl:<4d}",
+                "lambda_min": f"{self.wl_min:<5.1f}",
+                "lambda_max [microns]": f"{self.wl_max:<7g}",
+            },
+            {
+                "compute temperature?": f"{self.simu.compute_T}",
+                "compute sed?": f"{self.simu.compute_SED}",
+                "use default wavelength grid ?": f"{self.simu.use_default_wl}",
+            },
+            {"wavelength file (if previous parameter is F)": f"{self.file}"},
+            {
+                "separation of different contributions?": f"{self.simu.separate_contrib}",
+                "stokes parameters?": f"{self.simu.separate_pola}",
+            },
+        ]
+
+
+class Grid(AbstractParameterBlock):
+    header = "Grid geometry and size"
+
+    @property
+    def block_lines(self):
+        return [
+            {"1 = cylindrical, 2 = spherical": f"{self.type:>1d}"},
+            {
+                "n_rad (log distribution)": f"{self.n_rad}",
+                "nz (or n_theta)": f"{self.nz}",
+                "n_az": f"{self.n_az}",
+                "n_rad_in": f"{self.n_rad_in}",
+            },
+        ]
+
+
+class Map(AbstractParameterBlock):
+    header = "Maps"
+
+    @property
+    def block_lines(self):
+        return [
+            {
+                "grid (nx)": f"{self.nx}",
+                "grid (ny)": f"{self.ny:d}",
+                "size [au]": f"{self.size:5.1f}",
+            },
+            {
+                "RT: imin": f"{self.RT_imin:<4.1f}",
+                "imax": f"{self.RT_imax:<4.1f}",
+                "n_incl": f"{self.RT_ntheta:>2d}",
+                "centered ?": f"{self.lRT_centered}",
+            },
+            {
+                "RT: az_min": f"{self.RT_az_min:<4.1f}",
+                "az_max": f"{self.RT_az_max:<4.1f}",
+                "n_az": f"{self.RT_n_az:>2d}",
+            },
+            {"distance [pc]": f"{self.distance:<6.2f}"},
+            {"disk PA": f"{self.PA:<6.2f}"},
+        ]
+
+
+class Scattering(AbstractParameterBlock):
+    header = "Scattering method"
+
+    @property
+    def block_lines(self):
+        assert hasattr(self, "simu")
+        return [
+            {"0=auto, 1=grain prop, 2=cell prop": f"{self.simu.scattering_method}"},
+            {
+                "1=Mie, 2=hg (2 implies the loss of polarizarion)": f"{self.simu.phase_function_method}"
+            },
+        ]
+
+
+class Symmetries(AbstractParameterBlock):
+    header = "Symmetries"
+
+    @property
+    def block_lines(self):
+        assert hasattr(self, "simu")
+        return [
+            {"image symmetry": f"{self.simu.image_symmetry}"},
+            {"central symmetry": f"{self.simu.central_symmetry}"},
+            {
+                "axial symmetry (important only if N_phi > 1)": f"{self.simu.axial_symmetry}"
+            },
+        ]
+
+
+class Physics(AbstractParameterBlock):
+    header = "Disk physics"
+
+    @property
+    def block_lines(self):
+        assert hasattr(self, "simu")
+        return [
+            {
+                "dust_settling (0=no settling, 1=parametric, 2=Dubrulle, 3=Fromang)": f"{self.simu.dust_settling_type}",
+                "exp_strat": f"{self.simu.dust_settling_exp:<6.2f}",
+                "a_strat (for parametric settling)": f"{self.simu.a_settling:<6.2f}",
+            },
+            {"dust radial migration": f"{self.simu.radial_migration}"},
+            {"sublimate dust": f"{self.simu.dust_sublimation}"},
+            {"hydrostatic equilibrium": f"{self.simu.hydrostatic_eq}"},
+            {
+                "viscous heating": f"{self.simu.viscous_heating}",
+                "alpha_viscosity": f"{self.simu.viscosity:4.1g}",
+            },
+        ]
+
+
+class Nzone(AbstractParameterBlock):
+    header = "Number of zones"
+
+    @property
+    def block_lines(self):
+        assert hasattr(self, "simu")
+        return [
+            {
+                "1 zone = 1 density structure + corresponding grain properties": f"{self.simu.n_zones}"
+            }
+        ]
 
 
 class Dust:
@@ -26,13 +180,6 @@ class Dust:
 class DustComponent:
     pass
 
-
-class Grid:
-    pass
-
-
-class Map:
-    pass
 
 
 class Zone:
@@ -344,57 +491,48 @@ class Params:
         """ Return a formatted parameter file. Currently returns v3.0 format
         """
 
+        # -- Header --
+        txt = "".join(["3.0", 23*" ", "mcfost version", "\n"])
+
         # -- Photon packets --
-        txt = f"""3.0                       mcfost version\n
-#-- Number of photon packages --
-  {self.phot.nphot_T:<10.5g}              nbr_photons_eq_th  : T computation
-  {self.phot.nphot_SED:<10.5g}              nbr_photons_lambda : SED computation
-  {self.phot.nphot_image:<10.5g}              nbr_photons_image : images computation\n\n"""
+        txt += str(self.phot) + "\n"
 
         # -- Wavelengths --
-        txt += f"""#-- Wavelength --
-  {self.wavelengths.n_wl:<4d} {self.wavelengths.wl_min:<5.1f} {self.wavelengths.wl_max:<7g}      n_lambda, lambda_min, lambda_max [microns]
-  {self.simu.compute_T} {self.simu.compute_SED} {self.simu.use_default_wl}         compute temperature?, compute sed?, use default wavelength grid ?
-  {self.wavelengths.file}            wavelength file (if previous parameter is F)
-  {self.simu.separate_contrib} {self.simu.separate_pola}              separation of different contributions?, stokes parameters?\n\n"""
+        self.wavelengths._link_simu_block(self.simu)
+        txt += str(self.wavelengths) + "\n"
 
         # -- Grid --
-        txt += f"""#-- Grid geometry and size --
-  {self.grid.type:>1d}                       1 = cylindrical, 2 = spherical
-  {self.grid.n_rad} {self.grid.nz} {self.grid.n_az} {self.grid.n_rad_in}             n_rad (log distribution), nz (or n_theta), n_az, n_rad_in\n\n"""
+        txt += str(self.grid) + "\n"
 
         # -- Maps --
-        txt += f"""#-- Maps --
-  {self.map.nx} {self.map.ny} {self.map.size:5.1f}           grid (nx,ny), size [au]
-  {self.map.RT_imin:<4.1f}  {self.map.RT_imax:<4.1f}  {self.map.RT_ntheta:>2d} {self.map.lRT_centered}    RT: imin, imax, n_incl, centered ?
-  {self.map.RT_az_min:<4.1f}  {self.map.RT_az_max:<4.1f}  {self.map.RT_n_az:>2d}          RT: az_min, az_max, n_az
-  {self.map.distance:<6.2f}                  distance (pc)
-  {self.map.PA:<6.2f}                  disk PA\n\n"""
+        txt += str(self.map) + "\n"
 
         # -- Scattering method --
-        txt += f"""#-- Scattering method --
-  {self.simu.scattering_method}                       0=auto, 1=grain prop, 2=cell prop
-  {self.simu.phase_function_method}                       1=Mie, 2=hg (2 implies the loss of polarizarion)\n\n"""
+        self.scattering = Scattering()
+        self.scattering._link_simu_block(self.simu)
+        txt += str(self.scattering) + "\n"
 
         # -- Symetries --
-        txt += f"""#-- Symmetries --
-  {self.simu.image_symmetry}                    image symmetry
-  {self.simu.central_symmetry}                    central symmetry
-  {self.simu.axial_symmetry}                    axial symmetry (important only if N_phi > 1)\n\n"""
+        self.symmetries = Symmetries()
+        self.symmetries._link_simu_block(self.simu)
+        txt += str(self.symmetries) + "\n"
 
         # -- Disk physics --
-        txt += f"""#Disk physics
-  {self.simu.dust_settling_type}  {self.simu.dust_settling_exp:<6.2f}  {self.simu.a_settling:<6.2f}       dust_settling (0=no settling, 1=parametric, 2=Dubrulle, 3=Fromang), exp_strat, a_strat (for parametric settling)
-  {self.simu.radial_migration}                   dust radial migration
-  {self.simu.dust_sublimation}                   sublimate dust
-  {self.simu.hydrostatic_eq}                   hydrostatic equilibrium
-  {self.simu.viscous_heating}  {self.simu.viscosity:4.1g}            viscous heating, alpha_viscosity\n\n"""
+        self.physics = Physics()
+        self.physics._link_simu_block(self.simu)
+        txt += str(self.physics) + "\n"
 
         # -- Number of zones --
-        txt += f"""#-- Number of zones --   1 zone = 1 density structure + corresponding grain properties
-  {self.simu.n_zones}\n\n"""
+        self.n_zone = Nzone()
+        self.n_zone._link_simu_block(self.simu)
+        txt += str(self.n_zone) + "\n"
 
         # -- Density structure --
+        #self.structure = Structure()
+        #self.structure._link_simu_block(self.simu)
+        #txt += str(self.structure) + "\n"
+
+
         txt += f"#-- Density structure --\n"
         for k in range(self.simu.n_zones):
             txt += f"""  {self.zones[k].geometry}                        zone type : 1 = disk, 2 = tapered-edge disk, 3 = envelope, 4 = debris disk, 5 = wall
