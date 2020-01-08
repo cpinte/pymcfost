@@ -609,7 +609,7 @@ class Params:
             for species in zone.dust[:zone.n_species]:
                 blocks.append(GrainSpeciesHeadlines(species))
                 for component in species.component[:species.n_components]:
-                    blocks.append(component) # not sure this would work
+                    blocks.append(component)
                 blocks.append(GrainSpeciesFootlines(species))
             assert all([isinstance(b, AbstractParameterBlock) for b in blocks])
             subsections.append(ParafileSubsection(header=f"{zone.n_species} (Number of species)",
