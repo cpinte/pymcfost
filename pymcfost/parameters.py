@@ -10,7 +10,7 @@ def _word_to_bool(word):
 
 class ParafileSection:
     """writeme"""
-    def __init__(self, blocks: list):
+    def __init__(self, header: str, blocks: list):
         if isinstance(blocks, AbstractParameterBlock):
             # force iterability
             blocks = [blocks]
@@ -18,10 +18,11 @@ class ParafileSection:
         for b in blocks[1:]:
             assert isinstance(b, type(blocks[0]))
 
+        self._header = header
         self._blocks = blocks
 
     def __str__(self):
-        txt = "# -- " + self._blocks[0].__class__.header + " --\n"
+        txt = "# -- " + self._header + " --\n"
         txt += "\n".join([str(b) for b in self._blocks])
         return txt
 
@@ -53,8 +54,6 @@ class AbstractParameterBlock(ABC):
 
 
 class Photons(AbstractParameterBlock):
-    header = "Number of photon packages"
-
     @property
     def lines(self):
         return [
@@ -65,8 +64,6 @@ class Photons(AbstractParameterBlock):
 
 
 class Wavelengths(AbstractParameterBlock):
-    header = "Wavelengths"
-
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -90,8 +87,6 @@ class Wavelengths(AbstractParameterBlock):
 
 
 class Grid(AbstractParameterBlock):
-    header = "Grid geometry and size"
-
     @property
     def lines(self):
         return [
@@ -106,8 +101,6 @@ class Grid(AbstractParameterBlock):
 
 
 class Map(AbstractParameterBlock):
-    header = "Maps"
-
     @property
     def lines(self):
         return [
@@ -133,8 +126,6 @@ class Map(AbstractParameterBlock):
 
 
 class Scattering(AbstractParameterBlock):
-    header = "Scattering method"
-
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -147,8 +138,6 @@ class Scattering(AbstractParameterBlock):
 
 
 class Symmetries(AbstractParameterBlock):
-    header = "Symmetries"
-
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -162,8 +151,6 @@ class Symmetries(AbstractParameterBlock):
 
 
 class Physics(AbstractParameterBlock):
-    header = "Disk physics"
-
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -184,8 +171,6 @@ class Physics(AbstractParameterBlock):
 
 
 class Nzone(AbstractParameterBlock):
-    header = "Number of zones"
-
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -196,7 +181,6 @@ class Nzone(AbstractParameterBlock):
         ]
 
 class Zone(AbstractParameterBlock):
-    header = "Density structure"
     dust = []
 
     @property
@@ -223,11 +207,21 @@ class Zone(AbstractParameterBlock):
 
 class Dust:
     component = []
-    pass
 
 
-class DustComponent:
-    pass
+class DustSpecies(AbstractParameterBlock):
+    """dust species is a particular block... writeme"""
+    @property
+    def lines(self):
+        res = []
+        for comp in self._components: # I don't know how this is supposed to be accessed...
+            res.append(comp.lines)
+    
+class DustComponent(AbstractParameterBlock):
+
+    @property
+    def lines(self):
+        pass
 
 
 
@@ -539,40 +533,41 @@ class Params:
         txt = "".join(["3.0", 23*" ", "mcfost version", "\n"])
 
         # -- Photon packets --
-        txt += str(ParafileSection(blocks=self.phot)) + "\n"
+        txt += str(ParafileSection(header="Number of photon packages", blocks=self.phot)) + "\n"
 
         # -- Wavelengths --
         self.wavelengths._link_simu_block(self.simu)
-        txt += str(ParafileSection(blocks=self.wavelengths)) + "\n"
+        txt += str(ParafileSection(header="Wavelengths", blocks=self.wavelengths)) + "\n"
 
         # -- Grid --
-        txt += str(ParafileSection(blocks=self.grid)) + "\n"
+        txt += str(ParafileSection(header="Grid geometry and size", blocks=self.grid)) + "\n"
 
         # -- Maps --
-        txt += str(ParafileSection(blocks=self.map)) + "\n"
+        txt += str(ParafileSection(header="Maps", blocks=self.map)) + "\n"
 
         # -- Scattering method --
         self.scattering = Scattering()
         self.scattering._link_simu_block(self.simu)
-        txt += str(ParafileSection(blocks=self.scattering)) + "\n"
+        txt += str(ParafileSection(header="Scattering method", blocks=self.scattering)) + "\n"
 
         # -- Symetries --
         self.symmetries = Symmetries()
         self.symmetries._link_simu_block(self.simu)
-        txt += str(ParafileSection(blocks=self.symmetries)) + "\n"
+        txt += str(ParafileSection(header="Symmetries", blocks=self.symmetries)) + "\n"
 
         # -- Disk physics --
         self.physics = Physics()
         self.physics._link_simu_block(self.simu)
-        txt += str(ParafileSection(blocks=self.physics)) + "\n"
+        txt += str(ParafileSection(header="Disk physics", blocks=self.physics)) + "\n"
 
         # -- Number of zones --
         self.n_zone = Nzone()
         self.n_zone._link_simu_block(self.simu)
-        txt += str(ParafileSection(blocks=self.n_zone)) + "\n"
+        txt += str(ParafileSection(header="Number of zones", blocks=self.n_zone)) + "\n"
 
         # -- Density structure --
-        txt += str(ParafileSection(blocks=self.zones[:self.simu.n_zones])) + "\n"
+        blocks = self.zones[:self.simu.n_zones]
+        txt += str(ParafileSection(header="Density structure", blocks=blocks)) + "\n"
 
         # -- Grain properties --
         txt += f"#-- Grain properties --\n"
