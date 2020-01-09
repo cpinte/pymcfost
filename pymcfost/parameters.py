@@ -73,7 +73,7 @@ class Params:
 
     def _read(self):
 
-        with open(self.filename, 'r') as file:
+        with open(self.filename, mode="rt") as file:
             f = []
             # Reading file and removing comments
             for line in file:
@@ -439,8 +439,8 @@ class Params:
 
     def writeto(self, outname):
         """ Write an MCFOST parameter file to disk.  """
-        with open(outname, mode="wt") as outfile:
-            outfile.write(str(self))
+        with open(outname, mode="wt") as file:
+            file.write(str(self))
 
     def calc_inclinations(self):
         # Calculate the inclinations for the ray-traced SEDs and images
