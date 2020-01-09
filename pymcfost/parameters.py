@@ -654,9 +654,9 @@ class Params:
                 for component in species.component[:species.n_components]:
                     blocks.append(component)
                 blocks.append(GrainSpeciesFootlines(species))
-            assert all([isinstance(b, AbstractParameterBlock) for b in blocks])
-            subsections.append(ParafileSubsection(header=f"{zone.n_species} (Number of species)",
-                                              blocks=blocks))
+            subsections.append(
+                ParafileSubsection(header=f"{zone.n_species} (Number of species)", blocks=blocks)
+            )
         txt += str(ParafileSection(header="Grain properties", subsections=subsections)) + "\n"
 
         # -- Molecular settings --
