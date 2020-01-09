@@ -11,7 +11,7 @@ def _word_to_bool(word):
 class ParafileSection:
     """writeme"""
     def __init__(self, header: str, blocks: list = None, subsections: list = None):
-        if isinstance(blocks, AbstractParameterBlock):
+        if isinstance(blocks, ParameterBlock):
             # force iterability in case there is only one block
             blocks = [blocks]
         elif isinstance(subsections, ParafileSubsection):
@@ -38,7 +38,7 @@ class ParafileSubsection(ParafileSection):
         txt += "".join([str(b) for b in self._blocks])
         return txt
 
-class AbstractParameterBlock(ABC):
+class ParameterBlock(ABC):
     """writeme"""
     def __str__(self):
         txt = ""
@@ -64,7 +64,7 @@ class AbstractParameterBlock(ABC):
         pass
 
 
-class Photons(AbstractParameterBlock):
+class Photons(ParameterBlock):
     @property
     def lines(self):
         return [
@@ -74,7 +74,7 @@ class Photons(AbstractParameterBlock):
         ]
 
 
-class Wavelengths(AbstractParameterBlock):
+class Wavelengths(ParameterBlock):
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -97,7 +97,7 @@ class Wavelengths(AbstractParameterBlock):
         ]
 
 
-class Grid(AbstractParameterBlock):
+class Grid(ParameterBlock):
     @property
     def lines(self):
         return [
@@ -111,7 +111,7 @@ class Grid(AbstractParameterBlock):
         ]
 
 
-class Map(AbstractParameterBlock):
+class Map(ParameterBlock):
     @property
     def lines(self):
         return [
@@ -136,7 +136,7 @@ class Map(AbstractParameterBlock):
         ]
 
 
-class Scattering(AbstractParameterBlock):
+class Scattering(ParameterBlock):
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -148,7 +148,7 @@ class Scattering(AbstractParameterBlock):
         ]
 
 
-class Symmetries(AbstractParameterBlock):
+class Symmetries(ParameterBlock):
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -161,7 +161,7 @@ class Symmetries(AbstractParameterBlock):
         ]
 
 
-class Physics(AbstractParameterBlock):
+class Physics(ParameterBlock):
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -181,7 +181,7 @@ class Physics(AbstractParameterBlock):
         ]
 
 
-class Nzone(AbstractParameterBlock):
+class Nzone(ParameterBlock):
     @property
     def lines(self):
         assert hasattr(self, "simu")
@@ -191,7 +191,7 @@ class Nzone(AbstractParameterBlock):
             }
         ]
 
-class Zone(AbstractParameterBlock):
+class Zone(ParameterBlock):
     dust = []
 
     @property
@@ -214,7 +214,7 @@ class Zone(AbstractParameterBlock):
             "-gamma_exp (or alpha_in & alpha_out for debris disk)": f"{self.m_gamma_exp}"}
         ]
 
-class GrainSpeciesHeadlines(AbstractParameterBlock):
+class GrainSpeciesHeadlines(ParameterBlock):
     def __init__(self, species):
         self._species = species
 
@@ -232,7 +232,7 @@ class GrainSpeciesHeadlines(AbstractParameterBlock):
             "Vmax (for DHS)": f"{self.DHS_Vmax}",
         }]
 
-class GrainSpeciesFootlines(AbstractParameterBlock):
+class GrainSpeciesFootlines(ParameterBlock):
     def __init__(self, species):
         self._species = species
 
@@ -251,14 +251,14 @@ class GrainSpeciesFootlines(AbstractParameterBlock):
 class Dust:
     component = []
     
-class DustComponent(AbstractParameterBlock):
+class DustComponent(ParameterBlock):
     @property
     def lines(self):
         return [{"Optical indices file": f"{self.file}",
                  "volume fraction": f"{self.volume_fraction}"}]
 
 
-class StarBlock(AbstractParameterBlock):
+class StarBlock(ParameterBlock):
     def __init__(self, star):
         self._star = star
 
@@ -279,7 +279,7 @@ class StarBlock(AbstractParameterBlock):
                 "slope_UV": f"{self.slope_UV}"}
         ]
 
-class Mol(AbstractParameterBlock):
+class Mol(ParameterBlock):
     molecule = []
 
      # only used for headlines of the section
@@ -293,7 +293,7 @@ class Mol(AbstractParameterBlock):
         {"n_mol": f"{self.n_mol}"}]
 
 
-class Molecule(AbstractParameterBlock):
+class Molecule(ParameterBlock):
     @property
     def lines(self):
         _lines = [{"molecular data filename": f"{self.file}",
