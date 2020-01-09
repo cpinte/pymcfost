@@ -2,6 +2,7 @@ import glob
 import numpy as np
 from abc import ABC, abstractmethod
 
+
 def _word_to_bool(word):
     """convert a string to boolean according the first 2 characters."""
     _accepted_bool_prefixes = ("T", ".T")
@@ -13,6 +14,7 @@ class ParafileSection:
         starting with a header line e.g. "# -- Molecular RT settings --"
         and containing a list of subsections or parameter blocks
     """
+
     def __init__(self, header: str, blocks: list = None, subsections: list = None):
         if isinstance(blocks, ParameterBlock):
             # force iterability in case there is only one block
@@ -32,9 +34,11 @@ class ParafileSection:
             txt += "\n".join([str(b) for b in self._blocks])
         return txt
 
+
 class ParafileSubsection(ParafileSection):
     """A subclass of Parafilesection that prints the header differently"""
-    def __init__(self, header:str, blocks:list):
+
+    def __init__(self, header: str, blocks: list):
         ParafileSection.__init__(self, header=header, blocks=blocks)
 
     def __str__(self):
@@ -42,20 +46,16 @@ class ParafileSubsection(ParafileSection):
         txt += "".join([str(b) for b in self._blocks])
         return txt
 
+
 class ParameterBlock(ABC):
     """An abstract representation of a list of text lines, each representend as a dictionnary
        where keys are comments and values are formatted strings representing 
        the value of a parameter. Any child class must implement the abstractmethod lines()"""
+
     def __str__(self):
         txt = ""
         for line in self.lines:
-            txt += (
-                "  "
-                + "  ".join(line.values()).ljust(44)
-                + "  "
-                + ", ".join(line.keys())
-                + "\n"
-            )
+            txt += "  " + "  ".join(line.values()).ljust(44) + "  " + ", ".join(line.keys()) + "\n"
         return txt
 
     def _link_simu_block(self, simu):
@@ -159,9 +159,7 @@ class Symmetries(ParameterBlock):
         return [
             {"image symmetry": f"{self.simu.image_symmetry}"},
             {"central symmetry": f"{self.simu.central_symmetry}"},
-            {
-                "axial symmetry (important only if N_phi > 1)": f"{self.simu.axial_symmetry}"
-            },
+            {"axial symmetry (important only if N_phi > 1)": f"{self.simu.axial_symmetry}"},
         ]
 
 
@@ -195,28 +193,38 @@ class Nzone(ParameterBlock):
             }
         ]
 
+
 class Zone(ParameterBlock):
     dust = []
 
     @property
     def lines(self):
         return [
-            {"zone type : 1 = disk, 2 = tapered-edge disk, 3 = envelope, 4 = debris disk, 5 = wall": f"{self.geometry}"},
-            {"dust mass": f"{self.dust_mass:<10.2e}",
-            "gas-to-dust mass ratio": f"{self.gas_to_dust_ratio:<5.1f}"},
-            {"scale height": f"{self.h0:<5.1f}",
-            "reference radius [au] (unused for envelope)": f"{self.Rref:<6.1f}",
-            "vertical profile exponent (only for debris disk)": f"{self.vertical_exp:<6.1f}"
+            {
+                "zone type : 1 = disk, 2 = tapered-edge disk, 3 = envelope, 4 = debris disk, 5 = wall": f"{self.geometry}"
             },
-            {"Rin": f"{self.Rin:<6.1f}",
-            "edge": f"{self.edge:<6.1f}",
-            "Rout": f"{self.Rout:<6.1f}",
-            "Rc [AU] - only used for tappered-edge & debris disks (Rout set to 8*Rc if Rout==0)": f"{self.Rc:<6.1f}",
+            {
+                "dust mass": f"{self.dust_mass:<10.2e}",
+                "gas-to-dust mass ratio": f"{self.gas_to_dust_ratio:<5.1f}",
+            },
+            {
+                "scale height": f"{self.h0:<5.1f}",
+                "reference radius [au] (unused for envelope)": f"{self.Rref:<6.1f}",
+                "vertical profile exponent (only for debris disk)": f"{self.vertical_exp:<6.1f}",
+            },
+            {
+                "Rin": f"{self.Rin:<6.1f}",
+                "edge": f"{self.edge:<6.1f}",
+                "Rout": f"{self.Rout:<6.1f}",
+                "Rc [AU] - only used for tappered-edge & debris disks (Rout set to 8*Rc if Rout==0)": f"{self.Rc:<6.1f}",
             },
             {"flaring exponent - unused for envelope": f"{self.flaring_exp:<8.3f}"},
-            {"surface density exponent (or -gamma for tappered-edge disk or volume density for envelope) - usually < 0": f"{self.surface_density_exp}",
-            "-gamma_exp (or alpha_in & alpha_out for debris disk)": f"{self.m_gamma_exp}"}
+            {
+                "surface density exponent (or -gamma for tappered-edge disk or volume density for envelope) - usually < 0": f"{self.surface_density_exp}",
+                "-gamma_exp (or alpha_in & alpha_out for debris disk)": f"{self.m_gamma_exp}",
+            },
         ]
+
 
 class GrainSpeciesHeadlines(ParameterBlock):
     def __init__(self, species):
@@ -227,14 +235,17 @@ class GrainSpeciesHeadlines(ParameterBlock):
 
     @property
     def lines(self):
-        return [{
-            "Grain type (Mie or DHS)": f"Mie",
-            "N_components": f"{self.n_components}",
-            "mixing rule (1 = EMT or 2 = coating)": f"{self.mixing_rule}",
-            "porosity": f"{self.porosity:<5.2f}",
-            "mass fraction": f"{self.mass_fraction:<5.2f}",
-            "Vmax (for DHS)": f"{self.DHS_Vmax}",
-        }]
+        return [
+            {
+                "Grain type (Mie or DHS)": f"Mie",
+                "N_components": f"{self.n_components}",
+                "mixing rule (1 = EMT or 2 = coating)": f"{self.mixing_rule}",
+                "porosity": f"{self.porosity:<5.2f}",
+                "mass fraction": f"{self.mass_fraction:<5.2f}",
+                "Vmax (for DHS)": f"{self.DHS_Vmax}",
+            }
+        ]
+
 
 class GrainSpeciesFootlines(ParameterBlock):
     def __init__(self, species):
@@ -245,21 +256,27 @@ class GrainSpeciesFootlines(ParameterBlock):
 
     @property
     def lines(self):
-        return [{"Heating method : 1 = RE + LTE, 2 = RE + NLTE, 3 = NRE": f"{self.heating_method}"},
-                {"amin": f"{self.amin}",
+        return [
+            {"Heating method : 1 = RE + LTE, 2 = RE + NLTE, 3 = NRE": f"{self.heating_method}"},
+            {
+                "amin": f"{self.amin}",
                 "amax": f"{self.amax}",
                 "aexp": f"{self.aexp}",
-                "nbr_grains": f"{self.n_grains}"
-        }]
+                "nbr_grains": f"{self.n_grains}",
+            },
+        ]
+
 
 class Dust:
     component = []
-    
+
+
 class DustComponent(ParameterBlock):
     @property
     def lines(self):
-        return [{"Optical indices file": f"{self.file}",
-                 "volume fraction": f"{self.volume_fraction}"}]
+        return [
+            {"Optical indices file": f"{self.file}", "volume fraction": f"{self.volume_fraction}"}
+        ]
 
 
 class StarBlock(ParameterBlock):
@@ -271,48 +288,58 @@ class StarBlock(ParameterBlock):
 
     @property
     def lines(self):
-        return [{"Temp": f"{self.Teff}",
+        return [
+            {
+                "Temp": f"{self.Teff}",
                 "radius [solar radius]": f"{self.R}",
                 "M [solar mass]": f"{self.M}",
                 "x": f"{self.x}",
                 "y": f"{self.y}",
                 "z [au]": f"{self.x}",
-                "is a blackbody?": f"{self.is_bb}"},
-                {"": f"{self.file}"},
-                {"fUV": f"{self.fUV}",
-                "slope_UV": f"{self.slope_UV}"}
+                "is a blackbody?": f"{self.is_bb}",
+            },
+            {"": f"{self.file}"},
+            {"fUV": f"{self.fUV}", "slope_UV": f"{self.slope_UV}"},
         ]
+
 
 class Mol(ParameterBlock):
     molecule = []
 
-     # only used for headlines of the section
+    # only used for headlines of the section
     @property
     def lines(self):
-        return [{"lpop": f"{self.compute_pop}",
-        "laccurate_pop": f"{self.compute_pop_accurate}",
-        "LTE": f"{self.LTE}",
-        "profile width": f"{self.profile_width}"},
-        {"v_turb [km/s]": f"{self.v_turb}"},
-        {"n_mol": f"{self.n_mol}"}]
+        return [
+            {
+                "lpop": f"{self.compute_pop}",
+                "laccurate_pop": f"{self.compute_pop_accurate}",
+                "LTE": f"{self.LTE}",
+                "profile width": f"{self.profile_width}",
+            },
+            {"v_turb [km/s]": f"{self.v_turb}"},
+            {"n_mol": f"{self.n_mol}"},
+        ]
 
 
 class Molecule(ParameterBlock):
     @property
     def lines(self):
-        _lines = [{"molecular data filename": f"{self.file}",
-                "level_max": f"{self.level_max}"},
-                {"vmax [km/s]": f"{self.v_max}",
-                "n_speed": f"{self.nv}"},
-                {"cst molecule abundance ?": f"{self.cst_abundance}",
+        _lines = [
+            {"molecular data filename": f"{self.file}", "level_max": f"{self.level_max}"},
+            {"vmax [km/s]": f"{self.v_max}", "n_speed": f"{self.nv}"},
+            {
+                "cst molecule abundance ?": f"{self.cst_abundance}",
                 "abundance": f"{self.abundance}",
-                "abundance file": f"{self.abundance_file}"},
-                {"ray tracing ?": f"{self.ray_tracing}",
-                "number of lines in ray-tracing": f"{self.n_trans}"},
-
+                "abundance file": f"{self.abundance_file}",
+            },
+            {
+                "ray tracing ?": f"{self.ray_tracing}",
+                "number of lines in ray-tracing": f"{self.n_trans}",
+            },
         ]
         _lines.append({"transitions": "  ".join([f"{trans:d}" for trans in self.transitions])})
         return _lines
+
 
 class Star:
     pass
