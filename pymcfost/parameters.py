@@ -1,6 +1,6 @@
 import glob
-import numpy as np
 from abc import ABC, abstractmethod
+import numpy as np
 
 
 def _word_to_bool(word):
