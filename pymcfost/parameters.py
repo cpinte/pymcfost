@@ -279,14 +279,36 @@ class StarBlock(AbstractParameterBlock):
                 "slope_UV": f"{self.slope_UV}"}
         ]
 
-class Mol:
+class Mol(AbstractParameterBlock):
     molecule = []
-    pass
+
+     # only used for headlines of the section
+    @property
+    def lines(self):
+        return [{"lpop": f"{self.compute_pop}",
+        "laccurate_pop": f"{self.compute_pop_accurate}",
+        "LTE": f"{self.LTE}",
+        "profile width": f"{self.profile_width}"},
+        {"v_turb [km/s]": f"{self.v_turb}"},
+        {"n_mol": f"{self.n_mol}"}]
 
 
-class Molecule:
-    pass
+class Molecule(AbstractParameterBlock):
+    @property
+    def lines(self):
+        _lines = [{"molecular data filename": f"{self.file}",
+                "level_max": f"{self.level_max}"},
+                {"vmax [km/s]": f"{self.v_max}",
+                "n_speed": f"{self.nv}"},
+                {"cst molecule abundance ?": f"{self.cst_abundance}",
+                "abundance": f"{self.abundance}",
+                "abundance file": f"{self.abundance_file}"},
+                {"ray tracing ?": f"{self.ray_tracing}",
+                "number of lines in ray-tracing": f"{self.n_trans}"},
 
+        ]
+        _lines.append({"transitions": "  ".join([f"{trans:d}" for trans in self.transitions])})
+        return _lines
 
 class Star:
     pass
@@ -638,26 +660,18 @@ class Params:
         txt += str(ParafileSection(header="Grain properties", subsections=subsections)) + "\n"
 
         # -- Molecular settings --
-        txt += f"""#-- Molecular RT settings --
-  {self.mol.compute_pop}  {self.mol.compute_pop_accurate}  {self.mol.LTE} {self.mol.profile_width}      lpop, laccurate_pop, LTE, profile width
-  {self.mol.v_turb}                        v_turb [km/s]
-  {self.mol.n_mol}                          nmol\n"""
-        for k in range(self.mol.n_mol):
-            txt += f"""  {self.mol.molecule[k].file} {self.mol.molecule[k].level_max}          molecular data filename, level_max
-  {self.mol.molecule[k].v_max} {self.mol.molecule[k].nv}                 vmax (km.s-1), n_speed
-  {self.mol.molecule[k].cst_abundance} {self.mol.molecule[k].abundance} {self.mol.molecule[k].abundance_file}   cst molecule abundance ?, abundance, abundance file
-  {self.mol.molecule[k].ray_tracing}  {self.mol.molecule[k].n_trans}                   ray tracing ?,  number of lines in ray-tracing\n """
-            for j in range(self.mol.molecule[k].n_trans):
-                txt += f" {self.mol.molecule[k].transitions[j]}"
-            txt += f" transition numbers\n"
-        txt += f"\n"
+        blocks = []
+        blocks.append(self.mol)
+        for molecule in self.mol.molecule[:self.mol.n_mol]:
+            blocks.append(molecule)
+        txt += str(ParafileSection(header="Molecular RT settings", blocks=blocks)) + "\n"
 
         # -- Star properties --
         blocks = []
         for star in self.stars[:self.simu.n_stars]:
             blocks.append(StarBlock(star))
         subsection = ParafileSubsection(header=f"{self.simu.n_stars} (Number of stars)", blocks=blocks)
-        txt += str(ParafileSection(header="Star properties", subsections=subsection))
+        txt += str(ParafileSection(header="Star properties", subsections=subsection)) + "\n"
 
 
         return txt
