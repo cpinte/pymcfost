@@ -9,7 +9,10 @@ def _word_to_bool(word):
 
 
 class ParafileSection:
-    """writeme"""
+    """This class represents a section from the parafile,
+        starting with a header line e.g. "# -- Molecular RT settings --"
+        and containing a list of subsections or parameter blocks
+    """
     def __init__(self, header: str, blocks: list = None, subsections: list = None):
         if isinstance(blocks, ParameterBlock):
             # force iterability in case there is only one block
@@ -30,6 +33,7 @@ class ParafileSection:
         return txt
 
 class ParafileSubsection(ParafileSection):
+    """A subclass of Parafilesection that prints the header differently"""
     def __init__(self, header:str, blocks:list):
         ParafileSection.__init__(self, header=header, blocks=blocks)
 
@@ -39,7 +43,9 @@ class ParafileSubsection(ParafileSection):
         return txt
 
 class ParameterBlock(ABC):
-    """writeme"""
+    """An abstract representation of a list of text lines, each representend as a dictionnary
+       where keys are comments and values are formatted strings representing 
+       the value of a parameter. Any child class must implement the abstractmethod lines()"""
     def __str__(self):
         txt = ""
         for line in self.lines:
@@ -58,9 +64,7 @@ class ParameterBlock(ABC):
     @property
     @abstractmethod
     def lines(self):
-        """this method should return a list of lines in a parafile.
-        A line is represented as a dictionnary where keys are comments and
-        values are formatted strings representing the value of a parameter"""
+        """this method should return a list of lines"""
         pass
 
 
