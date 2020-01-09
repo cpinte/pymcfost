@@ -439,9 +439,8 @@ class Params:
 
     def writeto(self, outname):
         """ Write an MCFOST parameter file to disk.  """
-        outfile = open(outname, 'w')
-        outfile.write(str(self))
-        outfile.close()
+        with open(outname, mode="wt") as outfile:
+            outfile.write(str(self))
 
     def calc_inclinations(self):
         # Calculate the inclinations for the ray-traced SEDs and images
