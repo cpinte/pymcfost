@@ -1,21 +1,23 @@
 from pathlib import Path
 import os
 
+import pytest
 from pymcfost import Params
 
 test_dir = Path(__file__).parent
 
+output_dir = test_dir / "artifacts"
+input_dir = test_dir / "corpus"
+corpus = list(input_dir.glob("*.para"))
 
-def test_io_copy():
-    """Read a parafile, write it elsewhere and attempt to read the copy
-    Goal : check that the copy is still valid as an input
-    """
-    input_dir = test_dir / "corpus"
-    output_dir = test_dir / "artifacts"
+
+@pytest.mark.parametrize("parafile", corpus)
+def test_io_copy(parafile):
+    """Read a valid .para file, check that it can still be read and written with no data corruption"""
     os.makedirs(output_dir, exist_ok=True)
-    for parafile in input_dir.glob("*.para"):
-        p = Params(str(parafile))
+    p1 = Params(str(parafile))
+    output_file = str(output_dir / "_".join(["copy", parafile.name]))
+    p1.writeto(output_file)
+    p2 = Params(output_file)
 
-        output_file = str(output_dir / "_".join(["copy", parafile.name]))
-        p.writeto(output_file)
-        p2 = Params(output_file)
+    assert str(p1) == str(p2)
