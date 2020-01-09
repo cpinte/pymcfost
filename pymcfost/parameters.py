@@ -11,10 +11,11 @@ def _word_to_bool(word):
 class ParafileSection:
     """writeme"""
     def __init__(self, header: str, blocks: list = None, subsections: list = None):
-        if blocks is not None:
-            if isinstance(blocks, AbstractParameterBlock):
-                # force iterability in case there is only one block
-                blocks = [blocks]
+        if isinstance(blocks, AbstractParameterBlock):
+            # force iterability in case there is only one block
+            blocks = [blocks]
+        elif isinstance(subsections, ParafileSubsection):
+            subsections = [subsections]
 
         self._header = header
         self._blocks = blocks
@@ -44,7 +45,7 @@ class AbstractParameterBlock(ABC):
         for line in self.lines:
             txt += (
                 "  "
-                + "  ".join(line.values()).ljust(36)
+                + "  ".join(line.values()).ljust(44)
                 + "  "
                 + ", ".join(line.keys())
                 + "\n"
@@ -257,6 +258,26 @@ class DustComponent(AbstractParameterBlock):
                  "volume fraction": f"{self.volume_fraction}"}]
 
 
+class StarBlock(AbstractParameterBlock):
+    def __init__(self, star):
+        self._star = star
+
+    def __getattr__(self, attr):
+        return getattr(self._star, attr)
+
+    @property
+    def lines(self):
+        return [{"Temp": f"{self.Teff}",
+                "radius [solar radius]": f"{self.R}",
+                "M [solar mass]": f"{self.M}",
+                "x": f"{self.x}",
+                "y": f"{self.y}",
+                "z [au]": f"{self.x}",
+                "is a blackbody?": f"{self.is_bb}"},
+                {"": f"{self.file}"},
+                {"fUV": f"{self.fUV}",
+                "slope_UV": f"{self.slope_UV}"}
+        ]
 
 class Mol:
     molecule = []
@@ -632,12 +653,12 @@ class Params:
         txt += f"\n"
 
         # -- Star properties --
-        txt += f"""#-- Star properties --
-  {self.simu.n_stars}  Number of stars\n"""
-        for k in range(self.simu.n_stars):
-            txt += f"""  {self.stars[k].Teff} {self.stars[k].R} {self.stars[k].M} {self.stars[k].x} {self.stars[k].y} {self.stars[k].x} {self.stars[k].is_bb}  Temp, radius (solar radius),M (solar mass),x,y,z (AU), is a blackbody?
-  {self.stars[k].file}
-  {self.stars[k].fUV} {self.stars[k].slope_UV}     fUV, slope_UV\n"""
+        blocks = []
+        for star in self.stars[:self.simu.n_stars]:
+            blocks.append(StarBlock(star))
+        subsection = ParafileSubsection(header=f"{self.simu.n_stars} (Number of stars)", blocks=blocks)
+        txt += str(ParafileSection(header="Star properties", subsections=subsection))
+
 
         return txt
 
