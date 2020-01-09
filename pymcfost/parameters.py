@@ -35,7 +35,7 @@ class ParafileSubsection(ParafileSection):
 
     def __str__(self):
         txt = "  " + self._header + "\n"
-        txt += "  ".join([str(b) for b in self._blocks])
+        txt += "".join([str(b) for b in self._blocks])
         return txt
 
 class AbstractParameterBlock(ABC):
