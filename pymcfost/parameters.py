@@ -1,6 +1,10 @@
 import glob
 import numpy as np
 
+def _word_to_bool(word):
+    """convert a string to boolean according the first 2 characters."""
+    _accepted_bool_prefixes = ("T", ".T")
+    return word.upper().startswith(_accepted_bool_prefixes)
 
 class Photons:
     pass
@@ -108,16 +112,16 @@ class Params:
         self.wavelengths.wl_max = float(line[2])
 
         line = next(f).split()
-        self.simu.compute_T = line[0][0] == "T"
-        self.simu.compute_SED = line[1][0] == "T"
-        self.simu.use_default_wl = line[2][0] == "T"
+        self.simu.compute_T = _word_to_bool(line[0])
+        self.simu.compute_SED = _word_to_bool(line[1])
+        self.simu.use_default_wl = _word_to_bool(line[2])
 
         line = next(f).split()
         self.wavelengths.file = line[0]
 
         line = next(f).split()
-        self.simu.separate_contrib = line[0][0] == "T"
-        self.simu.separate_pola = line[1][0] == "T"
+        self.simu.separate_contrib = _word_to_bool(line[0])
+        self.simu.separate_pola = _word_to_bool(line[1])
 
         # -- Grid --
         line = next(f).split()
@@ -138,7 +142,7 @@ class Params:
         self.map.RT_imin = float(line[0])
         self.map.RT_imax = float(line[1])
         self.map.RT_ntheta = int(line[2])
-        self.map.lRT_centered = line[3][0] == "T"
+        self.map.lRT_centered = _word_to_bool(line[3])
 
         line = next(f).split()
         self.map.RT_az_min = float(line[0])
@@ -160,11 +164,11 @@ class Params:
 
         # -- Symetries --
         line = next(f).split()
-        self.simu.image_symmetry = line[0][0] == "T"
+        self.simu.image_symmetry = _word_to_bool(line[0])
         line = next(f).split()
-        self.simu.central_symmetry = line[0][0] == "T"
+        self.simu.central_symmetry = _word_to_bool(line[0])
         line = next(f).split()
-        self.simu.axial_symmetry = line[0][0] == "T"
+        self.simu.axial_symmetry = _word_to_bool(line[0])
 
         # -- Disk physics --
         line = next(f).split()
@@ -173,16 +177,16 @@ class Params:
         self.simu.a_settling = float(line[2])
 
         line = next(f).split()
-        self.simu.radial_migration = line[0][0] == "True"
+        self.simu.radial_migration = _word_to_bool(line[0])
 
         line = next(f).split()
-        self.simu.dust_sublimation = line[0][0] == "True"
+        self.simu.dust_sublimation = _word_to_bool(line[0])
 
         line = next(f).split()
-        self.simu.hydrostatic_eq = line[0][0] == "True"
+        self.simu.hydrostatic_eq = _word_to_bool(line[0])
 
         line = next(f).split()
-        self.simu.viscous_heating = line[0][0] == "True"
+        self.simu.viscous_heating = _word_to_bool(line[0])
         self.simu.viscosity = float(line[1])
 
         # -- Number of zones --
@@ -258,9 +262,9 @@ class Params:
 
         # -- Molecular settings --
         line = next(f).split()
-        self.mol.compute_pop = line[0][0] == "T"
-        self.mol.compute_pop_accurate = line[1][0] == "T"
-        self.mol.LTE = line[2][0] == "T"
+        self.mol.compute_pop = _word_to_bool(line[0])
+        self.mol.compute_pop_accurate = _word_to_bool(line[1])
+        self.mol.LTE = _word_to_bool(line[2])
         self.mol.profile_width = float(line[3])
 
         line = next(f).split()
@@ -283,12 +287,12 @@ class Params:
             self.mol.molecule[k].nv = int(line[1])
 
             line = next(f).split()
-            self.mol.molecule[k].cst_abundance = line[0][0] == "T"
+            self.mol.molecule[k].cst_abundance = _word_to_bool(line[0])
             self.mol.molecule[k].abundance = line[1]
             self.mol.molecule[k].abundance_file = line[2]
 
             line = next(f).split()
-            self.mol.molecule[k].ray_tracing = line[0][0] == "T"
+            self.mol.molecule[k].ray_tracing = _word_to_bool(line[0])
             nTrans = int(line[1])
             self.mol.molecule[k].n_trans = nTrans
 
@@ -312,7 +316,7 @@ class Params:
             self.stars[k].x = float(line[3])
             self.stars[k].y = float(line[4])
             self.stars[k].z = float(line[5])
-            self.stars[k].is_bb = line[6][0] == "T"
+            self.stars[k].is_bb = _word_to_bool(line[6])
 
             line = next(f).split()
             self.stars[k].file = line[0]
