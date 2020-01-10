@@ -28,3 +28,20 @@ def test_io_copy(parafile):
     assert s3 == s1
     assert s2 == s1
 
+
+@pytest.mark.parametrize(
+    "parafile,expected",
+    [
+        ("ref3.0.para", (False, True, True, True)),
+        ("ref3.0_switch_bools.para", (True, False, False, False)),
+    ],
+)
+def test_bool_parsing(parafile, expected):
+    p = Params(input_dir / parafile)
+    result = (
+        p.simu.radial_migration,
+        p.simu.image_symmetry,
+        p.mol.compute_pop,  # lpop
+        p.stars[0].is_bb,
+    )
+    assert result == expected
