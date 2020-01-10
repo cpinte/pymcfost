@@ -77,7 +77,7 @@ class Params:
 
     def _read(self):
 
-        with open(self.filename, 'r') as file:
+        with open(self.filename, mode="rt") as file:
             f = []
             # Reading file and removing comments
             for line in file:
@@ -445,38 +445,32 @@ class Params:
 
     def writeto(self, outname):
         """ Write an MCFOST parameter file to disk.  """
-        outfile = open(outname, 'w')
-        outfile.write(str(self))
-        outfile.close()
+        with open(outname, mode="wt") as file:
+            file.write(str(self))
 
     def calc_inclinations(self):
         # Calculate the inclinations for the ray-traced SEDs and images
         if self.map.RT_ntheta == 1:
             return self.map.RT_imin
         else:
-            cos_min = np.cos(self.map.RT_imin / 180.0 * np.pi)
-            cos_max = np.cos(self.map.RT_imax / 180.0 * np.pi)
+            cos_min, cos_max = np.cos(np.deg2rad([self.map.RT_imin, self.map.RT_imax]))
             if self.map.lRT_centered:
                 return (
-                    np.arccos(
+                    np.rad2deg(np.arccos(
                         cos_min
                         + (np.arange(self.map.RT_ntheta) + 0.5)
                         / self.map.RT_ntheta
                         * (cos_max - cos_min)
-                    )
-                    / np.pi
-                    * 180.0
+                    ))
                 )
             else:
                 return (
-                    np.arccos(
+                    np.rad2deg(np.arccos(
                         cos_min
                         + (np.arange(self.map.RT_ntheta))
                         / (self.map.RT_ntheta - 1)
                         * (cos_max - cos_min)
-                    )
-                    / np.pi
-                    * 180.0
+                    ))
                 )
 
 
