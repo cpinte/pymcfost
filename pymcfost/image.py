@@ -92,6 +92,7 @@ class Image:
         limit=None,
         limits=None,
         coronagraph=None,
+        rescale_r2 = False,
         clear=False,
         Tb=False,
         telescope_diameter=None,
@@ -240,7 +241,19 @@ class Image:
             if pola_needed:
                 Q[radius_mas < coronagraph] = 0.0
                 U[radius_mas < coronagraph] = 0.0
-
+                
+        # --- Rescale to I * r^2
+        if rescale_r2:
+            halfsize = np.asarray(self.image.shape[-2:]) / 2
+            posx = np.linspace(-halfsize[0], halfsize[0], self.nx)
+            posy = np.linspace(-halfsize[1], halfsize[1], self.ny)
+            meshx, meshy = np.meshgrid(posx, posy)
+            radius_pixel = np.sqrt(meshx ** 2 + meshy ** 2)
+            radius_au = radius_pixel * pix_scale
+            I = I * radius_au**2
+            if pola_needed:
+                raise ValueError('rescale_r2 not implemented for polarisation')
+                
         # --- Selecting image to plot & convolution
         unit = self.unit
         flux_name = type
