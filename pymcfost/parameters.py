@@ -82,7 +82,7 @@ class Params:
             # Reading file and removing comments
             for line in file:
                 # Skipping comments and empty lines
-                if (not line.startswith("#")) and (len(line) > 1):
+                if (not line.startswith("#")) and (len(line.strip()) > 0):
                     f += [line]
             f = iter(f)
 
