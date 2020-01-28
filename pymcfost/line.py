@@ -7,6 +7,7 @@ from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+from . import  plots
 
 try:
     import progressbar
@@ -16,6 +17,307 @@ from scipy import interpolate
 
 from .parameters import Params, find_parameter_file
 from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb
+
+
+class Map:
+    
+    # see Line plot_map for details on each parameter
+    def __init__(self,
+        i, iaz, iTrans, v, iv, insert, substract_cont, moment,
+        psf_FWHM, bpa, plot_beam, axes_unit, conv_method,
+        colorbar, cmap, ax, no_xlabel, no_ylabel, no_xticks,
+        no_yticks, title, limit, limits, Delta_v, shift_dx, shift_dy, plot_stars, bmin, bmaj, line=None):
+        
+        self.i = i
+        self.iaz = iaz
+        self.iTrans = iTrans
+        self.v = v
+        self.iv = iv
+        self.insert = insert
+        self.substract_cont = substract_cont
+        self.moment = moment
+        self.psf_FWHM = psf_FWHM
+        self.bpa = bpa
+        self.plot_beam = plot_beam
+        self.axes_unit = axes_unit
+        self.conv_method = conv_method
+        self.colorbar = colorbar
+        self.cmap = cmap
+        self.ax = ax
+        self.no_xlabel = no_xlabel
+        self.no_ylabel = no_ylabel
+        self.no_xticks = no_xticks
+        self.no_yticks = no_yticks
+        self.title = title
+        self.limit = limit
+        self.limits = limits
+        self.Delta_v = Delta_v
+        self.shift_dx = shift_dx
+        self.shift_dy = shift_dy
+        self.plot_stars = plot_stars 
+               
+        self.im = None
+        self.image = None
+        self.moments = None
+        
+        # instance of Line class
+        self.line = line
+        self.norm = None
+        
+        self.bmin = bmin
+        self.bmaj = bmaj
+
+
+    def get_moment(self, moment):
+        # have to recalculate each time if it is not M0
+        if moment == 0 and self.moment != 0:
+            return self.line.get_moment_map(self, moment)
+        else:
+            return self.moments[moment]
+    
+    def create_colorbar(self, label):
+        if self.colorbar:
+            divider = make_axes_locatable(self.ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cb = plt.colorbar(self.image, cax=cax)
+            cb.set_label(label)
+
+    def create_cb_label(self):
+        formatted_unit = self.line.unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
+        
+        if self.Tb:
+            return "T$_\mathrm{b}$ [K]"
+        elif self.moment == 0:
+            return "Flux [" + formatted_unit + "km.s$^{-1}$]"
+        elif self.moment == 1:
+            return "Velocity [km.s$^{-1}]$"
+        elif self.moment == 2:
+            return "Velocity dispersion [km.s$^{-1}$]"
+        else:
+            return "Flux [" + formatted_unit + "]"
+    
+            
+    def add_beam_stars_vlabels(self, ax, bmin, bmaj, line):
+        # -- Adding velocity
+        have_label = False
+        if self.moment is None and have_label:
+            ax.text(
+                0.5,
+                0.1,
+                f"$\Delta$v={line.velocity[self.iv]:<4.2f}$\,$km/s",
+                horizontalalignment='center',
+                color="white",
+                transform=self.ax.transAxes,
+            )
+
+        # --- Adding beam
+        if self.plot_beam:
+            dx = 0.125
+            dy = 0.125
+            beam = Ellipse(
+                ax.transLimits.inverted().transform((dx, dy)),
+                width=bmin,
+                height=bmaj,
+                angle=self.bpa,
+                fill=True,
+                color="grey",
+            )
+            ax.add_patch(beam)
+
+        #-- Add stars
+        if self.plot_stars: # todo : different units
+            self.show_stars(ax)
+
+    def format_plot(self, ax):
+        if self.limit is not None:
+            self.limits = [-self.limit, self.limit, -self.limit, self.limit]
+
+        if self.limits is not None:
+            ax.set_xlim(self.limits[0], self.limits[1])
+            ax.set_ylim(self.limits[2], self.limits[3])
+
+        if not self.no_xlabel:
+            ax.set_xlabel(self.xlabel)
+        if not self.no_ylabel:
+            ax.set_ylabel(self.ylabel)
+
+        if self.no_xticks:
+            ax.get_xaxis().set_visible(False)
+        if self.no_yticks:
+            ax.get_yaxis().set_visible(False)
+
+        if self.title is not None:
+            ax.set_title(self.title)
+
+    def set_ax(self, ax):
+        self.ax = ax
+            
+    def iv_labels_extent(self, line, axes_unit):
+
+        # -- Selecting channel corresponding to a given velocity
+        if self.v is not None:
+            self.iv = np.abs(line.velocity - self.v).argmin()
+            print("Selecting channel #", self.iv)
+        else:
+            self.iv = None
+        # --- Compute pixel scale and extent of image
+        if axes_unit.lower() == 'arcsec':
+            pix_scale = line.pixelscale
+            self.xlabel = r'$\Delta$ RA ["]'
+            self.ylabel = r'$\Delta$ Dec ["]'
+        elif axes_unit.lower() == 'au':
+            pix_scale = line.pixelscale * line.P.map.distance
+            self.xlabel = 'Distance from star [au]'
+            self.ylabel = 'Distance from star [au]'
+        elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
+            pix_scale = 1
+            self.xlabel = r'$\Delta$ x [pix]'
+            self.ylabel = r'$\Delta$ y [pix]'
+        else:
+            raise ValueError("Unknown unit for axes_units: " + axes_unit)
+        halfsize = np.asarray(line.lines.shape[-2:]) / 2 * pix_scale
+        self.extent = [halfsize[0] - self.shift_dx, -halfsize[0] - self.shift_dx, -halfsize[1] - self.shift_dy, halfsize[1] - self.shift_dy]
+        
+    
+    def i_convolving(self, bmin, bmaj, line):
+        # -- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
+        i_convolve = False
+        self.beam = None
+        if self.psf_FWHM is not None:
+            # in pixels
+            sigma = self.psf_FWHM / line.pixelscale * FWHM_to_sigma
+            self.beam = Gaussian2DKernel(sigma)
+            i_convolve = True
+            bmin = psf_FWHM
+            bmaj = psf_FWHM
+            self.bpa = 0
+            if self.plot_beam is None:
+                self.plot_beam = True
+
+        if bmaj is not None:
+            sigma_x = bmin / line.pixelscale * FWHM_to_sigma  # in pixels
+            sigma_y = bmaj / line.pixelscale * FWHM_to_sigma  # in pixels
+            self.beam = Gaussian2DKernel(sigma_x, sigma_y, self.bpa * np.pi / 180)
+            i_convolve = True
+            if self.plot_beam is None:
+                self.plot_beam = True
+
+        # -- Selecting convolution function
+        if self.conv_method is None:
+            self.conv_method = convolve_fft
+
+        return i_convolve
+            
+    def create_channel_im(self, i_convolve, Tb, line):
+        # individual channel
+        if line.is_casa:
+            cube = line.lines[:, :, :]
+            # im = self.lines[iv+1,:,:])
+        else:
+            cube = line.lines[self.iaz, self.i, self.iTrans, :, :, :]
+            # im = self.lines[i,iaz,iTrans,iv,:,:]
+
+            # -- continuum substraction
+            if self.substract_cont:
+                cube = np.maximum(cube - line.cont[self.iaz, self.i, self.iTrans, np.newaxis, :, :], 0.0)
+
+        # Convolve spectrally
+        if self.Delta_v is not None:
+            print("Spectral convolution at ", self.Delta_v, "km/s")
+            # Creating a Hanning function with 101 points
+            n_window = 101
+            w = np.hanning(n_window)
+
+            # For each pixel, resampling the spectrum between -FWHM to FWHM
+            # then integrating over convolution window
+            v_new = line.velocity[self.iv] + np.linspace(-1, 1, n_window) * self.Delta_v
+            iv_min = int(self.iv - self.Delta_v / line.dv - 1)
+            iv_max = int(self.iv + self.Delta_v / line.dv + 2)
+
+            im = np.zeros([line.nx, line.ny])
+            for j in range(line.ny):
+                for i in range(line.nx):
+                    f = interpolate.interp1d(
+                        line.velocity[iv_min:iv_max], cube[iv_min:iv_max, i, j]
+                    )
+                    im[i, j] = np.average(f(v_new))
+        else:
+            im = cube[self.iv, :, :]
+            
+        # -- Convolve image
+        if i_convolve:
+            im = self.conv_method(im, self.beam)
+            if self.plot_beam is None:
+                self.plot_beam = True
+
+        # -- Conversion to brightness temperature
+        # if Tb:
+#             if line.is_casa:
+#                 im = Jy_to_Tb(im, line.freq[self.iTrans], line.pixelscale)
+#             else:
+#                 im = Wm2_to_Tb(im, line.freq[self.iTrans], line.pixelscale)
+#                 im = np.nan_to_num(im)
+#             print("Max Tb=", np.max(im), "K")
+
+        self.im = im
+            
+    def create_color_scale(self, fmin, fmax, fpeak, color_scale, dynamic_range):
+
+        if fmax is None:
+            fmax = self.im.max()
+            print("max: ", fmax)
+        if fpeak is not None:
+            fmax = self.im.max() * fpeak
+        if fmin is None:
+            fmin = self.im.min()
+            print("min: ", fmin)
+
+        if color_scale is None:
+            color_scale = 'lin'
+        if color_scale == 'log':
+            if fmin <= 0.0:
+                fmin = fmax / dynamic_range
+            self.norm = colors.LogNorm(vmin=fmin, vmax=fmax, clip=True)
+        elif color_scale == 'lin':
+            self.norm = colors.Normalize(vmin=fmin, vmax=fmax, clip=True)
+        elif color_scale == 'sqrt':
+            self.norm = colors.PowerNorm(gamma=1./2., vmin=fmin, vmax=fmax, clip=True)
+        else:
+            raise ValueError("Unknown color scale: " + color_scale)
+            
+            
+    def show_stars(self, ax, which="all"):
+        # add being able to choose colour and style
+        
+        if which not in ["primary", "companion", "binary", "all"]:
+            raise ValueError("invalid stars requested. Must be one of primary, secondary, or all")
+    
+        if self.moment == 0 or self.moment is None:
+                color = "cyan"
+        else:
+            color = "black"
+            
+        x_star = self.line.star_positions[0, self.iaz, self.i, :]
+        y_stars = self.line.star_positions[1, self.iaz, self.i, :]       
+        
+        if which == "all":
+            ax.scatter(x_star, y_stars, color=color, s=10, edgecolors='black', linewidth=0.2, marker='o')  
+            return 
+        
+        if which in ["primary", "binary"]:
+            ax.scatter(x_star[0], y_stars[0], color=color, s=20, edgecolors='black', linewidth=0.2, marker='*')
+            
+        if which in ["companion", "binary"]:
+            ax.scatter(x_star[1], y_stars[1], color=color, s=10, edgecolors='black', linewidth=0.2, marker='o')
+
+
+    def create_plot(self, ax, cmap):
+        # -- Make the plot
+        ax.cla()
+        self.image = ax.imshow(self.im, norm=self.norm, extent=self.extent, origin='lower', cmap=cmap)
+        ax.tick_params(direction='in', length=6, width=1, color='w', top=True, right=True, labelsize=14)
+        ax.set_xticks([-0.5, 0, 0.5])
+        ax.set_yticks([-0.5, 0, 0.5])
 
 
 class Line:
@@ -69,10 +371,6 @@ class Line:
                     self.star_positions = hdu[1].data
                 except:
                     self.star_positions = []
-                try:
-                    self.star_vr = hdu[2].data
-                except:
-                    self.star_vr = []
             else:
                 self.is_casa = False
                 self.cont = hdu[1].data
@@ -84,10 +382,6 @@ class Line:
                     self.star_positions = hdu[5].data
                 except:
                     self.star_positions = []
-                try:
-                    self.star_vr = hdu[6].data
-                except:
-                    self.star_vr = []
 
             self.dv = self.velocity[1] - self.velocity[0]
 
@@ -97,282 +391,101 @@ class Line:
 
     def plot_map(
         self,
-        i=0,
-        iaz=0,
-        iTrans=0,
-        v=None,
-        iv=None,
-        insert=False,
-        substract_cont=False,
-        moment=None,
-        psf_FWHM=None,
-        bmaj=None,
-        bmin=None,
-        bpa=None,
-        plot_beam=None,
-        beam_position=(0.125, 0.125), # fraction of plot width and height
-        axes_unit="arcsec",
-        conv_method=None,
-        fmax=None,
-        fmin=None,
-        fpeak=None,
-        dynamic_range=1e3,
-        color_scale=None,
-        colorbar=True,
-        cmap=None,
-        ax=None,
-        no_xlabel=False,
-        no_ylabel=False,
-        no_xticks=False,
-        no_yticks=False,
-        vlabel_position=(0.5, 0.1), # fraction of plot width and height
-        vlabel_size=10, # size in points
-        title=None,
-        limit=None,
-        limits=None,
-        Tb=False,
-        Delta_v=None,
-        shift_dx=0,
-        shift_dy=0,
-        plot_stars=False,
-        s=5
+        i=0,                        # (int) inclination index
+        iaz=0,                      # (int) azimuth index 
+        iTrans=0,                   # ?
+        v=None,                     # (float) Velocity channel plotted (km/s)
+        iv=None,                    # ?
+        insert=False,               # ?
+        substract_cont=False,       # (bool) subtract continuum from data
+        moment=None,                # (int) moment to be plotted
+        psf_FWHM=None,              # ?
+        bmaj=None,                  # (float) size of beam's major axis (arcseconds)
+        bmin=None,                  # (float) size of beam's minor axis  (arcseconds)
+        bpa=None,                   # (float) beam's position angle (degrees)
+        plot_beam=None,             # (bool) a representation of the beam size will be plotted
+        axes_unit="arcsec",         # (str) unit for axes
+        conv_method=None,           # (?) method of convolving beam
+        fmax=None,                  # (float) maximum value to be shown on plot
+        fmin=None,                  # (float) minimum value to be shown on plot
+        fpeak=None,                 # (float) ?
+        dynamic_range=1e3,          # (float) ?
+        color_scale=None,           # (str) Scale used when plotting data e.g. one of 'lin', 'log', 'sqrt'
+        colorbar=True,              # (bool) is a colorbar displayed next to the plot?
+        cmap=None,                  # (str) color scheme for colormap
+        ax=None,                    # (plt.axis) axis the map will be plotted on
+        no_xlabel=False,            # (bool) no label for the x-axis of the plot
+        no_ylabel=False,            # (bool) no label for the y-axis of the plot
+        no_xticks=False,            # (bool) no ticks along the x-axis of the plot
+        no_yticks=False,            # (bool) no ticks along the y-axis of the plot
+        title=None,                 # (str) set title of the plot
+        limit=None,                 # (int) ?
+        limits=None,                # (List<int>) ?
+        Tb=False,                   # (bool) Use a temperature scale
+        Delta_v=None,               # (float) Uncertainty spread of velocity (km/s)
+        shift_dx=0,                 # ?
+        shift_dy=0,                 # ?
+        plot_stars=False,           # (bool) plot all stars, or no stars
+        subtractor=None             # (Map) pre-calculated map, which is used to take away from this instance
+                                    #       e.g. if we wanted to create a M1 residual plot 
     ):
-        # Todo:
-        # - allow user to change brightness unit : W.m-1, Jy, Tb
-        # - print molecular info (eg CO J=3-2)
-        # - add continnum subtraction
-        # bmin and bamj in arcsec
+        
+        # Puts properties into a wrapper class for later use
+        map = Map(i, iaz, iTrans, v, iv, insert, substract_cont, moment,
+        psf_FWHM, bpa, plot_beam, axes_unit, conv_method,
+        colorbar, cmap, ax, no_xlabel, no_ylabel, no_xticks,
+        no_yticks, title, limit, limits, Delta_v, shift_dx, shift_dy, plot_stars, bmin, bmaj, line=self)
+            
+        self.subtractor = subtractor
+        map.Tb = Tb
 
         if ax is None:
             ax = plt.gca()
-
-        # -- Selecting channel corresponding to a given velocity
-        if v is not None:
-            iv = np.abs(self.velocity - v).argmin()
-            print("Selecting channel #", iv)
-
-        # --- Compute pixel scale and extent of image
-        if axes_unit.lower() == 'arcsec':
-            pix_scale = self.pixelscale
-            xlabel = r'$\Delta$ RA ["]'
-            ylabel = r'$\Delta$ Dec ["]'
-        elif axes_unit.lower() == 'au':
-            pix_scale = self.pixelscale * self.P.map.distance
-            xlabel = 'Distance from star [au]'
-            ylabel = 'Distance from star [au]'
-        elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
-            pix_scale = 1
-            xlabel = r'$\Delta$ x [pix]'
-            ylabel = r'$\Delta$ y [pix]'
-        else:
-            raise ValueError("Unknown unit for axes_units: " + axes_unit)
-        halfsize = np.asarray(self.lines.shape[-2:]) / 2 * pix_scale
-        extent = [halfsize[0]-shift_dx, -halfsize[0]-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
-        self.extent = extent
-
+        
+        map.iv_labels_extent(self, axes_unit)
         # -- set color map
         if cmap is None:
             if moment in [1,9]:
                 cmap = "RdBu_r"
             else:
                 cmap = default_cmap
+                
+        map.cmap = cmap
 
-        # -- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
-        i_convolve = False
-        beam = None
-        if psf_FWHM is not None:
-            # in pixels
-            sigma = psf_FWHM / self.pixelscale * FWHM_to_sigma
-            beam = Gaussian2DKernel(sigma)
-            i_convolve = True
-            bmin = psf_FWHM
-            bmaj = psf_FWHM
-            bpa = 0
-            if plot_beam is None:
-                plot_beam = True
-
-        if bmaj is not None:
-            sigma_x = bmin / self.pixelscale * FWHM_to_sigma  # in pixels
-            sigma_y = bmaj / self.pixelscale * FWHM_to_sigma  # in pixels
-            beam = Gaussian2DKernel(sigma_x, sigma_y, bpa * np.pi / 180)
-            i_convolve = True
-            if plot_beam is None:
-                plot_beam = True
-
-        # -- Selecting convolution function
-        if conv_method is None:
-            conv_method = convolve_fft
+        i_convolve = map.i_convolving(bmin, bmaj, self)
+        
 
         # -- Selection of image to plot
-        if moment is not None:
-            im = self.get_moment_map(
-                i=i,
-                iaz=iaz,
-                iTrans=iTrans,
-                moment=moment,
-                beam=beam,
-                conv_method=conv_method,
-                substract_cont=substract_cont
-            )
+        if moment is not None:            
+            map.im = self.get_moment_map(map, moment)
         else:
-            # individual channel
+            map.create_channel_im(i_convolve, Tb, self)
+        
+        if subtractor is not None:
+            if subtractor.moment != moment:
+                raise ValueError("Subtractor map does not have the correct moment")
+            map.im -= subtractor.im
+                    
+        im = map.im
+        if Tb:
             if self.is_casa:
-                cube = self.lines[:, :, :]
-                # im = self.lines[iv+1,:,:])
+                im = Jy_to_Tb(im, self.freq[map.iTrans], self.pixelscale)
             else:
-                cube = self.lines[iaz, i, iTrans, :, :, :]
-                # im = self.lines[i,iaz,iTrans,iv,:,:]
+                im = Wm2_to_Tb(im, self.freq[map.iTrans], self.pixelscale)
+                im = np.nan_to_num(im)
+            print("Max Tb=", np.max(im), "K")
+            print("Min Tb=", np.min(im), "K")
+        map.im = im
 
-                # -- continuum substraction
-                if substract_cont:
-                    cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
+        map.create_color_scale(fmin, fmax, fpeak, color_scale, dynamic_range)
+        map.create_plot(map.ax, cmap)
+        map.format_plot(map.ax)
+        map.add_beam_stars_vlabels(map.ax, bmin, bmaj, self)
 
-            # Convolve spectrally
-            if Delta_v is not None:
-                print("Spectral convolution at ", Delta_v, "km/s")
-                # Creating a Hanning function with 101 points
-                n_window = 101
-                w = np.hanning(n_window)
-
-                # For each pixel, resampling the spectrum between -FWHM to FWHM
-                # then integrating over convolution window
-                v_new = self.velocity[iv] + np.linspace(-1, 1, n_window) * Delta_v
-
-                iv_min = int(iv - Delta_v / self.dv - 1)
-                iv_max = int(iv + Delta_v / self.dv + 2)
-
-                im = np.zeros([self.nx, self.ny])
-                for j in range(self.ny):
-                    for i in range(self.nx):
-                        f = interpolate.interp1d(
-                            self.velocity[iv_min:iv_max], cube[iv_min:iv_max, i, j]
-                        )
-                        im[i, j] = np.average(f(v_new))
-            else:
-                im = cube[iv, :, :]
-
-            # -- Convolve image
-            if i_convolve:
-                im = conv_method(im, beam)
-                if plot_beam is None:
-                    plot_beam = True
-
-            # -- Conversion to brightness temperature
-            if Tb:
-                if self.is_casa:
-                    im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
-                else:
-                    im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
-                    im = np.nan_to_num(im)
-                print("Max Tb=", np.max(im), "K")
-
-        # --- Plot range and color map`
-        _color_scale = 'lin'
-        if fmax is None:
-            fmax = im.max()
-        if fpeak is not None:
-            fmax = im.max() * fpeak
-        if fmin is None:
-            fmin = im.min()
-
-        if color_scale is None:
-            color_scale = _color_scale
-        if color_scale == 'log':
-            if fmin <= 0.0:
-                fmin = fmax / dynamic_range
-            norm = colors.LogNorm(vmin=fmin, vmax=fmax, clip=True)
-        elif color_scale == 'lin':
-            norm = colors.Normalize(vmin=fmin, vmax=fmax, clip=True)
-        else:
-            raise ValueError("Unknown color scale: " + color_scale)
-
-        # -- Make the plot
-        ax.cla()
-        image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
-
-        if limit is not None:
-            limits = [limit, -limit, -limit, limit]
-
-        if limits is not None:
-            ax.set_xlim(limits[0], limits[1])
-            ax.set_ylim(limits[2], limits[3])
-
-        if not no_xlabel:
-            ax.set_xlabel(xlabel)
-        if not no_ylabel:
-            ax.set_ylabel(ylabel)
-
-        if no_xticks:
-            ax.get_xaxis().set_visible(False)
-        if no_yticks:
-            ax.get_yaxis().set_visible(False)
-
-        if title is not None:
-            ax.set_title(title)
-
-        # -- Color bar
-        unit = self.unit
         if colorbar:
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.05)
-            cb = plt.colorbar(image, cax=cax)
-            formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
-            plt.sca(ax) # we reset the main axis
-
-            if moment == 0:
-                if Tb:
-                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ [K.km.s$^{-1}$]")
-                else:
-                    cb.set_label("Flux [" + formatted_unit + "km.s$^{-1}$]")
-            elif moment == 1:
-                cb.set_label("Velocity [km.s$^{-1}]$")
-            elif moment == 2:
-                cb.set_label("Velocity dispersion [km.s$^{-1}$]")
-            else:
-                if Tb:
-                    cb.set_label("T$_\mathrm{b}$ [K]")
-                else:
-                    cb.set_label("Flux [" + formatted_unit + "]")
-
-        # -- Adding velocity
-        if moment is None:
-            vlabx, vlaby = vlabel_position
-            ax.text(
-                vlabx, vlaby,
-                f"$\Delta$v={self.velocity[iv]:<4.2f}$\,$km/s",
-                horizontalalignment='center',
-                size=vlabel_size,
-                color="white",
-                transform=ax.transAxes,
-            )
-
-        # --- Adding beam
-        if plot_beam:
-            dx, dy = beam_position
-            beam = Ellipse(
-                ax.transLimits.inverted().transform((dx, dy)),
-                width=bmin,
-                height=bmaj,
-                angle=-bpa,
-                fill=True,
-                color="grey",
-            )
-            ax.add_patch(beam)
-
-        #-- Add stars
-        if plot_stars: # todo : must work too with different units than arsec
-            if isinstance(plot_stars,bool):
-                x_stars = self.star_positions[0,iaz,i,:]
-                y_stars = self.star_positions[1,iaz,i,:]
-            else: # int or list of int
-                x_stars = self.star_positions[0,iaz,i,plot_stars]
-                y_stars = self.star_positions[1,iaz,i,plot_stars]
-            ax.scatter(x_stars, y_stars, color="cyan",s=s)
-
-        #-- Saving the last plotted quantity
-        self.last_im = im
-
-        return image
+            map.create_colorbar(map.create_cb_label())
+        
+        return map
 
     def plot_line(
         self,
@@ -408,104 +521,174 @@ class Line:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-    def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
-                       beam=None, conv_method=None,substract_cont=False):
+
+    def convolve_channels(self, cube, beam, conv_method):
+        print("Convolving individual channel maps, this may take a bit of time ....")
+        try:
+            bar = progressbar.ProgressBar(
+                maxval = self.nv,
+                widgets = [
+                    progressbar.Bar('=', '[', ']'),' ', progressbar.Percentage(),
+                ], )
+            bar.start()
+        except:
+            pass
+        for iv in range(self.nv):
+            try:
+                bar.update(iv + 1)
+            except:
+                pass
+            cube[iv, :, :] = conv_method(np.copy(cube[iv, :, :]), beam)
+            M0 = np.sum(cube, axis=0) * self.dv
+        try:
+            bar.finish()
+        except:
+            pass
+        return M0
+    
+    
+    def calc_M0(self, moments, beam, cube, conv_method, original_moment):
+        """ Calcualtes moment 0 """
+        if beam is None:
+            return np.sum(cube, axis=0) * self.dv
+        else:
+            if original_moment == 0:
+                return conv_method(np.sum(cube, axis=0) * self.dv, beam)
+            else:                   
+                return self.convolve_channels(cube, beam, conv_method)
+    
+    def calc_moment(self, moment, beam, cube, conv_method, moments, original_moment):
+        """ Calculates and return an indiviudal moment. Assumes moments needed for each one have already been calculated"""
+    
+        if moment == 0:
+            return self.calc_M0(moments, beam, cube, conv_method, original_moment)
+            
+        elif moment == 1:
+            return np.sum(cube[:, :, :] * self.velocity[:, np.newaxis, np.newaxis], axis=0) * self.dv / moments[0]
+            
+        elif moment == 2:
+            return np.sqrt(np.sum(cube[:, :, :]
+                    * (self.velocity[:, np.newaxis, np.newaxis] - moments[1][np.newaxis, :, :]) ** 2,
+                    axis=0,) * self.dv / moments[0])
+        
+        
+    
+    def calc_moments(self, moment, beam, cube, conv_method, moments):
+        """ Calculates a set of mathematical moments and assigns them to the appropriate index of the moments list"""
+        if moment == 9:
+                return self.velocity[(np.argmax(cube, axis=0))]
+                
+        for i in range(moment + 1):
+            moments[i] = self.calc_moment(i, beam, cube, conv_method, moments, moment)
+
+    def get_moment_map(self, map, moment):
         """
-        This returns the moment maps in physical units, ie:
-         - M1 is the average velocity [km/s]
-         - M2 is the velocity dispersion [km/s]
+        Calculates and returns a moment for a given map, with a predetermined set of properties.
+        Moments calculated are saved within the map for later use.
+    
+        Parameters:
+            map (Map): Container for the properties needed to calculate the moment map
+            moment (int): moment which will be calculated
+    
+        Returns : The moment maps in physical units, ie:
+                - M1 is the average velocity [km/s]
+                - M2 is the velocity dispersion [km/s]
+         
         """
+        map.moment = moment
+        i = map.i
+        iaz = map.iaz
+        iTrans = map.iTrans
+        beam = map.beam
+        conv_method = map.conv_method
+        substract_cont = map.substract_cont
+        
+        # currently does not account for moments greater than M2
+        if map.moments is None:
+            map.moments = [None] * 3
+
+        self.dv = self.velocity[1] - self.velocity[0]
+        
         if self.is_casa:
             cube = np.copy(self.lines[:, :, :])
         else:
             cube = np.copy(self.lines[iaz, i, iTrans, :, :, :])
-
         if substract_cont:
             cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
+        
+        self.calc_moments(moment, beam, cube, conv_method, map.moments)
+        
+        return map.moments[moment]
+                   
+                   
+def plot_contours(map, moment, levels=4, ax=None, specific_values=[], colors='black', linewidths=0.25):    
+    """
+    Overplot contours of a given map and moment onto an axis.
+    
+    Parameters:
+        map (Map): map of data to be plotted
+        moment (int): The moment that will be the source of the contour lines
+        levels (int): How many contour levels will be plotted. This is overridden if specific values are specified
+        ax (plt.axis): The pyplot axis on which the contours will be plotted on. This allows for contours to be placed over an existing plot (e.g. moment 1 contours over an already plotted moment 0)
+                        Defaults to map.ax if no other is specified
+        specific_values (List<int>): Specific contour levels that can be specified to be plotted
+        colors: (str or List<str>): Colors for the contour lines/levels
+        linewidths= (int or List<int>): Line thickness of contour lines/levels
+        
+    Example:
+        If we wanted to plot v=0, v=-1.5 and v=+1.5 of a map onto an axis...
+        plot_contours(map, 1, specific_values=[-1.5, 0, 1.5])
+    """
+    im = map.get_moment(moment)
+    if ax is None:
+        ax = map.ax
+    
+    if len(specific_values) != 0:
+        levels = specific_values
+    
+    ax.contour(im, extent=map.extent, origin='lower', levels=levels, colors=colors, linewidths=linewidths)
+    
 
-        dv = self.velocity[1] - self.velocity[0]
-
-        # Peak flux
-        if moment == 8:
-            return np.max(cube, axis=0)
-
-        # Velocity of the peak
-        if moment == 9:
-            vmax_index = np.argmax(cube, axis=0)
-            M9 = self.velocity[(vmax_index)]
-
-            #print(vmax_index.shape)
-            #
-            ## Extract the maximum and neighboring pixels
-            #print("test1")
-            #f_max = cube[(vmax_index)]
-            #print(f_max.shape)
-            #print("test2")
-            #f_minus = cube[(vmax_index-1)]
-            #print("test3")
-            #f_plus = cube[(vmax_index+1)]
-            #
-            ## Work out the polynomial coefficients
-            #print("test4")
-            #a0 = 13. * f_max / 12. - (f_plus + f_minus) / 24.
-            #print("test5")
-            #a1 = 0.5 * (f_plus - f_minus)
-            #print("test6")
-            #a2 = 0.5 * (f_plus + f_minus - 2*f_max)
-            #
-            ## Compute the maximum of the quadratic
-            #x_max = idx - 0.5 * a1 / a2
-            #y_max = a0 - 0.25 * a1**2 / a2
-            #
-            #M9 = xmax
-
-            return M9
-
-        # Moment 0, 1 and 2
-        if beam is None:
-            M0 = np.sum(cube, axis=0) * dv
-        else:
-            if moment == 0:
-                M0 = np.sum(cube, axis=0) * dv
-                M0 = conv_method(M0, beam)
-            else:  # We need to convolve each channel indidually
-                print("Convolving individual channel maps, this may take a bit of time ....")
-                try:
-                    bar = progressbar.ProgressBar(
-                        maxval=self.nv,
-                        widgets=[
-                            progressbar.Bar('=', '[', ']'),
-                            ' ',
-                            progressbar.Percentage(),
-                        ],
-                    )
-                    bar.start()
-                except:
-                    pass
-                for iv in range(self.nv):
-                    try:
-                        bar.update(iv + 1)
-                    except:
-                        pass
-                    channel = np.copy(cube[iv, :, :])
-                    cube[iv, :, :] = conv_method(channel, beam)
-                    M0 = np.sum(cube, axis=0) * dv
-                try:
-                    bar.finish()
-                except:
-                    pass
-
-        if moment >= 1:
-            M1 = np.sum(cube[:, :, :] * self.velocity[:, np.newaxis, np.newaxis], axis=0) * dv / M0
-
-        if moment == 2:
-            M2 = np.sqrt(np.sum(cube[:, :, :]
-                    * (self.velocity[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
-                    axis=0,) * dv / M0)
-
-        if moment == 0:
-            return M0
-        elif moment == 1:
-            return M1
-        elif moment == 2:
-            return M2
+def replot(ax, map, cmap=None):
+    """ 
+    Allows for an already processed map to be plotted on a different set of axis.
+    This may be done to look at how a plot may look with different cmaps, or to overplot
+    contours or stars.
+    
+    Parameters:
+        ax (plt.axis): axis the map is being plotted onto
+        map (pym.Map): previously processed Map instance (e.g. a map that has already been
+                        used to plot a moment, velocity etc..)
+        cmap (str or Colormap instance): colormap used for the plot
+    """
+    if cmap is None:
+        cmap = map.cmap
+    
+    map.create_plot(ax, cmap)
+    map.format_plot(ax)
+    map.add_beam_stars_vlabels(ax, map.bmin, map.bmaj, map.line)
+    
+    
+def create_colorbar(figure, map, ax, fontsize='18', rotation=270, tick_label_size=16):
+    """
+    Places a colorbar with the fmin and fmax, and the appropriate label sourced from the given map.
+    Ensure fmin/fmax are the same or have been scaled appropriately if using one colorbar for many plots
+    
+    The below will produce a colorbar along the side of a group of subplots, with the fmin and fmax values
+    specified in the m1_map, as well as the appropriate label from it.
+    
+        fig, allAxes = plt.subplots(....)
+        ...
+        m1_map = data.plot_map(...ax=allAxes[j][i]...)
+        ...
+        create_colorbar(fig, m1_map, allAxes)
+        
+    Returns a colorbar instance
+    """
+    cb = figure.colorbar(map.image, ax=ax, orientation='vertical')
+    label = map.create_cb_label()
+    cb.set_label(label, fontsize=fontsize, rotation=rotation, labelpad=30)
+    cb.ax.tick_params(labelsize=tick_label_size) 
+    
+    return cb
+    
