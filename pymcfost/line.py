@@ -70,7 +70,7 @@ class Map:
 
     def get_moment(self, moment):
         # have to recalculate each time if it is not M0
-        if moment == 0 and self.moment != 0:
+        if (moment == 0 and self.moment != 0) or self.moments[moment] is None:
             return self.line.get_moment_map(self, moment)
         else:
             return self.moments[moment]
@@ -84,7 +84,6 @@ class Map:
 
     def create_cb_label(self):
         formatted_unit = self.line.unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
-        
         if self.Tb:
             return "T$_\mathrm{b}$ [K]"
         elif self.moment == 0:
@@ -128,7 +127,15 @@ class Map:
         if self.plot_stars: # todo : different units
             self.show_stars(ax)
 
-    def format_plot(self, ax):
+    def format_plot(self, ax, no_xlabel=None, no_ylabel=None, title=None):
+        
+        if no_xlabel is None:
+            no_xlabel = self.no_xlabel
+        if no_ylabel is None:
+            no_ylabel = self.no_ylabel
+        if title is None:
+            title = self.title
+    
         if self.limit is not None:
             self.limits = [-self.limit, self.limit, -self.limit, self.limit]
 
@@ -136,9 +143,9 @@ class Map:
             ax.set_xlim(self.limits[0], self.limits[1])
             ax.set_ylim(self.limits[2], self.limits[3])
 
-        if not self.no_xlabel:
+        if not no_xlabel:
             ax.set_xlabel(self.xlabel)
-        if not self.no_ylabel:
+        if not no_ylabel:
             ax.set_ylabel(self.ylabel)
 
         if self.no_xticks:
@@ -146,8 +153,8 @@ class Map:
         if self.no_yticks:
             ax.get_yaxis().set_visible(False)
 
-        if self.title is not None:
-            ax.set_title(self.title)
+        if title is not None:
+            ax.set_title(title)
 
     def set_ax(self, ax):
         self.ax = ax
@@ -292,18 +299,20 @@ class Map:
         if which not in ["primary", "companion", "binary", "all"]:
             raise ValueError("invalid stars requested. Must be one of primary, secondary, or all")
     
-        if self.moment == 0 or self.moment is None:
+        if self.moment is None or self.moment != 1:
                 color = "cyan"
         else:
             color = "black"
             
         x_star = self.line.star_positions[0, self.iaz, self.i, :]
-        y_stars = self.line.star_positions[1, self.iaz, self.i, :]       
-        
-        if which == "all":
+        y_stars = self.line.star_positions[1, self.iaz, self.i, :]      
+
+        if len(x_star) == 2:
+            which = "binary"
+        elif which == "all":
             ax.scatter(x_star, y_stars, color=color, s=10, edgecolors='black', linewidth=0.2, marker='o')  
             return 
-        
+
         if which in ["primary", "binary"]:
             ax.scatter(x_star[0], y_stars[0], color=color, s=20, edgecolors='black', linewidth=0.2, marker='*')
             
@@ -595,7 +604,6 @@ class Line:
                 - M2 is the velocity dispersion [km/s]
          
         """
-        map.moment = moment
         i = map.i
         iaz = map.iaz
         iTrans = map.iTrans
@@ -617,7 +625,7 @@ class Line:
             cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
         
         self.calc_moments(moment, beam, cube, conv_method, map.moments)
-        
+
         return map.moments[moment]
                    
                    
@@ -631,7 +639,7 @@ def plot_contours(map, moment, levels=4, ax=None, specific_values=[], colors='bl
         levels (int): How many contour levels will be plotted. This is overridden if specific values are specified
         ax (plt.axis): The pyplot axis on which the contours will be plotted on. This allows for contours to be placed over an existing plot (e.g. moment 1 contours over an already plotted moment 0)
                         Defaults to map.ax if no other is specified
-        specific_values (List<int>): Specific contour levels that can be specified to be plotted
+        specific_values (List<int>): Specific contour levels that can be specified to be plotted. Must be in ascending order
         colors: (str or List<str>): Colors for the contour lines/levels
         linewidths= (int or List<int>): Line thickness of contour lines/levels
         
@@ -649,7 +657,7 @@ def plot_contours(map, moment, levels=4, ax=None, specific_values=[], colors='bl
     ax.contour(im, extent=map.extent, origin='lower', levels=levels, colors=colors, linewidths=linewidths)
     
 
-def replot(ax, map, cmap=None):
+def replot(ax, map, no_xlabel=None, no_ylabel=None, title=None, cmap=None):
     """ 
     Allows for an already processed map to be plotted on a different set of axis.
     This may be done to look at how a plot may look with different cmaps, or to overplot
@@ -665,7 +673,7 @@ def replot(ax, map, cmap=None):
         cmap = map.cmap
     
     map.create_plot(ax, cmap)
-    map.format_plot(ax)
+    map.format_plot(ax, no_xlabel, no_ylabel, title)
     map.add_beam_stars_vlabels(ax, map.bmin, map.bmaj, map.line)
     
     
