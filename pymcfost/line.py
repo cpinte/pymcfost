@@ -135,7 +135,8 @@ class Line:
         shift_dx=0,
         shift_dy=0,
         plot_stars=False,
-        s=5
+        sink_particle_size=6,
+        sink_particle_color="cyan"
     ):
         # Todo:
         # - allow user to change brightness unit : W.m-1, Jy, Tb
@@ -367,7 +368,7 @@ class Line:
             else: # int or list of int
                 x_stars = self.star_positions[0,iaz,i,plot_stars]
                 y_stars = self.star_positions[1,iaz,i,plot_stars]
-            ax.scatter(x_stars, y_stars, color="cyan",s=s)
+            ax.scatter(x_stars, y_stars, color=sink_particle_color,s=sink_particle_size)
 
         #-- Saving the last plotted quantity
         self.last_im = im
