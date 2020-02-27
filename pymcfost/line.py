@@ -328,7 +328,6 @@ class Map:
         ax.set_xticks([-0.5, 0, 0.5])
         ax.set_yticks([-0.5, 0, 0.5])
 
-
 class Line:
 
     _line_file = "lines.fits.gz"
