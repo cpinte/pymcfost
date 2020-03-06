@@ -399,7 +399,7 @@ class Params:
         for k in range(self.simu.n_zones):
             txt += f"""  {self.zones[k].geometry}                        zone type : 1 = disk, 2 = tapered-edge disk, 3 = envelope, 4 = debris disk, 5 = wall
   {self.zones[k].dust_mass:<10.2e} {self.zones[k].gas_to_dust_ratio:<5.1f}         dust mass,  gas-to-dust mass ratio
-  {self.zones[k].h0:<5.1f}  {self.zones[k].Rref:<6.1f} {self.zones[k].vertical_exp:<6.1f}     scale height, reference radius (AU), unused for envelope, vertical profile exponent (only for debris disk)
+  {self.zones[k].h0:<5.1e}  {self.zones[k].Rref:<6.1f} {self.zones[k].vertical_exp:<6.1f}     scale height, reference radius (AU), unused for envelope, vertical profile exponent (only for debris disk)
   {self.zones[k].Rin:<6.1f}  {self.zones[k].edge:<6.1f} {self.zones[k].Rout:<6.1f} {self.zones[k].Rc:<6.1f}  Rin, edge, Rout, Rc (AU) Rc is only used for tappered-edge & debris disks (Rout set to 8*Rc if Rout==0)
   {self.zones[k].flaring_exp:<8.3f}                 flaring exponent, unused for envelope
   {self.zones[k].surface_density_exp} {self.zones[k].m_gamma_exp}                 surface density exponent (or -gamma for tappered-edge disk or volume density for envelope), usually < 0, -gamma_exp (or alpha_in & alpha_out for debris disk)\n\n"""
