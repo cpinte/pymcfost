@@ -233,8 +233,10 @@ class Image:
         # --- Coronagraph: in mas
         if coronagraph is not None:
             halfsize = np.asarray(self.image.shape[-2:]) / 2
-            posx = np.linspace(-halfsize[0], halfsize[0], self.nx)
-            posy = np.linspace(-halfsize[1], halfsize[1], self.ny)
+            posx = np.linspace(-halfsize[0]+shift_dx/pix_scale,
+                                halfsize[0]+shift_dx/pix_scale, self.nx)
+            posy = np.linspace(-halfsize[1]-shift_dy/pix_scale,
+                                halfsize[1]-shift_dy/pix_scale, self.ny)
             meshx, meshy = np.meshgrid(posx, posy)
             radius_pixel = np.sqrt(meshx ** 2 + meshy ** 2)
             radius_mas = radius_pixel * pix_scale * 1000
@@ -246,8 +248,10 @@ class Image:
         # --- Rescale to I * r^2
         if rescale_r2:
             halfsize = np.asarray(self.image.shape[-2:]) / 2
-            posx = np.linspace(-halfsize[0], halfsize[0], self.nx)
-            posy = np.linspace(-halfsize[1], halfsize[1], self.ny)
+            posx = np.linspace(-halfsize[0]+shift_dx/pix_scale,
+                                halfsize[0]+shift_dx/pix_scale, self.nx)
+            posy = np.linspace(-halfsize[1]-shift_dy/pix_scale,
+                                halfsize[1]-shift_dy/pix_scale, self.ny)
             meshx, meshy = np.meshgrid(posx, posy)
             radius_pixel2 = meshx**2 + meshy**2
             I = I * radius_pixel2
@@ -446,7 +450,8 @@ class Image:
             else: # int or list of int
                 x_stars = self.star_positions[0,iaz,i,plot_stars]
                 y_stars = self.star_positions[1,iaz,i,plot_stars]
-            ax.scatter(x_stars, y_stars, color=sink_particle_color,s=sink_particle_size)
+            ax.scatter(x_stars-shift_dx, y_stars-shift_dy,
+                        color=sink_particle_color,s=sink_particle_size)
 
         #-- Saving the last plotted quantity
         self.last_im = im
