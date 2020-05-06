@@ -80,6 +80,7 @@ class Image:
         bmin=None,
         bpa=None,
         plot_beam=None,
+        beam_position=(0.125, 0.125), # fraction of plot width and height
         conv_method=None,
         mask=None,
         cmap=None,
@@ -161,7 +162,7 @@ class Image:
             print(psf_FWHM)
 
         if psf_FWHM is not None:
-            print("test")
+            #print("test")
             # sigma in pixels
             sigma = psf_FWHM / (self.pixelscale * 2*np.sqrt(2*np.log(2)))
             beam = Gaussian2DKernel(sigma)
@@ -417,8 +418,7 @@ class Image:
 
         # --- Adding beam
         if plot_beam:
-            dx = 0.125
-            dy = 0.125
+            dx, dy = beam_position
             beam = Ellipse(
                 ax.transLimits.inverted().transform((dx, dy)),
                 width=bmin,
