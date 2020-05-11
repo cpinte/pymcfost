@@ -440,12 +440,13 @@ class Image:
 
         #-- Add stars
         if plot_stars:
+            factor = pix_scale / self.pixelscale
             if isinstance(plot_stars,bool):
-                x_stars = self.star_positions[0,iaz,i,:]
-                y_stars = self.star_positions[1,iaz,i,:]
+                x_stars = self.star_positions[0,iaz,i,:] * factor
+                y_stars = self.star_positions[1,iaz,i,:] * factor
             else: # int or list of int
-                x_stars = self.star_positions[0,iaz,i,plot_stars]
-                y_stars = self.star_positions[1,iaz,i,plot_stars]
+                x_stars = self.star_positions[0,iaz,i,plot_stars] * factor
+                y_stars = self.star_positions[1,iaz,i,plot_stars] * factor
             ax.scatter(x_stars, y_stars, color=sink_particle_color,s=sink_particle_size)
 
         #-- Saving the last plotted quantity
