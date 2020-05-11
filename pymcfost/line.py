@@ -369,7 +369,8 @@ class Line:
             else: # int or list of int
                 x_stars = self.star_positions[0,iaz,i,plot_stars] * factor
                 y_stars = self.star_positions[1,iaz,i,plot_stars] * factor
-            ax.scatter(x_stars, y_stars, color=sink_particle_color,s=sink_particle_size)
+            ax.scatter(x_stars-shift_dx, y_stars-shift_dy,
+                        color=sink_particle_color,s=sink_particle_size)
 
         #-- Saving the last plotted quantity
         self.last_im = im
