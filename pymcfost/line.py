@@ -73,6 +73,10 @@ class Line:
                     self.star_vr = hdu[2].data
                 except:
                     self.star_vr = []
+                try:
+                    self.star_properties = hdu[3].data
+                except:
+                    self.star_properties = []
             else:
                 self.is_casa = False
                 self.cont = hdu[1].data

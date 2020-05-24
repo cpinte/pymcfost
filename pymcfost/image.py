@@ -56,6 +56,10 @@ class Image:
                 self.star_vr = hdu[2].data
             except:
                 self.star_vr = []
+            try:
+                self.star_properties = hdu[3].data
+            except:
+                self.star_properties = []
             hdu.close()
         except OSError:
             print('cannot open', self._RT_file)
