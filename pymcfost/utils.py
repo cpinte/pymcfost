@@ -159,3 +159,74 @@ class DustExtinction:
         tau_V = 0.4 * np.log(10.0) * Av
 
         return np.exp(-tau_V * kext)
+
+
+def Hill_radius():
+    pass
+    #d * (Mplanet/3*Mstar)**(2./3)
+
+
+def splash2mcfost(anglex, angley, angle):
+    #Convert the splash angles to mcfost angles
+
+    # Base unit vector
+    x0 = [1,0,0]
+    y0 = [0,1,0]
+    z0 = [0,0,1]
+
+    # Splash rotated vectors
+    x = mcfost.utils.rotate_splash(x0,thetax,thetay,thetaz)
+    y = mcfost.utils.rotate_splash(y0,thetax,thetay,thetaz)
+    z = mcfost.utils.rotate_splash(z0,thetax,thetay,thetaz)
+
+    # MCFOST angles
+    mcfost_i = np.arccos(np.dot(z,z0)) * 180./np.pi
+    # angle du vecteur z dans le plan (-y0,x0)
+    mcfost_az = np.arctan2(z[0],-z[1]) * 180./np.pi
+    # angle du vecteur z0 dans le plan x_image, y_image (orientation astro + 90deg)
+    mcfost_PA = -np.arctan2(np.dot(x,z0), np.dot(y,z0)) * 180./np.pi
+
+
+    print("thetax =",thetax, "thetay=", thetay, "thetaz=", thetaz,"\n")
+    print("Direction to oberver=",z)
+    print("x-image=",x)
+    print("y_image = ", y,"\n")
+    print("MCFOST parameters :")
+    print("inclination =", mcfost_i)
+    print("azimuth =", mcfost_az)
+    print("PA =", mcfost_PA)
+
+    return
+
+def _rotate_splash(xyz, anglex, angley, anglez):
+    # Defines rotations as in splash
+
+    x = xyz[0]
+    y = xyz[1]
+    z = xyz[2]
+
+    # rotate about z
+    if np.abs(anglez) > 1e-30:
+        r = np.sqrt(x**2+y**2)
+        phi = np.arctan2(y,x)
+        phi -= anglez/180*np.pi
+        x = r*np.cos(phi)
+        y = r*np.sin(phi)
+
+    # rotate about y
+    if np.abs(angley) > 1e-30:
+        r = np.sqrt(z**2+x**2)
+        phi = np.arctan2(z,x)
+        phi -= angley/180*np.pi
+        x = r*np.cos(phi)
+        z = r*np.sin(phi)
+
+    # rotate about x
+    if np.abs(anglex) > 1e-30:
+        r = np.sqrt(y**2+z**2)
+        phi = np.arctan2(z,y)
+        phi -= anglex/180*np.pi
+        y = r*np.cos(phi)
+        z = r*np.sin(phi)
+
+    return np.array([x,y,z])
