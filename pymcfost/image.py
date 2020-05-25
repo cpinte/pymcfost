@@ -56,6 +56,10 @@ class Image:
                 self.star_vr = hdu[2].data
             except:
                 self.star_vr = []
+            try:
+                self.star_properties = hdu[3].data
+            except:
+                self.star_properties = []
             hdu.close()
         except OSError:
             print('cannot open', self._RT_file)
@@ -444,12 +448,13 @@ class Image:
 
         #-- Add stars
         if plot_stars:
+            factor = pix_scale / self.pixelscale
             if isinstance(plot_stars,bool):
-                x_stars = self.star_positions[0,iaz,i,:]
-                y_stars = self.star_positions[1,iaz,i,:]
+                x_stars = self.star_positions[0,iaz,i,:] * factor
+                y_stars = self.star_positions[1,iaz,i,:] * factor
             else: # int or list of int
-                x_stars = self.star_positions[0,iaz,i,plot_stars]
-                y_stars = self.star_positions[1,iaz,i,plot_stars]
+                x_stars = self.star_positions[0,iaz,i,plot_stars] * factor
+                y_stars = self.star_positions[1,iaz,i,plot_stars] * factor
             ax.scatter(x_stars-shift_dx, y_stars-shift_dy,
                         color=sink_particle_color,s=sink_particle_size)
 
