@@ -243,10 +243,10 @@ class Line:
                     im = Wm2_to_Jy(im, self.freq[iTrans]) * 1e3
                     unit = unit.replace("W.m-2", "mJy")
             # -- Conversion to flux per arcsec2 or per beam
-            if per_arcsec2:
+            if per_arcsec2 and (moment == 0 or moment ==8):
                 im = im / self.pixelscale**2
                 unit = unit.replace("pixel-1", "arcsec-2")
-            if per_beam:
+            if per_beam and (moment == 0 or moment ==8):
                 im = im / self.pixelscale**2 * bmin * bmaj
                 unit = unit.replace("pixel-1", "beam-1")
         else:
