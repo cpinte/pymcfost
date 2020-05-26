@@ -175,19 +175,19 @@ def splash2mcfost(anglex, angley, angle):
     z0 = [0,0,1]
 
     # Splash rotated vectors
-    x = mcfost.utils.rotate_splash(x0,thetax,thetay,thetaz)
-    y = mcfost.utils.rotate_splash(y0,thetax,thetay,thetaz)
-    z = mcfost.utils.rotate_splash(z0,thetax,thetay,thetaz)
+    x = mcfost.utils.rotate_splash(x0,-anglex,-angley,-anglez)
+    y = mcfost.utils.rotate_splash(y0,-anglex,-angley,-anglez)
+    z = mcfost.utils.rotate_splash(z0,-anglex,-angley,-anglez)
 
     # MCFOST angles
     mcfost_i = np.arccos(np.dot(z,z0)) * 180./np.pi
     # angle du vecteur z dans le plan (-y0,x0)
     mcfost_az = np.arctan2(z[0],-z[1]) * 180./np.pi
     # angle du vecteur z0 dans le plan x_image, y_image (orientation astro + 90deg)
-    mcfost_PA = -np.arctan2(np.dot(x,z0), np.dot(y,z0)) * 180./np.pi
+    mcfost_PA = -np.arctan2(np.dot(x,z0), np.dot(y,z0)) * 180./np.pi - 90
 
 
-    print("thetax =",thetax, "thetay=", thetay, "thetaz=", thetaz,"\n")
+    print("anglex =",anglex, "angley=", angley, "anglez=", anglez,"\n")
     print("Direction to oberver=",z)
     print("x-image=",x)
     print("y_image = ", y,"\n")
