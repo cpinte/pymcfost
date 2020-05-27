@@ -15,7 +15,7 @@ except ImportError:
 from scipy import interpolate
 
 from .parameters import Params, find_parameter_file
-from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb
+from .utils import *
 
 
 class Line:
@@ -135,6 +135,10 @@ class Line:
         limit=None,
         limits=None,
         Tb=False,
+        Jy=False,
+        mJy=False,
+        per_arcsec2=False,
+        per_beam=False,
         Delta_v=None,
         shift_dx=0,
         shift_dy=0,
@@ -143,10 +147,10 @@ class Line:
         sink_particle_color="cyan"
     ):
         # Todo:
-        # - allow user to change brightness unit : W.m-1, Jy, Tb
+        # - allow user to change brightness unit : W.m-1, Jy, Tb => NOW DONE
         # - print molecular info (eg CO J=3-2)
-        # - add continnum subtraction
-        # bmin and bamj in arcsec
+        # - add continnum subtraction => ALREADY THERE
+        # bmin and bamj in arcsec => ALREADY THERE
 
         if ax is None:
             ax = plt.gca()
@@ -181,6 +185,7 @@ class Line:
                 cmap = "RdBu_r"
             else:
                 cmap = default_cmap
+        unit = self.unit
 
         # -- beam or psf : psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
@@ -219,6 +224,31 @@ class Line:
                 conv_method=conv_method,
                 substract_cont=substract_cont
             )
+            # -- Conversion to brightness temperature
+            if Tb and (moment == 0 or moment ==8):
+                if self.is_casa:
+                    im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
+                else:
+                    im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
+                    im = np.nan_to_num(im)
+                    print("Max Tb=", np.max(im), "K")
+            # -- Conversion to Jy
+            if Jy and (moment == 0 or moment ==8):
+                if not self.is_casa:
+                    im = Wm2_to_Jy(im, self.freq[iTrans])
+                    unit = unit.replace("W.m-2", "Jy")
+            # -- Conversion to mJy
+            if mJy and (moment == 0 or moment ==8):
+                if not self.is_casa:
+                    im = Wm2_to_Jy(im, self.freq[iTrans]) * 1e3
+                    unit = unit.replace("W.m-2", "mJy")
+            # -- Conversion to flux per arcsec2 or per beam
+            if per_arcsec2 and (moment == 0 or moment ==8):
+                im = im / self.pixelscale**2
+                unit = unit.replace("pixel-1", "arcsec-2")
+            if per_beam and (moment == 0 or moment ==8):
+                im = im / self.pixelscale**2 * bmin * bmaj
+                unit = unit.replace("pixel-1", "beam-1")
         else:
             # individual channel
             if self.is_casa:
@@ -316,7 +346,6 @@ class Line:
             ax.set_title(title)
 
         # -- Color bar
-        unit = self.unit
         if colorbar:
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="5%", pad=0.05)
@@ -328,7 +357,7 @@ class Line:
                 if Tb:
                     cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ [K.km.s$^{-1}$]")
                 else:
-                    cb.set_label("Flux [" + formatted_unit + "km.s$^{-1}$]")
+                    cb.set_label("Flux [" + formatted_unit + ".km.s$^{-1}$]")
             elif moment == 1:
                 cb.set_label("Velocity [km.s$^{-1}]$")
             elif moment == 2:
