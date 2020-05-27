@@ -15,7 +15,7 @@ except ImportError:
 from scipy import interpolate
 
 from .parameters import Params, find_parameter_file
-from .utils import *
+from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy
 
 
 class Line:
@@ -147,10 +147,7 @@ class Line:
         sink_particle_color="cyan"
     ):
         # Todo:
-        # - allow user to change brightness unit : W.m-1, Jy, Tb => NOW DONE
         # - print molecular info (eg CO J=3-2)
-        # - add continnum subtraction => ALREADY THERE
-        # bmin and bamj in arcsec => ALREADY THERE
 
         if ax is None:
             ax = plt.gca()
@@ -225,28 +222,31 @@ class Line:
                 substract_cont=substract_cont
             )
             # -- Conversion to brightness temperature
-            if Tb and (moment == 0 or moment ==8):
+            if Tb :
                 if self.is_casa:
                     im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
                 else:
                     im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
                     im = np.nan_to_num(im)
                     print("Max Tb=", np.max(im), "K")
+
             # -- Conversion to Jy
-            if Jy and (moment == 0 or moment ==8):
+            if Jy:
                 if not self.is_casa:
                     im = Wm2_to_Jy(im, self.freq[iTrans])
                     unit = unit.replace("W.m-2", "Jy")
+
             # -- Conversion to mJy
-            if mJy and (moment == 0 or moment ==8):
+            if mJy:
                 if not self.is_casa:
                     im = Wm2_to_Jy(im, self.freq[iTrans]) * 1e3
                     unit = unit.replace("W.m-2", "mJy")
+
             # -- Conversion to flux per arcsec2 or per beam
-            if per_arcsec2 and (moment == 0 or moment ==8):
+            if per_arcsec2:
                 im = im / self.pixelscale**2
                 unit = unit.replace("pixel-1", "arcsec-2")
-            if per_beam and (moment == 0 or moment ==8):
+            if per_beam:
                 im = im / self.pixelscale**2 * bmin * bmaj
                 unit = unit.replace("pixel-1", "beam-1")
         else:
