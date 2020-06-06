@@ -102,6 +102,7 @@ class Image:
         Tb=False,
         telescope_diameter=None,
         Jy=False,
+        mJy=False,
         per_arcsec2=False,
         per_beam=False,
         shift_dx=0,
@@ -235,6 +236,11 @@ class Image:
             if not self.is_casa:
                 I = Wm2_to_Jy(I, self.freq)
 
+        # -- Conversion to mJy
+        if mJy:
+            if not self.is_casa:
+                I = Wm2_to_Jy(I, self.freq) * 1e3
+
         # --- Coronagraph: in mas
         if coronagraph is not None:
             halfsize = np.asarray(self.image.shape[-2:]) / 2
@@ -260,7 +266,19 @@ class Image:
             meshx, meshy = np.meshgrid(posx, posy)
             radius_pixel2 = meshx**2 + meshy**2
             I = I * radius_pixel2
-            I = I/np.max(I) # normalizing to 1, as units become meaningless
+            # Normalizing to 1, as units become meaningless
+            # Computing max of plotted region and normalize to it
+            if limit is not None:
+                limits = [limit, -limit, -limit, limit]
+            if limits is not None:
+                limit_pix_xmin = int(halfsize[0]+(-shift_dx-limits[0])/pix_scale)
+                limit_pix_xmax = int(halfsize[0]+(-shift_dx-limits[1])/pix_scale)
+                limit_pix_ymin = int(halfsize[1]+(shift_dy+limits[2])/pix_scale)
+                limit_pix_ymax = int(halfsize[1]+(shift_dy+limits[3])/pix_scale)
+                I = I/np.max(I[limit_pix_xmin:limit_pix_xmax,
+                                limit_pix_ymin:limit_pix_ymax])
+            else:
+                I = I/np.max(I) # Normalizing to 1 over entire image
             if pola_needed:
                 raise ValueError('rescale_r2 not implemented for polarisation')
 
@@ -304,6 +322,9 @@ class Image:
 
         if Jy:
             unit = "Jy.pixel-1"
+
+        if mJy:
+            unit = "mJy.pixel-1"
 
         if rescale_r2:
             unit = "arbitrary units" # max == 1
