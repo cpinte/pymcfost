@@ -8,7 +8,7 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,beam=None,bmaj=None,bmin=None,bpa=None):
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve with beam as required
@@ -117,7 +117,6 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,beam=None,bmaj=None,bmin=Non
     hdu = fits.PrimaryHDU(image, header=hdr)
     hdul = fits.HDUList(hdu)
 
-    simu_name = "pseudo_casa"
     hdul.writeto(workdir + simu_name + ".fits", overwrite=True)
 
 
