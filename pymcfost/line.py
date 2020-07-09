@@ -162,18 +162,21 @@ class Line:
             pix_scale = self.pixelscale
             xlabel = r'$\Delta$ RA ["]'
             ylabel = r'$\Delta$ Dec ["]'
+            xaxis_factor = -1
         elif axes_unit.lower() == 'au':
             pix_scale = self.pixelscale * self.P.map.distance
             xlabel = 'Distance from star [au]'
             ylabel = 'Distance from star [au]'
+            xaxis_factor = 1
         elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
             pix_scale = 1
             xlabel = r'$\Delta$ x [pix]'
             ylabel = r'$\Delta$ y [pix]'
+            xaxis_factor = 1
         else:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
         halfsize = np.asarray(self.lines.shape[-2:]) / 2 * pix_scale
-        extent = [halfsize[0]-shift_dx, -halfsize[0]-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
+        extent = [-halfsize[0]*xaxis_factor-shift_dx, halfsize[0]*xaxis_factor-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
         self.extent = extent
 
         # -- set color map
@@ -390,10 +393,10 @@ class Line:
         if plot_stars:
             factor = pix_scale / self.pixelscale
             if isinstance(plot_stars,bool):
-                x_stars = self.star_positions[0,iaz,i,:] * factor
+                x_stars = self.star_positions[0,iaz,i,:] * factor * (-xaxis_factor)
                 y_stars = self.star_positions[1,iaz,i,:] * factor
             else: # int or list of int
-                x_stars = self.star_positions[0,iaz,i,plot_stars] * factor
+                x_stars = self.star_positions[0,iaz,i,plot_stars] * factor * (-xaxis_factor)
                 y_stars = self.star_positions[1,iaz,i,plot_stars] * factor
             ax.scatter(x_stars-shift_dx, y_stars-shift_dy,
                         color=sink_particle_color,s=sink_particle_size)
