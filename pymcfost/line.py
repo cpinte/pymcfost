@@ -261,40 +261,40 @@ class Line:
             else:
                 im = cube[iv, :, :]
 
-            # -- Convolve image
-            if i_convolve:
-                im = conv_method(im, beam)
-                if plot_beam is None:
-                    plot_beam = True
+        # -- Convolve image
+        if i_convolve:
+            im = conv_method(im, beam)
+            if plot_beam is None:
+                plot_beam = True
 
-            # -- Conversion to brightness temperature
-            if Tb:
-                if self.is_casa:
-                    im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
-                else:
-                    im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
-                    im = np.nan_to_num(im)
-                print("Max Tb=", np.max(im), "K")
+        # -- Conversion to brightness temperature
+        if Tb:
+            if self.is_casa:
+                im = Jy_to_Tb(im, self.freq[iTrans], self.pixelscale)
+            else:
+                im = Wm2_to_Tb(im, self.freq[iTrans], self.pixelscale)
+                im = np.nan_to_num(im)
+            print("Max Tb=", np.max(im), "K")
 
-            # -- Conversion to Jy
-            if Jy:
-                if not self.is_casa:
-                    im = Wm2_to_Jy(im, self.freq[iTrans])
-                    unit = unit.replace("W.m-2", "Jy")
+        # -- Conversion to Jy
+        if Jy:
+            if not self.is_casa:
+                im = Wm2_to_Jy(im, self.freq[iTrans])
+                unit = unit.replace("W.m-2", "Jy")
 
-            # -- Conversion to mJy
-            if mJy:
-                if not self.is_casa:
-                    im = Wm2_to_Jy(im, self.freq[iTrans]) * 1e3
-                    unit = unit.replace("W.m-2", "mJy")
+        # -- Conversion to mJy
+        if mJy:
+            if not self.is_casa:
+                im = Wm2_to_Jy(im, self.freq[iTrans]) * 1e3
+                unit = unit.replace("W.m-2", "mJy")
 
-            # -- Conversion to flux per arcsec2 or per beam
-            if per_arcsec2:
-                im = im / self.pixelscale**2
-                unit = unit.replace("pixel-1", "arcsec-2")
-            if per_beam:
-                im = im / self.pixelscale**2 * bmin * bmaj
-                unit = unit.replace("pixel-1", "beam-1")
+        # -- Conversion to flux per arcsec2 or per beam
+        if per_arcsec2:
+            im = im / self.pixelscale**2
+            unit = unit.replace("pixel-1", "arcsec-2")
+        if per_beam:
+            im = im / self.pixelscale**2 * bmin * bmaj
+            unit = unit.replace("pixel-1", "beam-1")
 
 
         # --- Plot range and color map`
