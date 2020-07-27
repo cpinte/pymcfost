@@ -240,6 +240,7 @@ def _rotate_splash(xyz, anglex, angley, anglez):
 
     return np.array([x,y,z])
 
+
 def _rotate_splash_axes(xyz, anglex, angley, anglez):
     # Defines rotations as in splash, but in reserve order
     # as we rotate the axes instead of the data
@@ -263,7 +264,6 @@ def _rotate_splash_axes(xyz, anglex, angley, anglez):
         phi -= angley/180*np.pi
         x = r*np.cos(phi)
         z = r*np.sin(phi)
-
 
     # rotate about z
     if np.abs(anglez) > 1e-30:

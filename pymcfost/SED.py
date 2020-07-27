@@ -200,67 +200,78 @@ class SED:
             plt.xlabel("r [au]")
             plt.ylabel("z [au]")
 
+
     def plot_Tz(self, r=100.0, dr=5.0, log=False, **kwargs):
 
         grid = self.check_grid()
 
         T = self.T
         if grid.ndim > 2:
-            Voronoi = False
-            r_mcfost = grid[0, 0, :, :]
-            z_mcfost = grid[1, 0, :, :]
+            r_mcfost = grid[0, 0, 0, :]
+            i = np.argmin(np.abs(r_mcfost - r))
+            print("selected_radius =", r_mcfost[i])
+            z_mcfost = grid[1, 0, :, i]
+
+            T = T[:,i]
+
+            if log:
+                plt.loglog(z_mcfost, T, **kwargs)
+            else:
+                plt.plot(z_mcfost, T, **kwargs)
+
         else:
-            Voronoi = True
             r_mcfost = np.sqrt(grid[0, :] ** 2 + grid[1, :] ** 2)
             ou = r_mcfost > 1e-6  # Removing star
             T = T[ou]
             r_mcfost = r_mcfost[ou]
             z_mcfost = grid[2, ou]
 
-        # Selecting data points
-        ou = (r_mcfost > r - dr) & (r_mcfost < r + dr)
+            # Selecting data points
+            ou = (r_mcfost > r - dr) & (r_mcfost < r + dr)
 
-        # If we have cylindrical grid, we search for closest grid point
-        # Todo
+            z_mcfost = z_mcfost[ou]
+            T = T[ou]
 
-        z_mcfost = z_mcfost[ou]
-        T = T[ou]
+            #plt.plot(z_mcfost, T, "o", **kwargs)
+            fig = plt.gcf()
+            ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+            density = ax.scatter_density(z_mcfost,T, **kwargs)
 
-        plt.plot(z_mcfost, T, "o", **kwargs)
         plt.xlabel("z [au]")
         plt.ylabel("T [K]")
 
-    def plot_Tr(self, h_r=0.05, log=True, symbol=None, **kwargs):
+
+    def plot_Tr(self, h_r=0.05, log=True, **kwargs):
 
         grid = self.check_grid()
 
         T = self.T
         if grid.ndim > 2:
-            Voronoi = False
-            r_mcfost = grid[0, 0, :, :]
-            z_mcfost = grid[1, 0, :, :]
+            r_mcfost = grid[0, 0, 0, :]
+            T = T[0,:]
+
+            if log:
+                plt.loglog(r_mcfost, T, **kwargs)
+            else:
+                plt.plot(r_mcfost, T, **kwargs)
         else:
-            Voronoi = True
             r_mcfost = np.sqrt(grid[0, :] ** 2 + grid[1, :] ** 2)
             ou = r_mcfost > 1e-6  # Removing star
             T = T[ou]
             r_mcfost = r_mcfost[ou]
             z_mcfost = grid[2, ou]
 
-        # Selecting data points
-        ou = abs(z_mcfost) / r_mcfost < h_r
+            # Selecting data points
+            ou = abs(z_mcfost) / r_mcfost < h_r
 
-        # If we have cylindrical grid, we search for closest grid point
-        # Todo
+            r_mcfost = r_mcfost[ou]
+            T = T[ou]
 
-        r_mcfost = r_mcfost[ou]
-        T = T[ou]
+            fig = plt.gcf()
+            ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+            density = ax.scatter_density(r_mcfost,T, **kwargs)
 
-        if log:
-            plt.loglog(r_mcfost, T, "o", linewidth=0.2, **kwargs)
-        else:
-            plt.plot(r_mcfost, T, "o", linewidth=0.2, **kwargs)
-        plt.xlabel("z [au]")
+        plt.xlabel("r [au]")
         plt.ylabel("T [K]")
 
 
