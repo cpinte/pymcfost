@@ -123,6 +123,7 @@ class Line:
         dynamic_range=1e3,
         color_scale=None,
         colorbar=True,
+        colorbar_size=14,
         cmap=None,
         ax=None,
         no_xlabel=False,
@@ -132,6 +133,7 @@ class Line:
         vlabel_position=(0.5, 0.1), # fraction of plot width and height
         vlabel_size=10, # size in points
         title=None,
+        title_size=14,
         limit=None,
         limits=None,
         Tb=False,
@@ -144,7 +146,8 @@ class Line:
         shift_dy=0,
         plot_stars=False,
         sink_particle_size=6,
-        sink_particle_color="cyan"
+        sink_particle_color="cyan",
+        M0_threshold=None
     ):
         # Todo:
         # - print molecular info (eg CO J=3-2)
@@ -222,7 +225,8 @@ class Line:
                 moment=moment,
                 beam=beam,
                 conv_method=conv_method,
-                substract_cont=substract_cont
+                substract_cont=substract_cont,
+                M0_threshold = M0_threshold
             )
         else:
             # individual channel
@@ -339,7 +343,7 @@ class Line:
             ax.get_yaxis().set_visible(False)
 
         if title is not None:
-            ax.set_title(title)
+            ax.set_title(title,size=title_size)
 
         # -- Color bar
         if colorbar:
@@ -351,18 +355,18 @@ class Line:
 
             if moment == 0:
                 if Tb:
-                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ [K.km.s$^{-1}$]")
+                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ [K.km.s$^{-1}$]",size=colorbar_size)
                 else:
-                    cb.set_label("Flux [" + formatted_unit + ".km.s$^{-1}$]")
+                    cb.set_label("Flux [" + formatted_unit + ".km.s$^{-1}$]",size=colorbar_size)
             elif moment == 1:
-                cb.set_label("Velocity [km.s$^{-1}]$")
+                cb.set_label("Velocity [km.s$^{-1}]$",size=colorbar_size)
             elif moment == 2:
-                cb.set_label("Velocity dispersion [km.s$^{-1}$]")
+                cb.set_label("Velocity dispersion [km.s$^{-1}$]",size=colorbar_size)
             else:
                 if Tb:
-                    cb.set_label("T$_\mathrm{b}$ [K]")
+                    cb.set_label("T$_\mathrm{b}$ [K]",size=colorbar_size)
                 else:
-                    cb.set_label("Flux [" + formatted_unit + "]")
+                    cb.set_label("Flux [" + formatted_unit + "]",size=colorbar_size)
 
         # -- Adding velocity
         if moment is None:
@@ -441,7 +445,7 @@ class Line:
         plt.ylabel(ylabel)
 
     def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
-                       beam=None, conv_method=None,substract_cont=False):
+                       beam=None, conv_method=None,substract_cont=False,Mo_threshold=None):
         """
         This returns the moment maps in physical units, ie:
          - M1 is the average velocity [km/s]
@@ -456,42 +460,6 @@ class Line:
             cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
 
         dv = self.velocity[1] - self.velocity[0]
-
-        # Peak flux
-        if moment == 8:
-            return np.max(cube, axis=0)
-
-        # Velocity of the peak
-        if moment == 9:
-            vmax_index = np.argmax(cube, axis=0)
-            M9 = self.velocity[(vmax_index)]
-
-            #print(vmax_index.shape)
-            #
-            ## Extract the maximum and neighboring pixels
-            #print("test1")
-            #f_max = cube[(vmax_index)]
-            #print(f_max.shape)
-            #print("test2")
-            #f_minus = cube[(vmax_index-1)]
-            #print("test3")
-            #f_plus = cube[(vmax_index+1)]
-            #
-            ## Work out the polynomial coefficients
-            #print("test4")
-            #a0 = 13. * f_max / 12. - (f_plus + f_minus) / 24.
-            #print("test5")
-            #a1 = 0.5 * (f_plus - f_minus)
-            #print("test6")
-            #a2 = 0.5 * (f_plus + f_minus - 2*f_max)
-            #
-            ## Compute the maximum of the quadratic
-            #x_max = idx - 0.5 * a1 / a2
-            #y_max = a0 - 0.25 * a1**2 / a2
-            #
-            #M9 = xmax
-
-            return M9
 
         # Moment 0, 1 and 2
         if beam is None:
@@ -535,9 +503,53 @@ class Line:
                     * (self.velocity[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
                     axis=0,) * dv / M0)
 
+        # Peak flux
+        if moment == 8:
+            M8 = np.max(cube, axis=0)
+
+        # Velocity of the peak
+        if moment == 9:
+            vmax_index = np.argmax(cube, axis=0)
+            M9 = self.velocity[(vmax_index)]
+
+            #print(vmax_index.shape)
+            #
+            ## Extract the maximum and neighboring pixels
+            #print("test1")
+            #f_max = cube[(vmax_index)]
+            #print(f_max.shape)
+            #print("test2")
+            #f_minus = cube[(vmax_index-1)]
+            #print("test3")
+            #f_plus = cube[(vmax_index+1)]
+            #
+            ## Work out the polynomial coefficients
+            #print("test4")
+            #a0 = 13. * f_max / 12. - (f_plus + f_minus) / 24.
+            #print("test5")
+            #a1 = 0.5 * (f_plus - f_minus)
+            #print("test6")
+            #a2 = 0.5 * (f_plus + f_minus - 2*f_max)
+            #
+            ## Compute the maximum of the quadratic
+            #x_max = idx - 0.5 * a1 / a2
+            #y_max = a0 - 0.25 * a1**2 / a2
+            #
+            #M9 = xmax
+
         if moment == 0:
-            return M0
+            M = M0
         elif moment == 1:
+            M = M1
             return M1
         elif moment == 2:
-            return M2
+            M = M2
+        elif moment == 8:
+            M = M8
+        elif moment == 9:
+            M = M9
+
+        if M0_threshold is not None:
+            M = np.ma.masked_where(M0 < M0_threshold, M)
+
+        return M
