@@ -445,7 +445,7 @@ class Line:
         plt.ylabel(ylabel)
 
     def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
-                       beam=None, conv_method=None,substract_cont=False,Mo_threshold=None):
+                       beam=None, conv_method=None,substract_cont=False,M0_threshold=None):
         """
         This returns the moment maps in physical units, ie:
          - M1 is the average velocity [km/s]
