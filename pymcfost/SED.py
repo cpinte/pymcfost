@@ -10,7 +10,7 @@ except ImportError:
     print('WARNING: mpl_scatter_density is not present')
 
 from .parameters import Params, find_parameter_file
-from .disc_structure import Disc
+from .disc_structure import _plot_cutz, check_grid
 from .utils import DustExtinction
 from .run import run
 
@@ -38,6 +38,7 @@ class SED:
 
         # Read model results
         self._read(**kwargs)
+
 
     def _read(self):
         # Read SED files
@@ -72,9 +73,8 @@ class SED:
         except OSError:
             print('cannot open', self._temperature_file)
 
-    def plot(
-        self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1, color="black", **kwargs
-    ):
+
+    def plot(self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1, color="black", **kwargs):
 
         # extinction
         if Av > 0:
@@ -131,7 +131,7 @@ class SED:
         #  - add functions for radial and vertical cuts
         # We test if the grid structure already exist, if not we try to read it
 
-        grid = self.check_grid()
+        grid = check_grid(self)
 
         plt.cla()
 
@@ -201,49 +201,15 @@ class SED:
             plt.ylabel("z [au]")
 
 
-    def plot_Tz(self, r=100.0, dr=5.0, log=False, **kwargs):
+    def plot_Tz(self,r=100.0, dr=5.0, log=False, **kwargs):
 
-        grid = self.check_grid()
-
-        T = self.T
-        if grid.ndim > 2:
-            r_mcfost = grid[0, 0, 0, :]
-            i = np.argmin(np.abs(r_mcfost - r))
-            print("selected_radius =", r_mcfost[i])
-            z_mcfost = grid[1, 0, :, i]
-
-            T = T[:,i]
-
-            if log:
-                plt.loglog(z_mcfost, T, **kwargs)
-            else:
-                plt.plot(z_mcfost, T, **kwargs)
-
-        else:
-            r_mcfost = np.sqrt(grid[0, :] ** 2 + grid[1, :] ** 2)
-            ou = r_mcfost > 1e-6  # Removing star
-            T = T[ou]
-            r_mcfost = r_mcfost[ou]
-            z_mcfost = grid[2, ou]
-
-            # Selecting data points
-            ou = (r_mcfost > r - dr) & (r_mcfost < r + dr)
-
-            z_mcfost = z_mcfost[ou]
-            T = T[ou]
-
-            #plt.plot(z_mcfost, T, "o", **kwargs)
-            fig = plt.gcf()
-            ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
-            density = ax.scatter_density(z_mcfost,T, **kwargs)
-
-        plt.xlabel("z [au]")
+        _plot_cutz(self,self.T,r=r,dr=dr,log=log, **kwargs)
         plt.ylabel("T [K]")
 
 
     def plot_Tr(self, h_r=0.05, log=True, **kwargs):
 
-        grid = self.check_grid()
+        grid = check_grid(self)
 
         T = self.T
         if grid.ndim > 2:
@@ -274,32 +240,6 @@ class SED:
         plt.xlabel("r [au]")
         plt.ylabel("T [K]")
 
-
-    def check_grid(self):
-        """
-        We check if the disc structure already exists
-        if not, we check if it exists
-        if not, we try to compute it
-        """
-
-        try:
-            grid = self.disc.grid
-        except:
-            try:
-                print("Trying to read grid structure ...")
-                self.disc = Disc(self.basedir)
-                grid = self.disc.grid
-            except:
-                print("No grid structure, trying to create it ...")
-                run(self.P.filename, options=self.P.options+" -disk_struct")
-                try:
-                    print("Trying to read grid structure again ...")
-                    self.disc = Disc(self.basedir)
-                    grid = self.disc.grid
-                except AttributeError:
-                    print("Cannot read grid in " + self.basedir)
-
-        return grid
 
     def spectral_index(self, wl1, wl2, i=0, iaz=0):
         pass

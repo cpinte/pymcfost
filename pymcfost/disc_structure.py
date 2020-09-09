@@ -120,3 +120,69 @@ class Disc:
         plt.tripcolor(triang, correct.flatten(), shading='flat')
 
         return self.gas_density[np.newaxis, :, :] * correct[:, np.newaxis, :]
+
+
+
+def check_grid(model):
+    """
+    We check if the disc structure already exists
+    if not, we check if it exists
+    if not, we try to compute it
+    """
+
+    try:
+        grid = model.disc.grid
+    except:
+        try:
+            print("Trying to read grid structure ...")
+            model.disc = Disc(model.basedir)
+            grid = model.disc.grid
+        except:
+            print("No grid structure, trying to create it ...")
+            run(model.P.filename, options=model.P.options+" -disk_struct")
+            try:
+                print("Trying to read grid structure again ...")
+                model.disc = Disc(model.basedir)
+                grid = model.disc.grid
+            except AttributeError:
+                print("Cannot read grid in " + model.basedir)
+
+    return grid
+
+
+def _plot_cutz(model, y, r=None, dr=None, log=None, **kwargs):
+
+    grid = check_grid(model)
+
+    if grid.ndim > 2:
+        r_mcfost = grid[0, 0, 0, :]
+        i = np.argmin(np.abs(r_mcfost - r))
+        print("selected_radius =", r_mcfost[i])
+        z_mcfost = grid[1, 0, :, i]
+
+        y = y[:,i]
+
+        if log:
+            plt.loglog(z_mcfost, y, **kwargs)
+        else:
+            plt.plot(z_mcfost, y, **kwargs)
+
+    else:
+        r_mcfost = np.sqrt(grid[0, :] ** 2 + grid[1, :] ** 2)
+        ou = r_mcfost > 1e-6  # Removing star
+        y = y[ou]
+        r_mcfost = r_mcfost[ou]
+        z_mcfost = grid[2, ou]
+
+        # Selecting data points
+        ou = (r_mcfost > r - dr) & (r_mcfost < r + dr)
+
+        z_mcfost = z_mcfost[ou]
+        y = y[ou]
+
+        #plt.plot(z_mcfost, T, "o", **kwargs)
+        fig = plt.gcf()
+        ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
+        density = ax.scatter_density(z_mcfost,y, **kwargs)
+
+    plt.xlabel("z [au]")
