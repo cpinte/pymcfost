@@ -217,7 +217,7 @@ class Image:
             else:
                 I = self.image[0, iaz, i, :, :]
 
-        # --- Convolve with beam
+        # --- Convolution with psf
         if i_convolve:
             I = conv_method(I, beam)
             if pola_needed:
@@ -259,33 +259,7 @@ class Image:
                 Q[radius_mas < coronagraph] = 0.0
                 U[radius_mas < coronagraph] = 0.0
 
-        # --- Rescale to I * r^2
-        if rescale_r2:
-            halfsize = np.asarray(self.image.shape[-2:]) / 2
-            posx = np.linspace(-halfsize[0]+shift_dx/pix_scale,
-                                halfsize[0]+shift_dx/pix_scale, self.nx)
-            posy = np.linspace(-halfsize[1]-shift_dy/pix_scale,
-                                halfsize[1]-shift_dy/pix_scale, self.ny)
-            meshx, meshy = np.meshgrid(posx, posy)
-            radius_pixel2 = meshx**2 + meshy**2
-            I = I * radius_pixel2
-            # Normalizing to 1, as units become meaningless
-            # Computing max of plotted region and normalize to it
-            if limit is not None:
-                limits = [limit, -limit, -limit, limit]
-            if limits is not None:
-                limit_pix_xmin = int(halfsize[0]+(-shift_dx-limits[0])/pix_scale)
-                limit_pix_xmax = int(halfsize[0]+(-shift_dx-limits[1])/pix_scale)
-                limit_pix_ymin = int(halfsize[1]+(shift_dy+limits[2])/pix_scale)
-                limit_pix_ymax = int(halfsize[1]+(shift_dy+limits[3])/pix_scale)
-                I = I/np.max(I[limit_pix_xmin:limit_pix_xmax,
-                                limit_pix_ymin:limit_pix_ymax])
-            else:
-                I = I/np.max(I) # Normalizing to 1 over entire image
-            if pola_needed:
-                raise ValueError('rescale_r2 not implemented for polarisation')
-
-        # --- Selecting image to plot & convolution
+        # --- Selecting image to plot
         unit = self.unit
         flux_name = type
         if type == 'I':
@@ -317,6 +291,30 @@ class Image:
             else:  # Uphi
                 im = -Q * np.sin(two_phi) + U * np.cos(two_phi)
             _scale = 'symlog'
+
+         # --- Rescale image by r^2
+        if rescale_r2:
+            halfsize = np.asarray(self.image.shape[-2:]) / 2
+            posx = np.linspace(-halfsize[0]+shift_dx/pix_scale,
+                                halfsize[0]+shift_dx/pix_scale, self.nx)
+            posy = np.linspace(-halfsize[1]-shift_dy/pix_scale,
+                                halfsize[1]-shift_dy/pix_scale, self.ny)
+            meshx, meshy = np.meshgrid(posx, posy)
+            radius_pixel2 = meshx**2 + meshy**2
+            im = im * radius_pixel2
+            # Normalizing to 1, as units become meaningless
+            # Computing max of plotted region and normalize to it
+            if limit is not None:
+                limits = [limit, -limit, -limit, limit]
+            if limits is not None:
+                limit_pix_xmin = int(halfsize[0]+(-shift_dx-limits[0])/pix_scale)
+                limit_pix_xmax = int(halfsize[0]+(-shift_dx-limits[1])/pix_scale)
+                limit_pix_ymin = int(halfsize[1]+(shift_dy+limits[2])/pix_scale)
+                limit_pix_ymax = int(halfsize[1]+(shift_dy+limits[3])/pix_scale)
+                im = im/np.max(I[limit_pix_xmin:limit_pix_xmax,
+                                limit_pix_ymin:limit_pix_ymax])
+            else:
+                im = im/np.max(im) # Normalizing to 1 over entire image
 
         if Tb:
             flux_name = "Tb"
