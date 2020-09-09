@@ -88,7 +88,8 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
         hdr["CTYPE3"] = "VELO-LSR"
         hdr["CRVAL3"] = 0.0  # line center
         hdr["CRPIX3"] = model.nv//2 + 1
-        hdr["CDELT3"] = model.dv
+        hdr["CDELT3"] = model.dv * 1e3
+        hdr["CUNIT3"] = "m/s"
 
     hdr["RESTFREQ"] = model.freq[iTrans] * 1e9  # Hz
     hdr["BUNIT"] = "JY/BEAM"
