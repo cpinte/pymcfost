@@ -19,8 +19,8 @@ class Physics:
 
 
 class Dust:
-    component = []
-    pass
+    def __init__(self):
+        self.component = []
 
 
 class DustComponent:
@@ -36,13 +36,13 @@ class Map:
 
 
 class Zone:
-    dust = []
-    pass
+    def __init__(self):
+        self.dust = []
 
 
 class Mol:
-    molecule = []
-    pass
+    def __init__(self):
+        self.molecule = []
 
 
 class Molecule:
@@ -54,8 +54,8 @@ class Star:
 
 
 class Simu:
-    version = float()
-    pass
+    def __init__(self):
+        self.version = float()
 
 
 class Params:
@@ -227,7 +227,7 @@ class Params:
             self.zones[k].m_gamma_exp = float(line[1])
 
         # -- Grain properties --
-        d = Dust
+        d = Dust()
         for k in range(n_zones):
             line = next(f).split()
             n_species = int(line[0])
