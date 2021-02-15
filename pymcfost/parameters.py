@@ -227,14 +227,13 @@ class Params:
             self.zones[k].m_gamma_exp = float(line[1])
 
         # -- Grain properties --
-        d = Dust()
         for k in range(n_zones):
             line = next(f).split()
             n_species = int(line[0])
             self.zones[k].n_species = n_species
 
             for j in range(n_species):
-                self.zones[k].dust.append(d)
+                self.zones[k].dust.append(Dust())
 
                 line = next(f).split()
                 self.zones[k].dust[j].type = line[0]
@@ -245,9 +244,8 @@ class Params:
                 self.zones[k].dust[j].mass_fraction = float(line[4])
                 self.zones[k].dust[j].DHS_Vmax = float(line[5])
 
-                c = DustComponent()
                 for l in range(n_components):
-                    self.zones[k].dust[j].component.append(c)
+                    self.zones[k].dust[j].component.append(DustComponent())
 
                     line = next(f).split()
                     self.zones[k].dust[j].component[l].file = line[0]
