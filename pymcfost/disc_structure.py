@@ -4,7 +4,7 @@ import matplotlib.tri as tri
 import numpy as np
 import os
 
-from .parameters import Params, find_parameter_file
+from parameters import Params, find_parameter_file
 
 
 class Disc:
