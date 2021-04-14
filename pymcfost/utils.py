@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy import ndimage
 import scipy.constants as sc
 import astropy.constants as const
 import astropy.units as u
@@ -103,6 +104,38 @@ def Wm2_to_Tb(nuFnu, nu, pixelscale):
     return Tb
 
 
+def telescope_beam(wl,D):
+    """ wl and D in m, returns FWHM in arcsec"""
+    return 0.989 * wl/D / 4.84814e-6
+
+
+def make_cut(z, x0,y0,x1,y1,num=None,plot=False):
+    """
+    Make a cut in image 'z' along a line between (x0,y0) and (x1,y1)
+    x0, y0,x1,y1 are pixel coordinates
+    """
+
+    if plot:
+        vmax = np.max(z)
+        vmin = vmax * 1e-6
+        norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
+        plt.imshow((test.last_image[:,:]),origin="lower", norm=norm)
+        plt.plot([x0,x1],[y0,y1])
+
+
+    if num is not None:
+        # Extract the values along the line, using cubic interpolation
+        x, y = np.linspace(x0, x1, num), np.linspace(y0, y1, num)
+        zi = ndimage.map_coordinates(z, np.vstack((y,x)))
+    else:
+        # Extract the values along the line at the pixel spacing
+        length = int(np.hypot(x1-x0, y1-y0))
+        x, y = np.linspace(x0, x1, length), np.linspace(y0, y1, length)
+        zi = z[y.astype(np.int), x.astype(np.int)]
+
+    return zi
+
+
 class DustExtinction:
 
     import os
@@ -163,7 +196,7 @@ class DustExtinction:
 
 def Hill_radius():
     pass
-    #d * (Mplanet/3*Mstar)**(2./3)
+    #d * (Mplanet/3*Mstar)**(1./3)
 
 
 def splash2mcfost(anglex, angley, anglez):
@@ -274,3 +307,19 @@ def _rotate_splash_axes(xyz, anglex, angley, anglez):
         y = r*np.sin(phi)
 
     return np.array([x,y,z])
+
+
+
+
+def planet_position(model, i_planet, i_star, ):
+    '''
+     Returns planet position [arcsec] and PA [deg] in the map
+    '''
+    xy_planet = model.star_positions[:,0,0,i_planet]
+    xy_star = model.star_positions[:,0,0,i_star]
+    dxy = xy_planet - xy_star
+
+    dist = np.hypot(dxy[0],dxy[1])
+    PA = np.rad2deg(np.arctan2(dxy[1],-dxy[0])) + 360 - 90
+
+    return [dist, PA]
