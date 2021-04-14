@@ -39,6 +39,7 @@ class Image:
             hdu = fits.open(self.dir + "/" + self._RT_file)
             self.image = hdu[0].data
             # Read a few keywords in header
+            self.header = hdu[0].header
             self.pixelscale = hdu[0].header['CDELT2'] * 3600.0  # arcsec
             self.unit = hdu[0].header['BUNIT']
             self.wl = hdu[0].header['WAVE']  # micron
@@ -103,13 +104,15 @@ class Image:
         telescope_diameter=None,
         Jy=False,
         mJy=False,
+        muJy=False,
         per_arcsec2=False,
         per_beam=False,
         shift_dx=0,
         shift_dy=0,
         plot_stars=False,
         sink_particle_size=6,
-        sink_particle_color="cyan"
+        sink_particle_color="cyan",
+        norm=False
     ):
         # Todo:
         #  - plot a selected contribution
@@ -135,9 +138,13 @@ class Image:
         if ntype_flux not in (4, 8):  # there is no pola
             if pola_needed:
                 raise ValueError('The model does not have polarisation data')
-        elif ntype_flux not in (5, 8):  # there is no contribution
+            n_pola = 1
+        else:
+            n_pola = 4
+        if ntype_flux not in (5, 8):  # there is no contribution
             if contrib_needed:
                 raise ValueError('The model does not have contribution data')
+
 
         # --- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
@@ -167,7 +174,6 @@ class Image:
         if telescope_diameter is not None:
             # sigma of Gaussian is ~ 0.42 lambda/D
             psf_FWHM = 0.42 * self.wl*1e-6 /telescope_diameter * sigma_to_FWHM / arcsec
-            print(psf_FWHM)
 
         if psf_FWHM is not None:
             #print("test")
@@ -199,10 +205,6 @@ class Image:
             Q = self.image[1, iaz, i, :, :]
             U = self.image[2, iaz, i, :, :]
         elif contrib_needed:
-            if pola_needed:
-                n_pola = 4
-            else:
-                n_pola = 1
             if type == "star":
                 I = self.image[n_pola, iaz, i, :, :]
             elif type == "scatt":
@@ -243,6 +245,15 @@ class Image:
         if mJy:
             if not self.is_casa:
                 I = Wm2_to_Jy(I, self.freq) * 1e3
+            else:
+                I *= 1e6
+
+        # -- Conversion to microJy
+        if muJy:
+            if not self.is_casa:
+                I = Wm2_to_Jy(I, self.freq) * 1e6
+            else:
+                I *= 1e6
 
         # --- Coronagraph: in mas
         if coronagraph is not None:
@@ -262,7 +273,7 @@ class Image:
         # --- Selecting image to plot
         unit = self.unit
         flux_name = type
-        if type == 'I':
+        if type in ('I','star','scatt','em_th','scatt_em_th'):
             flux_name = 'Flux density'
             im = I
             _scale = 'log'
@@ -339,6 +350,11 @@ class Image:
             im = im / self.pixelscale**2 * bmin * bmaj
             unit = unit.replace("pixel-1", "beam-1")
 
+        if norm:
+            im = im / np.max(im)
+            flux_name = "Normalised flux"
+            unit = ""
+
         # --- Plot range and color scale
         if vmax is None:
             vmax = im.max()
@@ -407,7 +423,10 @@ class Image:
             cax = divider.append_axes("right", size="5%", pad=0.05)
             cb = plt.colorbar(image, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
-            cb.set_label(flux_name + " [" + formatted_unit + "]")
+            if unit is not "":
+                cb.set_label(flux_name + " [" + formatted_unit + "]")
+            else:
+                cb.set_label(flux_name)
             plt.sca(ax) # we reset the main axis
 
 
@@ -481,7 +500,7 @@ class Image:
                         color=sink_particle_color,s=sink_particle_size)
 
         #-- Saving the last plotted quantity
-        self.last_im = im
+        self.last_image = im
 
         # --- Return
         return image
@@ -585,6 +604,8 @@ class Image:
         return baselines, vis, fim
 
 
+    def writeto(self, filename, **kwargs):
+        fits.writeto(os.path.normpath(os.path.expanduser(filename)),self.last_image, self.header, **kwargs)
 
 def spectral_index(model1, model2, i=0, iaz=0):
 
