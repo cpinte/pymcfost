@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 from .parameters import Params, find_parameter_file
-
+from .run import run
 
 class Disc:
     def __init__(self, dir=None, **kwargs):
