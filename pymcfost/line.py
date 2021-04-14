@@ -147,8 +147,9 @@ class Line:
         plot_stars=False,
         sink_particle_size=6,
         sink_particle_color="cyan",
-        M0_threshold=None
-    ):
+        M0_threshold=None,
+        iv_support=None,
+        v_minmax = None):
         # Todo:
         # - print molecular info (eg CO J=3-2)
 
@@ -226,8 +227,13 @@ class Line:
                 beam=beam,
                 conv_method=conv_method,
                 substract_cont=substract_cont,
-                M0_threshold = M0_threshold
-            )
+                M0_threshold=M0_threshold,
+                iv_support=iv_support,
+                v_minmax=v_minmax)
+
+            if moment in [1,2,9]:
+                Tb = False
+
         else:
             # individual channel
             if self.is_casa:
@@ -445,7 +451,8 @@ class Line:
         plt.ylabel(ylabel)
 
     def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
-                       beam=None, conv_method=None,substract_cont=False,M0_threshold=None):
+                       beam=None, conv_method=None,substract_cont=False,M0_threshold=None,
+                       iv_support=None, v_minmax = None):
         """
         This returns the moment maps in physical units, ie:
          - M1 is the average velocity [km/s]
@@ -460,6 +467,20 @@ class Line:
             cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
 
         dv = self.velocity[1] - self.velocity[0]
+        v = self.velocity
+
+        if v_minmax is not None:
+            vmin = np.min(v_minmax)
+            vmax = np.max(v_minmax)
+            iv_support = np.array(np.where(np.logical_and((self.velocity > vmin),(self.velocity < vmax)))).ravel()
+            print("Selecting channels:", iv_support)
+
+        if iv_support is None:
+            nv = self.nv
+        else:
+            nv = len(iv_support)
+            v = v[iv_support]
+            cube = cube[iv_support,:,:]
 
         # Moment 0, 1 and 2
         if beam is None:
@@ -482,25 +503,25 @@ class Line:
                     bar.start()
                 except:
                     pass
-                for iv in range(self.nv):
+                for iv in range(nv):
                     try:
                         bar.update(iv + 1)
                     except:
                         pass
                     channel = np.copy(cube[iv, :, :])
                     cube[iv, :, :] = conv_method(channel, beam)
-                    M0 = np.sum(cube, axis=0) * dv
+                M0 = np.sum(cube, axis=0) * dv
                 try:
                     bar.finish()
                 except:
                     pass
 
         if moment >= 1:
-            M1 = np.sum(cube[:, :, :] * self.velocity[:, np.newaxis, np.newaxis], axis=0) * dv / M0
+            M1 = np.sum(cube[:, :, :] * v[:, np.newaxis, np.newaxis], axis=0) * dv / M0
 
         if moment == 2:
             M2 = np.sqrt(np.sum(cube[:, :, :]
-                    * (self.velocity[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
+                    * (v[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
                     axis=0,) * dv / M0)
 
         # Peak flux
@@ -510,7 +531,7 @@ class Line:
         # Velocity of the peak
         if moment == 9:
             vmax_index = np.argmax(cube, axis=0)
-            M9 = self.velocity[(vmax_index)]
+            M9 = v[(vmax_index)]
 
             #print(vmax_index.shape)
             #
