@@ -481,3 +481,38 @@ def find_parameter_file(directory="./"):
         raise ValueError("Multiple parameter files found in " + directory)
     else:
         raise ValueError("No parameter files found in " + directory)
+
+def analytic_params_import(file):
+
+    global Nr, Nphi, Rmin, Rmax, Rplanet, PAp, i, PA
+
+    parobj = open(file)
+    params = {} # this is a dictionary
+    for line in parobj:
+        line = line.strip() # removes additional spaces after a line and also the newline character
+        if line and line[0] != '%': # the first 'if line' allows to remove blank lines.
+            line = line.split()
+            if len(line) == 1:
+                params[line[0]] = None
+
+            elif len(line) == 2:
+                params[line[0]] = line[1]
+
+            elif len(line) > 2:
+                params[line[0]] = [ line[1] ]
+                for i in range(2,len(line)):
+                    params[line[0]] += [ line[i] ]
+
+    Rmax = float(params['Rdisc'])
+    if 'Rmin' in params.keys():
+        Rmin = float(params['Rmin'])
+    else:
+        Rmin = Rdisc/50
+
+    Nr = int(params['Nr'])
+    Nphi = int(params['Nphi'])
+
+    Rplanet = float(params['Rplanet'])
+    PA = float(params['PA'])
+    i = float(params['inclination'])
+    PAp = float(params['PAp'])
