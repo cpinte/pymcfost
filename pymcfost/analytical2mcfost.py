@@ -56,16 +56,12 @@ def analytic2mcfost(
     Nr, Nphi, Rmin, Rmax, Rplanet, PAp, i, PA = analytic_params_import(analytic_params_file)
 
     # --- Reading data
-    rho = np.load(
-        data_dir + "/density.npy")
-
+    rho = np.load(data_dir + "/density.npy")
     print('after loading:', np.min(rho),np.max(rho))
 
-    vrad = 1e3*np.load(
-        data_dir + "/vr.npy")
+    vrad = 1e3*np.load(data_dir + "/vr.npy")
 
-    vtheta = 1e3*np.load(
-        data_dir + "/vphi.npy")
+    vtheta = 1e3*np.load(data_dir + "/vphi.npy")
 
     # --- reshape
     #Rho = DensUnit*rho.transpose()
