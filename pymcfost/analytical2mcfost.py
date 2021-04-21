@@ -164,7 +164,7 @@ def analytic2mcfost(
     # planet properties in header
     primary_hdu.header['hierarch planet_rad'] = Rplanet  # orbital radius of planet in AU
     primary_hdu.header['hierarch planet_phi'] = 0.       # planet is always at angle = 0 in analytics
-    primary_hdu.header['hierarch planet_v'] = np.sqrt(G*M*M_sol/(Rplanet*au)) # keplerian velocity at planet radius
+    primary_hdu.header['hierarch planet_v'] = np.sqrt(G*M*M_sol/(Rplanet*au)) / 100 # Keplerian velocity at planet radius in m/s
     primary_hdu.header['hierarch planet_m'] = Mp         # planet mass in solar masses
 
 
