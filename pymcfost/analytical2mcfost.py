@@ -42,38 +42,41 @@ def analytic_params_import(file):
     M = float(params['Mstar'])
     Mp = float(params['Mplanet'])
 
-    return Nr, Nphi, Rmin, Rmax, Rplanet, PAp, i, PA, M, Mp
+    cw = int(params['cw'])
+
+    return Nr, Nphi, Rmin, Rmax, Rplanet, PAp, i, PA, M, Mp, cw
 
 
 
 def analytic2mcfost(
-    data_dir="/home/tom/Documents/Protoplanetary_Discs_Project/Analytical_Kinks/hd163_angletest",
+    data_dir="/home/tom/Documents/Protoplanetary_Discs_Project/HD_163296_analytics_for_channels_grid/Analytics_output/hd163_4Mj",
     nz=50,
-    analytic_params_file="/home/tom/Documents/Protoplanetary_Discs_Project/Analytical_Kinks/hd163_angletest/hd163.param",
+    analytic_params_file="/home/tom/Documents/Protoplanetary_Discs_Project/HD_163296_analytics_for_channels_grid/Analytics_output/hd163_4Mj/hd163.param",
     mcfost_ref_file="/home/tom/Documents/pymcfost/pymcfost/ref3.0_3D.para",
-    mcfost_filename="mcfost_hd163_angletest.para",
-    fitsname='hd163_analytic_angletest',
+    mcfost_filename="mcfost_hd163_4Mj.para",
+    fitsname='hd163_analytic_4Mj',
 ):
 
-    Nr, Nphi, Rmin, Rmax, Rplanet, PAp, i, PA, M, Mp = analytic_params_import(analytic_params_file)
+    # read in properties from analytics
+    Nr, Nphi, Rmin, Rmax, Rplanet, PAp, i, PA, M, Mp, cw = analytic_params_import(analytic_params_file)
+
+    # set no. of sink particles (code modifications needed for anything other than 2)
+    Nsink = 2
 
     from astropy import constants as const
     from os import makedirs
 
+    # -- Setup constants
     G = const.G.cgs.value
     au = const.au.cgs.value
     M_sol = const.M_sun.cgs.value
 
     # --- Reading data
     rho = np.load(data_dir + "/density.npy")
-    print('after loading:', np.min(rho),np.max(rho))
-
     vrad = 1e3*np.load(data_dir + "/vr.npy")
-
     vtheta = 1e3*np.load(data_dir + "/vphi.npy")
 
     # --- reshape
-    #Rho = DensUnit*rho.transpose()
     Rho = rho.transpose()
     Vrad = vrad.transpose()
     Vtheta = vtheta.transpose()
@@ -86,34 +89,41 @@ def analytic2mcfost(
     P.grid.nz = nz
     P.grid.n_az = Nphi
 
-    P.zones[0].Rin = 1.0
+    # -- Disc geometry
+    P.zones[0].Rin = Rmin
     P.zones[0].edge = 0.0
     P.zones[0].Rout = Rmax
     P.zones[0].Rc = 0.0
 
-    # Don't compute SED
+    # -- Don't compute SED
     P.simu.compute_SED = False
 
-    P.map.nx = 1001 # pixel grid
+    # -- pixel grid
+    P.map.nx = 1001
     P.map.ny = 1001
 
-    # ROTATION DIR. NEEDS TO BE CORRECT FOR THE FOLLOWING TO WORK
-
+    # -- ROTATION DIR. NEEDS TO BE CORRECT FOR THE FOLLOWING TO WORK
     P.map.RT_az_min = -1*PAp # 45, planet angle
     P.map.RT_az_max = -1*PAp
     P.map.RT_n_az = 1
 
-    P.map.distance = 101.5 # distance
+    # -- distance
+    P.map.distance = 101.5
 
-    P.map.PA = PA - 90 # PA
+    # -- PA
+    P.map.PA = PA - 90
 
-    P.map.RT_imin = -1*i # inclination
+    # -- inclination
+    P.map.RT_imin = -1*i
     P.map.RT_imax = -1*i
     P.map.RT_ntheta = 1
 
     P.phot.nphot_T = 1.28e+07
-    P.mol.molecule[0].nv = 100 # number of velocity channels
-    P.mol.molecule[0].n_trans = 1 # no. of lines in ray tracing
+
+    # -- velocity channel settings
+    P.mol.molecule[0].v_max = 3.2     # max velocity
+    P.mol.molecule[0].nv = 20         # number of velocity channels
+    P.mol.molecule[0].n_trans = 1     # no. of lines in ray tracing
 
     # -- Turn off symmetries
     P.simu.image_symmetry = False
@@ -121,28 +131,23 @@ def analytic2mcfost(
     P.simu.axial_symmetry = False
 
     # -- Write new parameter file
-    makedirs('analytic_fits', exist_ok=True)
-    P.writeto('analytic_fits/' + mcfost_filename)
+    P.writeto(mcfost_filename)
 
     # --- Running mcfost to create the grid
     subprocess.call(["rm", "-rf", "data_disk", "data_disk_old"])
-    result = subprocess.call(["mcfost", mcfost_filename, "-disk_struct"])
+    subprocess.call(["mcfost", mcfost_filename, "-disk_struct"])
 
     # --- Reading mcfost grid
-    mcfost_disc = Disc("./analytic_fits/")
-
-    # --- print the mcfost radial grid to check that it is the same as analyticss
-    print("MCFOST radii=")
-    print(mcfost_disc.r()[0, 0, :])
+    mcfost_disc = Disc("./")
 
     # -- same dimension order as FARGO
     mcfost_z = mcfost_disc.z()
 
-    # --taking only half the grid (+z)
+    # -- taking only half the grid (+z)
     mcfost_z = mcfost_z[:, nz:, :]
     mcfost_z = mcfost_z.transpose()  # dims are now, r, z, theta
 
-    # defining H [au]
+    # -- defining H [au]
     h = 0.05 * mcfost_disc.r()[:, 0, :].transpose()
 
     # -- computing the 3D density structure for mcfost
@@ -151,30 +156,48 @@ def analytic2mcfost(
     vrad_mcfost = np.repeat(Vrad[:, np.newaxis, :], nz, axis=1)
     vz_mcfost = np.zeros((220,50,200))
 
+    # -- create master velocities array
     velocities = np.array([vrad_mcfost.transpose(),vtheta_mcfost.transpose(),vz_mcfost.transpose()])
 
+    # -- setup HDUs for fits file
     primary_hdu = fits.PrimaryHDU(np.abs(rho_mcfost.transpose()))
     second_hdu = fits.ImageHDU(np.abs(rho_mcfost.transpose()))
     tertiary_hdu = fits.ImageHDU(velocities)
+
+    # -- set header properties for mcfost
     primary_hdu.header['hierarch read_gas_velocity'] = 2
     primary_hdu.header['hierarch gas_dust_ratio'] = 100
     primary_hdu.header['hierarch read_gas_density'] = 1
     primary_hdu.header['read_n_a'] = 0
 
-    # planet properties in header
-    primary_hdu.header['hierarch planet_rad'] = Rplanet  # orbital radius of planet in AU
-    primary_hdu.header['hierarch planet_phi'] = 0.       # planet is always at angle = 0 in analytics
-    primary_hdu.header['hierarch planet_v'] = np.sqrt(G*M*M_sol/(Rplanet*au)) / 100 # Keplerian velocity at planet radius in m/s
-    primary_hdu.header['hierarch planet_m'] = Mp         # planet mass in solar masses
+    # -- sink particles properties in header (code modifications needed for anything other than 2)
+    primary_hdu.header['hierarch N_sink'] = Nsink
 
+    # -- star properties in header
+    primary_hdu.header['hierarch M_star'] = M          # star mass in M_sol
+    primary_hdu.header['hierarch x_star'] = 0.         # star at origin
+    primary_hdu.header['hierarch y_star'] = 0.
+    primary_hdu.header['hierarch z_star'] = 0.
+    primary_hdu.header['hierarch vx_star'] = 0.        # star not moving
+    primary_hdu.header['hierarch vy_star'] = 0.
+    primary_hdu.header['hierarch vz_star'] = 0.
 
+    # -- planet properties in header
+    primary_hdu.header['hierarch M_planet'] = Mp       # planet mass in M_jup
+    primary_hdu.header['hierarch x_planet'] = Rplanet  # planet x position simply orbital radius [AU]
+    primary_hdu.header['hierarch y_planet'] = 0.
+    primary_hdu.header['hierarch z_planet'] = 0.
+    primary_hdu.header['hierarch vx_planet'] = 0.      # planet velocity just keplerian rotation [m/s] (positive for anticlockwise, which is cw=-1)
+    primary_hdu.header['hierarch vy_planet'] = np.sqrt(G*M*M_sol/(Rplanet*au)) / 100 * -cw
+    primary_hdu.header['hierarch vz_planet'] = 0.
+
+    # -- setup fits file
     hdul = fits.HDUList([primary_hdu, second_hdu, tertiary_hdu])
 
     # --- Write a fits file for mcfost
     if fitsname is not None:
         print("Writing ", fitsname, " to disk")
-        hdul.writeto('analytic_fits/' + fitsname + '.fits', overwrite=True)
-        # --- TODO : add velocity : CP
+        hdul.writeto(fitsname + '.fits', overwrite=True)
     else:
         print("Fits file for mcfost was not created")
 
