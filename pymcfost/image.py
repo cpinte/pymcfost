@@ -372,7 +372,9 @@ class Image:
             norm = colors.SymLogNorm(1e-6 * vmax, vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'log':
             if vmin <= 0.0:
-                vmin = 1e-6 * vmax
+                vmin = 1e-5 * vmax
+            if vmin < 0.9e-5 * vmax:
+                print("WARNING : vmin ~< 1e-6 vmax may crash with recent versions of matplotlib")
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
