@@ -156,4 +156,4 @@ def pluto2mcfost(
     else:
         print("Fits file for mcfost was not created")
 
-    return 'Done'
+    return mcfost_r, mcfost_z, rho_mcfost, vr_mcfost, vphi_mcfost, vz_mcfost
