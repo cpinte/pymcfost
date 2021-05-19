@@ -241,5 +241,7 @@ class SED:
         plt.ylabel("T [K]")
 
 
+        return r_mcfost, T
+
     def spectral_index(self, wl1, wl2, i=0, iaz=0):
         pass
