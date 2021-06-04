@@ -9,3 +9,4 @@ from .fargo2mcfost import *
 from .pluto2mcfost import *
 from .CASA_simdata import *
 from .run import *
+from .wake import *
