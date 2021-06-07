@@ -308,8 +308,34 @@ def _rotate_splash_axes(xyz, anglex, angley, anglez):
 
     return np.array([x,y,z])
 
+def rotate_vec(u,v,angle):
+    '''
+      rotate a vector (u) around an axis defined by another vector (v)
+      by an angle (theta) using the Rodrigues rotation formula
+    '''
+    k = v/np.sqrt(np.inner(v,v))
+    w = np.cross(k,u)
+    k_dot_u = np.inner(k,u)
+    for i,uval in enumerate(u):
+        u[i] = u[i]*np.cos(angle) + w[i]*np.sin(angle) + k[i]*k_dot_u*(1.-np.cos(angle))
+    return u
 
+def rotate_coords(x,y,z,inc,PA):
+    '''
+       rotate x,y,z coordinates into the observational plane
+    '''
+    k = [-np.sin(PA), np.cos(PA), 0.]
+    xvec = [x,y,z]
+    xrot = rotate_vec(xvec,k,inc)
+    return xrot[0],xrot[1],xrot[2]
 
+def rotate_to_obs_plane(x,y,inc,PA):
+    '''
+       same as rotate_coords but takes 2D x,y as arrays
+    '''
+    for i,xx in enumerate(x):    # this can probably be done more efficiently
+        x[i],y[i],dum = rotate_coords(x[i],y[i],0.,inc,PA)
+    return x,y
 
 def planet_position(model, i_planet, i_star, ):
     '''
