@@ -8,7 +8,7 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None):
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,substract_cont=False):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve with beam as required
@@ -51,10 +51,22 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             image = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)
     else:  # cube
         if model.is_casa:
-            image = model.lines[:, :, :]
+            # -- continuum substraction
+            if substract_cont:
+                image = model.lines[:,:,:] - model.lines[0,:,:]
+            else:
+                image = model.lines[:, :, :]
         else:
+            # -- continuum substraction
+            if substract_cont:
+                image = model.lines[iaz, i, iTrans,:,:,:] - model.cont[iaz, i, iTrans, np.newaxis, :, :]
+            else:
+                image = model.lines[iaz, i, iTrans,:,:,:]
+
             # Convert to Jy
-            image = Wm2_to_Jy(model.lines[iaz, i, iTrans,:,:,:], model.freq[iTrans])
+            image = Wm2_to_Jy(image, model.freq[iTrans])
+
+
 
     #-- writing fits file
     hdr = fits.Header()
@@ -110,7 +122,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             image[iv,:,:] = convolve_fft(image[iv,:,:], beam)
 
 
-    #-- Jy/pixel to Jy/beamw
+    #-- Jy/pixel to Jy/beam
     beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
     pix_area = model.pixelscale**2
     image *= beam_area/pix_area

@@ -166,6 +166,7 @@ class Image:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
         halfsize = np.asarray(self.image.shape[-2:]) / 2 * pix_scale
         extent = [-halfsize[0]*xaxis_factor-shift_dx, halfsize[0]*xaxis_factor-shift_dx, -halfsize[1]-shift_dy, halfsize[1]-shift_dy]
+        self.extent = extent
 
         # --- Beam or psf: psf_FWHM and bmaj and bmin are in arcsec, bpa in deg
         i_convolve = False
