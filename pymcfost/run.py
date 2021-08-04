@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-_mcfost_bin = "~/mcfost/src/mcfost"
+_mcfost_bin = "mcfost"
 
 def run(filename, options="", delete_previous=False, notebook=False):
 
