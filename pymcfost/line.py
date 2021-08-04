@@ -107,7 +107,7 @@ class Line:
         v=None,
         iv=None,
         insert=False,
-        substract_cont=False,
+        subtract_cont=False,
         moment=None,
         psf_FWHM=None,
         bmaj=None,
@@ -226,7 +226,7 @@ class Line:
                 moment=moment,
                 beam=beam,
                 conv_method=conv_method,
-                substract_cont=substract_cont,
+                subtract_cont=subtract_cont,
                 M0_threshold=M0_threshold,
                 iv_support=iv_support,
                 v_minmax=v_minmax)
@@ -243,8 +243,8 @@ class Line:
                 cube = self.lines[iaz, i, iTrans, :, :, :]
                 # im = self.lines[i,iaz,iTrans,iv,:,:]
 
-                # -- continuum substraction
-                if substract_cont:
+                # -- continuum subtraction
+                if subtract_cont:
                     cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
 
             # Convolve spectrally
@@ -451,7 +451,7 @@ class Line:
         plt.ylabel(ylabel)
 
     def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
-                       beam=None, conv_method=None,substract_cont=False,M0_threshold=None,
+                       beam=None, conv_method=None,subtract_cont=False,M0_threshold=None,
                        iv_support=None, v_minmax = None):
         """
         This returns the moment maps in physical units, ie:
@@ -463,7 +463,7 @@ class Line:
         else:
             cube = np.copy(self.lines[iaz, i, iTrans, :, :, :])
 
-        if substract_cont:
+        if subtract_cont:
             cube = np.maximum(cube - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
 
         dv = self.velocity[1] - self.velocity[0]

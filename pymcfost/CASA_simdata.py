@@ -8,7 +8,7 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,substract_cont=False):
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve with beam as required
@@ -51,14 +51,14 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             image = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)
     else:  # cube
         if model.is_casa:
-            # -- continuum substraction
-            if substract_cont:
+            # -- continuum subtraction
+            if subtract_cont:
                 image = model.lines[:,:,:] - model.lines[0,:,:]
             else:
                 image = model.lines[:, :, :]
         else:
-            # -- continuum substraction
-            if substract_cont:
+            # -- continuum subtraction
+            if subtract_cont:
                 image = model.lines[iaz, i, iTrans,:,:,:] - model.cont[iaz, i, iTrans, np.newaxis, :, :]
             else:
                 image = model.lines[iaz, i, iTrans,:,:,:]
