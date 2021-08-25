@@ -197,13 +197,10 @@ class Params:
         self.simu.n_zones = n_zones
 
         # -- Density structure --
-        z = Zone()
         for k in range(n_zones):
-            self.zones.append(z)
-
+            self.zones.append(Zone())
             line = next(f).split()
             self.zones[k].geometry = int(line[0])
-
             line = next(f).split()
             self.zones[k].dust_mass = float(line[0])
             self.zones[k].gas_to_dust_ratio = float(line[1])
@@ -260,6 +257,7 @@ class Params:
                 self.zones[k].dust[j].aexp = float(line[2])
                 self.zones[k].dust[j].n_grains = int(line[3])
 
+
         # -- Molecular settings --
         line = next(f).split()
         self.mol.compute_pop = _word_to_bool(line[0])
@@ -274,9 +272,8 @@ class Params:
         n_mol = int(line[0])
         self.mol.n_mol = n_mol
 
-        m = Molecule()
         for k in range(n_mol):
-            self.mol.molecule.append(m)
+            self.mol.molecule.append(Molecule())
 
             line = next(f).split()
             self.mol.molecule[k].file = line[0]
@@ -305,9 +302,9 @@ class Params:
         line = next(f).split()
         n_stars = int(line[0])
         self.simu.n_stars = n_stars
-        s = Star()
+
         for k in range(n_stars):
-            self.stars.append(s)
+            self.stars.append(Star())
 
             line = next(f).split()
             self.stars[k].Teff = float(line[0])
