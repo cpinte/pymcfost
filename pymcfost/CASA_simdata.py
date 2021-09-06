@@ -28,7 +28,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     # --- Checking arguments
     if not is_image:
         if iTrans is None:
-            raise Exception("Missing transition number iTrans")
+            raise Exception("Missing transition number iTrans : iTrans is a python index from 0 to nTrans-1")
 
         nTrans = model.freq.size
         if iTrans > nTrans - 1:
@@ -65,8 +65,6 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
             # Convert to Jy
             image = Wm2_to_Jy(image, model.freq[iTrans])
-
-
 
     #-- writing fits file
     hdr = fits.Header()
@@ -241,8 +239,8 @@ def CASA_simdata(
             inwidth = width
 
         if channels is None:
-            inchan = 2 * model.P.mol.nv + 1
-            channels = np.arrange(inchan)
+            inchan = 2 * model.P.mol.molecule[imol].nv + 1
+            channels = np.arange(inchan)
         else:
             if isinstance(channels, int):
                 inchan = 1
