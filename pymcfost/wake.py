@@ -15,7 +15,7 @@ def get_wake_cartesian(rp,phip,npts,rmin,rmax,HonR,q):
     yy = rplot*np.sin(phi)
     return xx,yy
 
-def plot_wake(xy_obs,inc,PA,HonR,q):
+def plot_wake(xy_obs,inc,PA,HonR,q,color="black"):
     '''
        plot planet wake
        and rotate to the observational viewpoint
@@ -43,9 +43,9 @@ def plot_wake(xy_obs,inc,PA,HonR,q):
     # outer wake
     xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmax,HonR,q)
     xp,yp = rotate_to_obs_plane(xx,yy,inc,PA)
-    plt.plot(xx,yy,color='black')
+    plt.plot(xx,yy,color=color)
 
     # inner wake
     xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmin,HonR,q)
     xp,yp = rotate_to_obs_plane(xx,yy,inc,PA)
-    plt.plot(xx,yy,color='black')
+    plt.plot(xx,yy,color=color)
