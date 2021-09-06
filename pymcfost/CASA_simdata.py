@@ -8,7 +8,7 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False):
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve with beam as required
@@ -107,6 +107,30 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     hdr["BMAJ"] = bmaj/3600.
     hdr["BMIN"] = bmin/3600.
     hdr["BPA"] = bpa
+
+
+    # Convolve spectrally
+    if Delta_v is not None:
+        print("Spectral convolution at ", Delta_v, "km/s")
+        # Creating a Hanning function with 101 points
+        n_window = 101
+        w = np.hanning(n_window)
+
+        im = np.zeros([model.nv,model.ny, model.nx])
+        for iv in range(model.nv):
+            # For each pixel, resampling the spectrum between -FWHM to FWHM
+            # then integrating over convolution window
+            v_new = model.velocity[iv] + np.linspace(-1, 1, n_window) * Delta_v
+
+            iv_min = np.max(int(iv - Delta_v / model.dv - 1),0)
+            iv_max = np.min(int(iv + Delta_v / model.dv + 2),nv)
+
+            for j in range(model.ny):
+                for i in range(model.nx):
+                    f = interpolate.interp1d(model.velocity[iv_min:iv_max], image[iv_min:iv_max, j, i])
+                    im[iv, j, i] = np.average(f(v_new))
+        image = im
+        im = []
 
     #-- Convolution by beam
     sigma_x = bmin / model.pixelscale * FWHM_to_sigma  # in pixels
