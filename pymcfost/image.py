@@ -149,18 +149,18 @@ class Image:
         # --- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
             pix_scale = self.pixelscale
-            xlabel = r'$\Delta$ RA ["]'
-            ylabel = r'$\Delta$ Dec ["]'
+            xlabel = r'$\Delta$ RA (")'
+            ylabel = r'$\Delta$ Dec (")'
             xaxis_factor = -1
         elif axes_unit.lower() == 'au':
             pix_scale = self.pixelscale * self.P.map.distance
-            xlabel = 'Distance from star [au]'
-            ylabel = 'Distance from star [au]'
+            xlabel = 'Distance from star (au)'
+            ylabel = 'Distance from star (au)'
             xaxis_factor = 1
         elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
             pix_scale = 1
-            xlabel = r'$\Delta$ x [pix]'
-            ylabel = r'$\Delta$ y [pix]'
+            xlabel = r'$\Delta$ x (pix)'
+            ylabel = r'$\Delta$ y (pix)'
             xaxis_factor = 1
         else:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
@@ -427,7 +427,7 @@ class Image:
             cb = plt.colorbar(image, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
             if unit is not "":
-                cb.set_label(flux_name + " [" + formatted_unit + "]")
+                cb.set_label(flux_name + " (" + formatted_unit + ")")
             else:
                 cb.set_label(flux_name)
             plt.sca(ax) # we reset the main axis
@@ -587,18 +587,18 @@ class Image:
         # convert to Jy
         if Jy:
             Wm2_to_Jy(vis, sc.c / self.wl)
-            ylabel = "Correlated flux [Jy]"
+            ylabel = "Correlated flux (Jy)"
         else:
-            ylabel = "Correlated flux [W.m$^{-2}$.Hz$^{-1}$]"
+            ylabel = "Correlated flux (W.m$^{-2}$.Hz$^{-1}$)"
 
         if klambda:
             baselines = baselines / (self.wl * 1e-3)
-            xlabel = "Baselines [k$\lambda$]"
+            xlabel = "Baselines (k$\lambda$)"
         elif Mlambda:
             baselines = baselines / (self.wl * 1e-6)
-            xlabel = "Baselines [M$\lambda$]"
+            xlabel = "Baselines (M$\lambda$)"
         else:
-            xlabel = "Baselines [m]"
+            xlabel = "Baselines (m)"
 
         plt.plot(baselines, vis, color=color)
         plt.ylabel(ylabel)

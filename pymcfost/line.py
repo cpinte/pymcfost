@@ -128,6 +128,7 @@ class Line:
         ax=None,
         no_xlabel=False,
         no_ylabel=False,
+        no_vlabel=False,
         no_xticks=False,
         no_yticks=False,
         vlabel_position=(0.5, 0.1), # fraction of plot width and height
@@ -164,18 +165,18 @@ class Line:
         # --- Compute pixel scale and extent of image
         if axes_unit.lower() == 'arcsec':
             pix_scale = self.pixelscale
-            xlabel = r'$\Delta$ RA ["]'
-            ylabel = r'$\Delta$ Dec ["]'
+            xlabel = r'$\Delta$ RA (")'
+            ylabel = r'$\Delta$ Dec (")'
             xaxis_factor = -1
         elif axes_unit.lower() == 'au':
             pix_scale = self.pixelscale * self.P.map.distance
-            xlabel = 'Distance from star [au]'
-            ylabel = 'Distance from star [au]'
+            xlabel = 'Distance from star (au)'
+            ylabel = 'Distance from star (au)'
             xaxis_factor = 1
         elif axes_unit.lower() == 'pixels' or axes_unit.lower() == 'pixel':
             pix_scale = 1
-            xlabel = r'$\Delta$ x [pix]'
-            ylabel = r'$\Delta$ y [pix]'
+            xlabel = r'$\Delta$ x (pix)'
+            ylabel = r'$\Delta$ y (pix)'
             xaxis_factor = 1
         else:
             raise ValueError("Unknown unit for axes_units: " + axes_unit)
@@ -361,30 +362,31 @@ class Line:
 
             if moment == 0:
                 if Tb:
-                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ [K.km.s$^{-1}$]",size=colorbar_size)
+                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)
                 else:
-                    cb.set_label("Flux [" + formatted_unit + ".km.s$^{-1}$]",size=colorbar_size)
+                    cb.set_label("Flux (" + formatted_unit + ".km.s$^{-1}$)",size=colorbar_size)
             elif moment == 1:
-                cb.set_label("Velocity [km.s$^{-1}]$",size=colorbar_size)
+                cb.set_label("Velocity (km.s$^{-1})$",size=colorbar_size)
             elif moment == 2:
-                cb.set_label("Velocity dispersion [km.s$^{-1}$]",size=colorbar_size)
+                cb.set_label("Velocity dispersion (km.s$^{-1}$)",size=colorbar_size)
             else:
                 if Tb:
-                    cb.set_label("T$_\mathrm{b}$ [K]",size=colorbar_size)
+                    cb.set_label("T$_\mathrm{b}$ (K)",size=colorbar_size)
                 else:
-                    cb.set_label("Flux [" + formatted_unit + "]",size=colorbar_size)
+                    cb.set_label("Flux (" + formatted_unit + ")",size=colorbar_size)
 
         # -- Adding velocity
         if moment is None:
-            vlabx, vlaby = vlabel_position
-            ax.text(
-                vlabx, vlaby,
-                f"$\Delta$v={self.velocity[iv]:<4.2f}$\,$km/s",
-                horizontalalignment='center',
-                size=vlabel_size,
-                color="white",
-                transform=ax.transAxes,
-            )
+            if not no_vlabel:
+                vlabx, vlaby = vlabel_position
+                ax.text(
+                    vlabx, vlaby,
+                    f"$\Delta$v={self.velocity[iv]:<4.2f}$\,$km/s",
+                    horizontalalignment='center',
+                    size=vlabel_size,
+                    color="white",
+                    transform=ax.transAxes,
+                )
 
         # --- Adding beam
         if plot_beam:
@@ -431,10 +433,10 @@ class Line:
 
         if self.is_casa:
             line = np.sum(self.lines[:, :, :], axis=(1, 2))
-            ylabel = "Flux [Jy]"
+            ylabel = "Flux (Jy)"
         else:
             line = np.sum(self.lines[iaz, i, iTrans, :, :, :], axis=(1, 2))
-            ylabel = "Flux [W.m$^{-2}$]"
+            ylabel = "Flux (W.m$^{-2}$)"
 
         plt.plot(self.velocity, line)
 
@@ -445,7 +447,7 @@ class Line:
                 Fcont = np.sum(self.cont[iaz, i, iTrans, :, :])
             plt.plot([self.velocity[0], self.velocity[-1]], [Fcont, Fcont])
 
-        xlabel = "v [m.s$^{-1}$]"
+        xlabel = "v (m.s$^{-1}$)"
 
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
@@ -455,8 +457,8 @@ class Line:
                        iv_support=None, v_minmax = None):
         """
         This returns the moment maps in physical units, ie:
-         - M1 is the average velocity [km/s]
-         - M2 is the velocity dispersion [km/s]
+         - M1 is the average velocity (km/s)
+         - M2 is the velocity dispersion (km/s)
         """
         if self.is_casa:
             cube = np.copy(self.lines[:, :, :])
