@@ -91,17 +91,17 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
         # 4th axis
         hdr["CTYPE4"] = "FREQ"
-        hdr["CRVAL4"] = model.freq * 1e9  # Hz
+        hdr["CRVAL4"] = model.freq # Hz
         hdr["CDELT4"] = 2e9  # 2GHz by default
         hdr["CRPIX4"] = 0
     else:
         hdr["CTYPE3"] = "VELO-LSR"
         hdr["CRVAL3"] = 0.0  # line center
         hdr["CRPIX3"] = model.nv//2 + 1
-        hdr["CDELT3"] = model.dv * 1e3
-        hdr["CUNIT3"] = "m/s"
+        hdr["CDELT3"] = model.dv
+        hdr["CUNIT3"] = "km/s"
 
-    hdr["RESTFREQ"] = model.freq[iTrans] * 1e9  # Hz
+    hdr["RESTFREQ"] = model.freq[iTrans]  # Hz
     hdr["BUNIT"] = "JY/BEAM"
     hdr["BTYPE"] = "Intensity"
     hdr["BMAJ"] = bmaj/3600.
@@ -142,7 +142,6 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     else:
         for iv in range(image.shape[0]):
             image[iv,:,:] = convolve_fft(image[iv,:,:], beam)
-
 
     #-- Jy/pixel to Jy/beam
     beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))

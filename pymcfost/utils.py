@@ -104,6 +104,23 @@ def Wm2_to_Tb(nuFnu, nu, pixelscale):
     return Tb
 
 
+# -- Functions to deal the synthesized beam.
+def _beam_area(self):
+    """Beam area in arcsec^2"""
+    return np.pi * self.bmaj * self.bmin / (4.0 * np.log(2.0))
+
+def _beam_area_str(self):
+    """Beam area in steradian^2"""
+    return self._beam_area() * arcsec ** 2
+
+def _pixel_area(self):
+    return self.pixelscale ** 2
+
+def _beam_area_pix(self):
+    """Beam area in pix^2."""
+    return self._beam_area() / self._pixel_area()
+
+
 def telescope_beam(wl,D):
     """ wl and D in m, returns FWHM in arcsec"""
     return 0.989 * wl/D / 4.84814e-6

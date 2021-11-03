@@ -332,6 +332,9 @@ class Image:
             flux_name = "Tb"
             _scale = "lin"
             unit = "K"
+            # turning off some flags that may interfere
+            per_arcsec2 = False
+            per_beam = False
 
         if Jy:
             unit = "Jy.pixel-1"
@@ -348,7 +351,9 @@ class Image:
             unit = unit.replace("pixel-1", "arcsec-2")
 
         if per_beam:
-            im = im / self.pixelscale**2 * bmin * bmaj
+            beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
+            pix_area = model.pixelscale**2
+            im *= beam_area/pix_area
             unit = unit.replace("pixel-1", "beam-1")
 
         if norm:

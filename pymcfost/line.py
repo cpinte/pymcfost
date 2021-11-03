@@ -262,13 +262,13 @@ class Line:
                 iv_min = int(iv - Delta_v / self.dv - 1)
                 iv_max = int(iv + Delta_v / self.dv + 2)
 
-                im = np.zeros([self.nx, self.ny])
+                im = np.zeros([self.ny, self.nx])
                 for j in range(self.ny):
                     for i in range(self.nx):
                         f = interpolate.interp1d(
-                            self.velocity[iv_min:iv_max], cube[iv_min:iv_max, i, j]
+                            self.velocity[iv_min:iv_max], cube[iv_min:iv_max, j, i]
                         )
-                        im[i, j] = np.average(f(v_new))
+                        im[j, i] = np.average(f(v_new))
             else:
                 im = cube[iv, :, :]
 
@@ -287,6 +287,10 @@ class Line:
                 im = np.nan_to_num(im)
             print("Max Tb=", np.max(im), "K")
 
+            # turning off some flags that may interfere
+            per_arcsec2 = False
+            per_beam = False
+
         # -- Conversion to Jy
         if Jy:
             if not self.is_casa:
@@ -304,7 +308,9 @@ class Line:
             im = im / self.pixelscale**2
             unit = unit.replace("pixel-1", "arcsec-2")
         if per_beam:
-            im = im / self.pixelscale**2 * bmin * bmaj
+            beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
+            pix_area = model.pixelscale**2
+            im *= beam_area/pix_area
             unit = unit.replace("pixel-1", "beam-1")
 
 
