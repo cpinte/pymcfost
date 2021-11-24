@@ -98,8 +98,8 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
         hdr["CTYPE3"] = "VELO-LSR"
         hdr["CRVAL3"] = 0.0  # line center
         hdr["CRPIX3"] = model.nv//2 + 1
-        hdr["CDELT3"] = model.dv
-        hdr["CUNIT3"] = "km/s"
+        hdr["CDELT3"] = model.dv * 1000
+        hdr["CUNIT3"] = "m/s"
 
     hdr["RESTFREQ"] = model.freq[iTrans]  # Hz
     hdr["BUNIT"] = "JY/BEAM"
@@ -123,7 +123,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             v_new = model.velocity[iv] + np.linspace(-1, 1, n_window) * Delta_v
 
             iv_min = np.max(int(iv - Delta_v / model.dv - 1),0)
-            iv_max = np.min(int(iv + Delta_v / model.dv + 2),nv)
+            iv_max = np.min(int(iv + Delta_v / model.dv + 2),model.nv)
 
             for j in range(model.ny):
                 for i in range(model.nx):
