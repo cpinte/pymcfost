@@ -506,7 +506,7 @@ class Line:
                             progressbar.Bar('=', '[', ']'),
                             ' ',
                             progressbar.Percentage(),
-                        ],
+                        ]
                     )
                     bar.start()
                 except:
