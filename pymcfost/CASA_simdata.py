@@ -7,10 +7,7 @@ from .image import Image
 from .utils import Wm2_to_Jy, FWHM_to_sigma
 from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
-try:
-    import progressbar
-except ImportError:
-    print('WARNING: progressbar is not present')
+from scipy.ndimage import convolve1d
 
 def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None):
     """
@@ -115,44 +112,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
     # Convolve spectrally
     if Delta_v is not None:
-        print("Spectral convolution at ", Delta_v, "km/s, this may take a bit of time ...")
-        # Creating a Hanning function with 11 points
-        n_window = 11
-        w = np.hanning(n_window)
-
-        im = np.zeros([model.nv,model.ny, model.nx])
-
-        try:
-            bar = progressbar.ProgressBar(
-                maxval=model.nv,
-                widgets=[progressbar.Bar('=', '[', ']'),' ',progressbar.Percentage(),])
-            bar.start()
-        except:
-            pass
-
-        for iv in range(model.nv):
-            try:
-                bar.update(iv + 1)
-            except:
-                pass
-
-            # For each pixel, resampling the spectrum between -FWHM to FWHM
-            # then integrating over convolution window
-            v_new = model.velocity[iv] + np.linspace(-1, 1, n_window) * Delta_v
-
-            iv_min = np.maximum(int(iv - Delta_v / model.dv - 1),0)
-            iv_max = np.minimum(int(iv + Delta_v / model.dv + 2),model.nv)
-
-            for j in range(model.ny):
-                for i in range(model.nx):
-                    f = interpolate.interp1d(model.velocity[iv_min:iv_max], image[iv_min:iv_max, j, i], fill_value="extrapolate")
-                    im[iv, j, i] = np.average(f(v_new))
-        image = im
-        im = []
-        try:
-            bar.finish()
-        except:
-            pass
+        image = model._spectral_convolve(image, Delta_v)
 
     #-- Convolution by beam
     sigma_x = bmin / model.pixelscale * FWHM_to_sigma  # in pixels
@@ -175,6 +135,13 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
     hdul.writeto(workdir + simu_name + ".fits", overwrite=True)
 
+
+
+#    noise = np.random.randn(cube.size).reshape(cube.shape)
+#    noise = np.array([convolve(c, beam) for c in noise])
+#    noise = np.convolve(noise, spectral_response, axis=0)
+#    noise *= rms / np.std(noise)
+#    cube += noise
 
 def CASA_simdata(
     model,

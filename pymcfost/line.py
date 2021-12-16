@@ -7,12 +7,13 @@ from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+from scipy import interpolate
+from scipy.ndimage import convolve1d
 
 try:
     import progressbar
 except ImportError:
     print('WARNING: progressbar is not present')
-from scipy import interpolate
 
 from .parameters import Params, find_parameter_file
 from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy
@@ -250,27 +251,9 @@ class Line:
 
             # Convolve spectrally
             if Delta_v is not None:
-                print("Spectral convolution at ", Delta_v, "km/s")
-                # Creating a Hanning function with 101 points
-                n_window = 101
-                w = np.hanning(n_window)
+                cube = self._spectral_convolve(cube, Delta_v)
 
-                # For each pixel, resampling the spectrum between -FWHM to FWHM
-                # then integrating over convolution window
-                v_new = self.velocity[iv] + np.linspace(-1, 1, n_window) * Delta_v
-
-                iv_min = int(iv - Delta_v / self.dv - 1)
-                iv_max = int(iv + Delta_v / self.dv + 2)
-
-                im = np.zeros([self.ny, self.nx])
-                for j in range(self.ny):
-                    for i in range(self.nx):
-                        f = interpolate.interp1d(
-                            self.velocity[iv_min:iv_max], cube[iv_min:iv_max, j, i]
-                        )
-                        im[j, i] = np.average(f(v_new))
-            else:
-                im = cube[iv, :, :]
+            im = cube[iv, :, :]
 
         # -- Convolve image
         if i_convolve:
@@ -582,3 +565,39 @@ class Line:
             M = np.ma.masked_where(M0 < M0_threshold, M)
 
         return M
+
+
+    def _spectral_convolve(self, cube, Delta_v):
+
+        print("Spectral convolution at ", Delta_v, "km/s ->",Delta_v / self.dv, "channels")
+
+        # Creating a Hanning function with k points per mcfost delta_v
+        # could be optmised to have k points accrod the hanning function, but this is fast
+        k = 100
+
+        width = 2 * Delta_v / self.dv # in channels
+        nchan = int(width)+1
+        if nchan == 1:
+            return cube
+        if nchan%2 == 0:
+            nchan=nchan+1
+
+        # number of point for the high res pectral response
+        n = int(width*k)+1
+        if n%2 != 0:
+            n=n+1
+
+        w = np.hanning(n)
+        w = w/np.sum(w)
+
+        # rebinning the spectral response to the mcfost resolution (and padding with zeros as required)
+        n_pad = (nchan * k - n) // 2
+
+        if n_pad > 0:
+            pad = np.zeros(n_pad) * 1.0
+            w = np.concatenate((pad,w,pad))
+
+        w = w.reshape(nchan,k).sum(-1)
+        cube = convolve1d(cube, w, mode='constant',axis=0, cval=0.)
+
+        return cube
