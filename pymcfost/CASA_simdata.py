@@ -9,7 +9,7 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 from scipy.ndimage import convolve1d
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None):
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None, rms=0):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve spatially with beam (bmin, bmaj in arsec, bpa in degrees)
@@ -109,11 +109,11 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     hdr["BMIN"] = bmin/3600.
     hdr["BPA"] = bpa
 
-
     # Convolve spectrally
     if Delta_v is not None:
         image = model._spectral_convolve(image, Delta_v)
 
+    print(f"Spatial convolution at {bmaj} x {bmin}")
     #-- Convolution by beam
     sigma_x = bmin / model.pixelscale * FWHM_to_sigma  # in pixels
     sigma_y = bmaj / model.pixelscale * FWHM_to_sigma  # in pixels
@@ -127,8 +127,20 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
     #-- Jy/pixel to Jy/beam
     beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
-    pix_area = model.pixelscale**2
+    pix_area = model.pixelscale**3
     image *= beam_area/pix_area
+
+    print(f"Peak flux is {np.max(image)} Jy/beam")
+
+    if rms > 0.0:
+        noise = np.random.randn(image.size).reshape(image.shape)
+        for iv in range(image.shape[0]):
+            noise[iv,:,:] = convolve_fft(noise[iv,:,:], beam)
+        if Delta_v is not None:
+            noise =  model._spectral_convolve(noise, Delta_v)
+        print(np.std(noise), beam_area/pix_area)
+        noise *= rms / np.std(noise)
+        image += noise
 
     hdu = fits.PrimaryHDU(image, header=hdr)
     hdul = fits.HDUList(hdu)
@@ -137,11 +149,12 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
 
 
-#    noise = np.random.randn(cube.size).reshape(cube.shape)
-#    noise = np.array([convolve(c, beam) for c in noise])
-#    noise = np.convolve(noise, spectral_response, axis=0)
-#    noise *= rms / np.std(noise)
-#    cube += noise
+#	if rms > 0.0:
+#		noise = np.random.randn(cube.size).reshape(cube.shape)
+#		noise = np.array([convolve(c, beam) for c in noise])
+#		noise = np.convolve(noise, spectral_response, axis=0)
+#		noise *= rms / np.std(noise)
+#		image += noise
 
 def CASA_simdata(
     model,
