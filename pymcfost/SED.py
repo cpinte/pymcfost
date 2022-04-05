@@ -21,6 +21,7 @@ class SED:
     _sed_mc_file = "sed_mc.fits.gz"
     _sed_rt_file = "sed_rt.fits.gz"
     _temperature_file = "Temperature.fits.gz"
+    _nlte_temperature_file = "Temperature_nLTE.fits.gz"
 
     def __init__(self, dir=None, **kwargs):
         # Correct path if needed
@@ -71,7 +72,13 @@ class SED:
             self.T = hdu[0].data
             hdu.close()
         except OSError:
-            print('cannot open', self._temperature_file)
+            print('Warning: cannot open', self._temperature_file)
+            try:
+                hdu = fits.open(self.dir + "/" + self._nlte_temperature_file)
+                self.T = hdu[0].data
+                hdu.close()
+            except OSError:
+                print('Warning: cannot open', self._temperature_file)
 
 
     def plot(self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1, color="black", **kwargs):
