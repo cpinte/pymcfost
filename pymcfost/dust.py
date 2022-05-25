@@ -34,6 +34,9 @@ class Dust_model:
             self.kappa_abs = self.kappa * (1-self.albedo)
             self.kappa_sca = self.kappa * self.albedo
 
+            self.phase_function = fits.getdata(self.dir+"/phase_function.fits.gz")
+            self.polarisability = fits.getdata(self.dir+"/polarizability.fits.gz")
+
         except OSError:
             print('cannot open dust model in', self.dir)
 
@@ -48,11 +51,19 @@ class Dust_model:
         plt.xlabel("$\lambda$ [$\mu$m]")
         plt.ylabel("$\kappa$ [cm$^2$/g]")
 
+    def print_kappa(self,file="opacities.txt"):
+        np.savetxt(file, np.array([self.wl,self.kappa_abs,self.kappa_sca]).T ,header="# wl [micron]  kappa_abs [cm2/g] kappa_abs [cm2/g]")
+
     def plot_albedo(self,linewidth=1, **kwargs):
 
         plt.semilogx(self.wl,self.albedo,linewidth=linewidth)
         plt.xlabel("$\lambda$ [$\mu$m]")
         plt.ylabel("albedo")
 
-    def print_kappa(self,file="opacities.txt"):
-        np.savetxt(file, np.array([self.wl,self.kappa_abs,self.kappa_sca]).T ,header="# wl [micron]  kappa_abs [cm2/g] kappa_abs [cm2/g]")
+    def plot_phase_function(self,k=0,linewidth=1, **kwargs):
+        theta = np.arange(0,181)
+        plt.semilogy(theta,self.phase_function[:k])
+
+    def plot_polarisability(self,k=0,linewidth=1, **kwargs):
+        theta = np.arange(0,181)
+        plt.plot(theta,self.polarisability[:,k])
