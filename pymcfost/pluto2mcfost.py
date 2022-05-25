@@ -12,7 +12,7 @@ from .parameters import Params
 from .disc_structure import Disc
 
 def pluto2mcfost(
-        data_dir,
+        filename,
         nr=100,
         nz=100,
         umass=1,
@@ -61,7 +61,7 @@ def pluto2mcfost(
     rho0=Sigma0/(np.sqrt(2*np.pi)*epsilon*R0)
 
     # Read data file
-    V=readVTKSpherical(data_dir+'data.0700.vtk')
+    V=readVTKSpherical(filename)
 
     # Apply units
     V.data['rho']= np.squeeze((rho0*V.data['rho']).value)
