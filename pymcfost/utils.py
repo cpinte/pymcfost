@@ -80,8 +80,8 @@ def Jy_to_Tb(Fnu, nu, pixelscale):
      T [K]
     '''
     pixel_area = (pixelscale * arcsec) ** 2
-    exp_m1 = 1e16 * pixel_area * 2.0 * sc.h / sc.c ** 2 * nu ** 3 / Fnu
-    hnu_kT = np.log1p(exp_m1 + 1e-10)
+    exp_m1 = 1e26 * pixel_area * 2.0 * sc.h / sc.c ** 2 * nu ** 3 / Fnu
+    hnu_kT = np.log1p(np.maximum(exp_m1, 1e-10))
 
     Tb = sc.h * nu / (hnu_kT * sc.k)
 
