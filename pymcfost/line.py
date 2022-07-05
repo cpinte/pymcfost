@@ -253,6 +253,8 @@ class Line:
             if Delta_v is not None:
                 cube = self._spectral_convolve(cube, Delta_v)
 
+            if iv is None:
+                raise ValueError("plot_map needs either v or iv")
             im = cube[iv, :, :]
 
         # -- Convolve image
@@ -292,7 +294,7 @@ class Line:
             unit = unit.replace("pixel-1", "arcsec-2")
         if per_beam:
             beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
-            pix_area = model.pixelscale**2
+            pix_area = self.pixelscale**2
             im *= beam_area/pix_area
             unit = unit.replace("pixel-1", "beam-1")
 

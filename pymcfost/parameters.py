@@ -348,7 +348,7 @@ class Params:
 
         # -- Wavelengths --
         txt += f"""#-- Wavelength --
-  {self.wavelengths.n_wl:<4d} {self.wavelengths.wl_min:<5.1f} {self.wavelengths.wl_max:<7g}      n_lambda, lambda_min, lambda_max [microns]
+  {self.wavelengths.n_wl:<4d} {self.wavelengths.wl_min:<7.3f} {self.wavelengths.wl_max:<7.3f}      n_lambda, lambda_min, lambda_max [microns]
   {self.simu.compute_T} {self.simu.compute_SED} {self.simu.use_default_wl}         compute temperature?, compute sed?, use default wavelength grid ?
   {self.wavelengths.file}            wavelength file (if previous parameter is F)
   {self.simu.separate_contrib} {self.simu.separate_pola}              separation of different contributions?, stokes parameters?\n\n"""
@@ -393,10 +393,10 @@ class Params:
         txt += f"#-- Density structure --\n"
         for k in range(self.simu.n_zones):
             txt += f"""  {self.zones[k].geometry}                        zone type : 1 = disk, 2 = tapered-edge disk, 3 = envelope, 4 = debris disk, 5 = wall
-  {self.zones[k].dust_mass:<10.2e} {self.zones[k].gas_to_dust_ratio:<5.1f}         dust mass,  gas-to-dust mass ratio
-  {self.zones[k].h0:<5.1f}  {self.zones[k].Rref:<6.1f} {self.zones[k].vertical_exp:<6.1f}     scale height, reference radius (AU), unused for envelope, vertical profile exponent (only for debris disk)
-  {self.zones[k].Rin:<6.1f}  {self.zones[k].edge:<6.1f} {self.zones[k].Rout:<6.1f} {self.zones[k].Rc:<6.1f}  Rin, edge, Rout, Rc (AU) Rc is only used for tappered-edge & debris disks (Rout set to 8*Rc if Rout==0)
-  {self.zones[k].flaring_exp:<8.3f}                 flaring exponent, unused for envelope
+  {self.zones[k].dust_mass} {self.zones[k].gas_to_dust_ratio}         dust mass,  gas-to-dust mass ratio
+  {self.zones[k].h0}  {self.zones[k].Rref} {self.zones[k].vertical_exp}     scale height, reference radius (AU), unused for envelope, vertical profile exponent (only for debris disk)
+  {self.zones[k].Rin}  {self.zones[k].edge} {self.zones[k].Rout} {self.zones[k].Rc}  Rin, edge, Rout, Rc (AU) Rc is only used for tappered-edge & debris disks (Rout set to 8*Rc if Rout==0)
+  {self.zones[k].flaring_exp}                 flaring exponent, unused for envelope
   {self.zones[k].surface_density_exp} {self.zones[k].m_gamma_exp}                 surface density exponent (or -gamma for tappered-edge disk or volume density for envelope), usually < 0, -gamma_exp (or alpha_in & alpha_out for debris disk)\n\n"""
         txt += f"\n"
 

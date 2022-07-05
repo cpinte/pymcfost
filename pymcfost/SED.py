@@ -214,14 +214,18 @@ class SED:
         plt.ylabel("T [K]")
 
 
-    def plot_Tr(self, h_r=0.05, log=True, **kwargs):
+    def plot_Tr(self, h_r=0.05, iaz=0, log=True, **kwargs):
 
         grid = check_grid(self)
 
-        T = self.T
         if grid.ndim > 2:
-            r_mcfost = grid[0, 0, 0, :]
-            T = T[0,:]
+
+            if self.T.ndim > 2:
+                r_mcfost = grid[0, 0, self.P.grid.nz, :]
+                T = self.T[iaz, self.P.grid.nz, :]
+            else:
+                r_mcfost = grid[0, 0, 0, :]
+                T = self.T[0, :]
 
             if log:
                 plt.loglog(r_mcfost, T, **kwargs)
@@ -230,7 +234,7 @@ class SED:
         else:
             r_mcfost = np.sqrt(grid[0, :] ** 2 + grid[1, :] ** 2)
             ou = r_mcfost > 1e-6  # Removing star
-            T = T[ou]
+            T = self.T[ou]
             r_mcfost = r_mcfost[ou]
             z_mcfost = grid[2, ou]
 

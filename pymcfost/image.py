@@ -352,7 +352,7 @@ class Image:
 
         if per_beam:
             beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
-            pix_area = model.pixelscale**2
+            pix_area = self.pixelscale**2
             im *= beam_area/pix_area
             unit = unit.replace("pixel-1", "beam-1")
 
