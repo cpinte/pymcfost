@@ -431,7 +431,7 @@ class Image:
             cax = divider.append_axes("right", size="5%", pad=0.05)
             cb = plt.colorbar(image, cax=cax)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
-            if unit is not "":
+            if unit != "":
                 cb.set_label(flux_name + " (" + formatted_unit + ")")
             else:
                 cb.set_label(flux_name)

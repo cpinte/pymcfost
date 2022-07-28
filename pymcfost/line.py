@@ -1,5 +1,4 @@
 import os
-
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 import matplotlib.colors as colors
@@ -124,7 +123,7 @@ class Line:
         dynamic_range=1e3,
         color_scale=None,
         colorbar=True,
-        colorbar_size=14,
+        colorbar_size=10,
         cmap=None,
         ax=None,
         no_xlabel=False,
@@ -133,7 +132,7 @@ class Line:
         no_xticks=False,
         no_yticks=False,
         vlabel_position=(0.5, 0.1), # fraction of plot width and height
-        vlabel_size=10, # size in points
+        vlabel_size=8, # size in points
         title=None,
         title_size=14,
         limit=None,
