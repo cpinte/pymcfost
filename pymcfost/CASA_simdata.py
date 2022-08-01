@@ -126,9 +126,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             image[iv,:,:] = convolve_fft(image[iv,:,:], beam)
 
     #-- Jy/pixel to Jy/beam
-    beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
-    pix_area = model.pixelscale**3
-    image *= beam_area/pix_area
+    image *= model.beam_area_pix
 
     print(f"Peak flux is {np.max(image)} Jy/beam")
 

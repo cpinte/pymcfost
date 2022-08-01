@@ -370,7 +370,7 @@ class Image:
             if type in ["Q", "U"]:
                 vmin = -vmax
             else:
-                vmin = im.min()
+                vmin = 1e-3 * vmax
 
         if scale is None:
             scale = _scale
