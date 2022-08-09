@@ -62,7 +62,7 @@ class Dust_model:
 
     def plot_phase_function(self,k=0,linewidth=1, **kwargs):
         theta = np.arange(0,181)
-        plt.semilogy(theta,self.phase_function[:k])
+        plt.semilogy(theta,self.phase_function[:,k])
 
     def plot_polarisability(self,k=0,linewidth=1, **kwargs):
         theta = np.arange(0,181)
