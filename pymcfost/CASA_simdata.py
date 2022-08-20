@@ -126,7 +126,9 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             image[iv,:,:] = convolve_fft(image[iv,:,:], beam)
 
     #-- Jy/pixel to Jy/beam
-    image *= model.beam_area_pix
+    beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
+    pix_area = model.pixelscale**2
+    image *= beam_area/pix_area
 
     print(f"Peak flux is {np.max(image)} Jy/beam")
 
@@ -139,7 +141,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             noise[iv,:,:] = convolve_fft(noise[iv,:,:], beam)
         if Delta_v is not None:
             noise =  model._spectral_convolve(noise, Delta_v)
-        print(np.std(noise), beam_area/pix_area)
+        #print(np.std(noise), beam_area/pix_area)
         noise *= rms / np.std(noise)
         image += noise
 
