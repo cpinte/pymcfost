@@ -384,6 +384,8 @@ class Image:
             norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+        elif color_scale == 'sqrt':
+            norm = colors.PowerNorm(0.5, vmin=fmin, vmax=fmax, clip=True)
         else:
             raise ValueError("Unknown color scale: " + scale)
 

@@ -315,6 +315,8 @@ class Line:
             norm = colors.LogNorm(vmin=fmin, vmax=fmax, clip=True)
         elif color_scale == 'lin':
             norm = colors.Normalize(vmin=fmin, vmax=fmax, clip=True)
+        elif color_scale == 'sqrt':
+            norm = colors.PowerNorm(0.5, vmin=fmin, vmax=fmax, clip=True)
         else:
             raise ValueError("Unknown color scale: " + color_scale)
 

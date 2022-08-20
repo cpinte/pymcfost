@@ -1,4 +1,5 @@
 __version__ = "0.1"
+__author__ = "Christophe Pinte"
 
 from .parameters import *
 from .disc_structure import *
