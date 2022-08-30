@@ -75,6 +75,7 @@ class Image:
         fpeak=None,
         axes_unit='arcsec',
         colorbar=True,
+        colorbar_size=10,
         type='I',
         scale=None,
         pola_vector=False,
@@ -385,7 +386,7 @@ class Image:
         elif scale == 'lin':
             norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
         elif color_scale == 'sqrt':
-            norm = colors.PowerNorm(0.5, vmin=fmin, vmax=fmax, clip=True)
+            norm = colors.PowerNorm(0.5, vmin=vmin, vmax=vmax, clip=True)
         else:
             raise ValueError("Unknown color scale: " + scale)
 
@@ -429,15 +430,12 @@ class Image:
 
         # --- Colorbar
         if colorbar:
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.05)
-            cb = plt.colorbar(image, cax=cax)
+            cb = add_colorbar(image)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
             if unit != "":
-                cb.set_label(flux_name + " (" + formatted_unit + ")")
+                cb.set_label(flux_name + " (" + formatted_unit + ")",size=colorbar_size)
             else:
-                cb.set_label(flux_name)
-            plt.sca(ax) # we reset the main axis
+                cb.set_label(flux_name,size=colorbar_size)
 
 
         # --- Overplotting polarisation vectors

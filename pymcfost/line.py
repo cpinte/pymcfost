@@ -15,7 +15,7 @@ except ImportError:
     print('WARNING: progressbar is not present')
 
 from .parameters import Params, find_parameter_file
-from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy
+from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy, add_colorbar
 
 
 class Line:
@@ -346,12 +346,8 @@ class Line:
 
         # -- Color bar
         if colorbar:
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.05)
-            cb = plt.colorbar(image, cax=cax)
+            cb = add_colorbar(image)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
-            plt.sca(ax) # we reset the main axis
-
             if moment == 0:
                 if Tb:
                     cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)

@@ -366,3 +366,36 @@ def planet_position(model, i_planet, i_star, ):
     PA = np.rad2deg(np.arctan2(dxy[1],-dxy[0])) + 360 - 90
 
     return [dist, PA]
+
+def add_colorbar(mappable, shift=None, width=0.05, ax=None, trim_left=0, trim_right=0, side="right",**kwargs):
+    # creates a color bar that does not shrink the main plot or panel
+    # only works for horizontal bars so far
+
+    if ax is None:
+        ax = mappable.axes
+
+    # Get current figure dimensions
+    try:
+        fig = ax.figure
+        p = np.zeros([1,4])
+        p[0,:] = ax.get_position().get_points().flatten()
+    except:
+        fig = ax[0].figure
+        p = np.zeros([ax.size,4])
+        for k, a in enumerate(ax):
+            p[k,:] = a.get_position().get_points().flatten()
+    xmin = np.amin(p[:,0]) ; xmax = np.amax(p[:,2]) ; dx = xmax - xmin
+    ymin = np.amin(p[:,1]) ; ymax = np.amax(p[:,3]) ; dy = ymax - ymin
+
+    if side=="top":
+        if shift is None:
+            shift = 0.2
+        cax = fig.add_axes([xmin + trim_left, ymax + shift * dy, dx - trim_left - trim_right, width * dy])
+        cax.xaxis.set_ticks_position('top')
+        return fig.colorbar(mappable, cax=cax, orientation="horizontal",**kwargs)
+    elif side=="right":
+        if shift is None:
+            shift = 0.05
+        cax = fig.add_axes([xmax + shift*dx, ymin, width * dx, dy])
+        cax.xaxis.set_ticks_position('top')
+        return fig.colorbar(mappable, cax=cax, orientation="vertical",**kwargs)
