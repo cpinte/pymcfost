@@ -1,4 +1,4 @@
-import os
+import os, warnings
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -7,7 +7,7 @@ import numpy as np
 try:
     import mpl_scatter_density
 except ImportError:
-    print('WARNING: mpl_scatter_density is not present')
+    warnings.warn("mpl_scatter_density is not present", UserWarning)
 
 from .parameters import Params, find_parameter_file
 from .disc_structure import _plot_cutz, check_grid
