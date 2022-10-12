@@ -1,4 +1,4 @@
-import os
+import os, warnings
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 import matplotlib.colors as colors
@@ -12,7 +12,7 @@ from scipy.ndimage import convolve1d
 try:
     import progressbar
 except ImportError:
-    print('WARNING: progressbar is not present')
+    warnings.warn("progressbar is not present", UserWarning)
 
 from .parameters import Params, find_parameter_file
 from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy, add_colorbar
