@@ -402,7 +402,7 @@ class Line:
                         color=sink_particle_color,s=sink_particle_size)
 
         #-- Saving the last plotted quantity
-        self.last_im = im
+        self.last_image = im
 
         return image
 
@@ -417,16 +417,23 @@ class Line:
         bpa=None,
         plot_beam=False,
         plot_cont=True,
+        subtract_cont=False
     ):
 
         if self.is_casa:
             line = np.sum(self.lines[:, :, :], axis=(1, 2))
             ylabel = "Flux (Jy)"
         else:
-            line = np.sum(self.lines[iaz, i, iTrans, :, :, :], axis=(1, 2))
+            if subtract_cont:
+                lines = np.maximum(self.lines[iaz, i, iTrans, :, :, :] - self.cont[iaz, i, iTrans, np.newaxis, :, :], 0.0)
+            else:
+                lines = self.lines[iaz, i, iTrans, :, :, :]
+
+            line = np.sum(lines, axis=(1, 2))
             ylabel = "Flux (W.m$^{-2}$)"
 
-        plt.plot(self.velocity, line)
+        print(line)
+        plt.semilogy(self.velocity, line)
 
         if plot_cont:
             if self.is_casa:

@@ -4,8 +4,9 @@ from scipy import ndimage
 import scipy.constants as sc
 import astropy.constants as const
 import astropy.units as u
+import cmasher as cmr
 
-default_cmap = "inferno"
+default_cmap = cmr.arctic
 
 sigma_to_FWHM = 2.0 * np.sqrt(2.0 * np.log(2))
 FWHM_to_sigma = 1.0 / sigma_to_FWHM
