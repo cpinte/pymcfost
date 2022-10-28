@@ -44,10 +44,15 @@ class Mol:
     def __init__(self):
         self.molecule = []
 
+class Atomic:
+    def __init__(self):
+        self.atom = []
 
 class Molecule:
     pass
 
+class Atom:
+    pass
 
 class Star:
     pass
@@ -67,6 +72,7 @@ class Params:
     grid = Grid()
     zones = []
     mol = Mol()
+    atomic = Atomic()
     stars = []
 
     _minimum_version = 3.0
@@ -298,6 +304,42 @@ class Params:
                 map(int, line[0:nTrans])
             )  # convert list of str to int
 
+        if (self.simu.version > 3.0):
+            # -- Atom settings --
+            line = next(f).split()
+            n_atoms = int(line[0])
+            self.atomic.n_atoms = n_atoms
+
+            for k in range(n_atoms):
+                self.atomic.atom.append(Atom())
+
+                line = next(f).split()
+                self.atomic.atom[k].file = line[0]
+
+                line = next(f).split()
+                self.atomic.atom[k].nLTE = _word_to_bool(line[0])
+
+                line = next(f).split()
+                self.atomic.atom[k].initial_solution = int(line[0])
+
+                line = next(f).split()
+                self.atomic.atom[k].v_max = float(line[0])
+                self.atomic.atom[k].nv = int(line[1])
+
+                line = next(f).split()
+                self.atomic.atom[k].images = _word_to_bool(line[0])
+                n_trans = int(line[1])
+                self.atomic.atom[k].n_trans = n_trans
+
+                self.atomic.atom[k].lower = np.zeros(n_trans, dtype=np.int)
+                self.atomic.atom[k].upper = np.zeros(n_trans, dtype=np.int)
+                for l in range(n_trans):
+                    line = next(f).split()
+                    self.atomic.atom[k].lower[l] = int(line[0])
+                    self.atomic.atom[k].upper[l] = int(line[1])
+        else:
+            self.atomic.n_atoms = 0
+
         # -- Star properties --
         line = next(f).split()
         n_stars = int(line[0])
@@ -340,7 +382,7 @@ class Params:
         """
 
         # -- Photon packets --
-        txt = f"""3.0                       mcfost version\n
+        txt = f"""4.0                       mcfost version\n
 #-- Number of photon packages --
   {self.phot.nphot_T:<10.5g}              nbr_photons_eq_th  : T computation
   {self.phot.nphot_SED:<10.5g}              nbr_photons_lambda : SED computation
@@ -426,6 +468,19 @@ class Params:
             for j in range(self.mol.molecule[k].n_trans):
                 txt += f" {self.mol.molecule[k].transitions[j]}"
             txt += f" transition numbers\n"
+        txt += f"\n"
+
+         # -- Atomic settings --
+        txt += f"""#-- Atomic RT settings --
+  {self.atomic.n_atoms}   number of atoms\n"""
+        for k in range(self.atomic.n_atoms):
+            txt += f"""  {self.atomic.atom[k].file}          atomic data filename, level_max
+  {self.atomic.atom[k].nLTE}          non-LTE ?
+  {self.atomic.atom[k].initial_solution}          initial solution : 0 = LTE, 1 = from file
+  {self.atomic.atom[k].v_max} {self.atomic.atom[k].nv}                 vmax (km.s-1), n_speed
+  {self.atomic.atom[k].images} {self.atomic.atom[k].n_trans}                   images (T) or total flux (F)?,  number of lines in ray-tracing\n """
+            for j in range(self.atomic.atom[k].n_trans):
+                txt += f" {self.atomic.atom[k].lower[j]} {self.atomic.atom[k].upper[j]}    lower and upper levels\n"
         txt += f"\n"
 
         # -- Star properties --
