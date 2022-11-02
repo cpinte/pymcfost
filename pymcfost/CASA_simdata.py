@@ -132,9 +132,9 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
 
     print(f"Peak flux is {np.max(image)} Jy/beam")
 
-	#-- For testing purpose : this needs to be updated and to come before
-	#-- compute the scale factor in 1 channel once,
-	#-- then add noise before spatial and spectral convolution
+	#-- This is for testing purpose only so far: this needs to be updated and to come before
+	#--  - compute the scale factor in 1 channel once,
+	#--  - then add noise before spatial and spectral convolution so we do not convolve twice
     if rms > 0.0:
         noise = np.random.randn(image.size).reshape(image.shape)
         for iv in range(image.shape[0]):
@@ -149,8 +149,6 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     hdul = fits.HDUList(hdu)
 
     hdul.writeto(workdir + simu_name + ".fits", overwrite=True)
-
-
 
 #	if rms > 0.0:
 #		noise = np.random.randn(cube.size).reshape(cube.shape)

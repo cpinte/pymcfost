@@ -150,7 +150,8 @@ class Line:
         sink_particle_color="cyan",
         M0_threshold=None,
         iv_support=None,
-        v_minmax = None):
+        v_minmax = None,
+        rms=0):
         # Todo:
         # - print molecular info (eg CO J=3-2)
 
@@ -297,6 +298,13 @@ class Line:
             im *= beam_area/pix_area
             unit = unit.replace("pixel-1", "beam-1")
 
+        # -- Adding noise
+        if rms > 0.0:
+            noise = np.random.randn(im.size).reshape(im.shape)
+            if i_convolve:
+                noise = convolve_fft(noise, beam)
+            noise *= rms / np.std(noise)
+            im += noise
 
         # --- Plot range and color map`
         _color_scale = 'lin'
