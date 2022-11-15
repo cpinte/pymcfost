@@ -151,7 +151,9 @@ class Line:
         M0_threshold=None,
         iv_support=None,
         v_minmax = None,
-        rms=0):
+        rms=0,
+        interpolation=None
+    ):
         # Todo:
         # - print molecular info (eg CO J=3-2)
 
@@ -330,7 +332,7 @@ class Line:
 
         # -- Make the plot
         ax.cla()
-        image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
+        image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap,interpolation=interpolation)
 
         if limit is not None:
             limits = [limit, -limit, -limit, limit]

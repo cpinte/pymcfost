@@ -113,7 +113,8 @@ class Image:
         plot_stars=False,
         sink_particle_size=6,
         sink_particle_color="cyan",
-        norm=False
+        norm=False,
+        interpolation=None
     ):
         # Todo:
         #  - plot a selected contribution
@@ -406,7 +407,7 @@ class Image:
                 raise Warning("Can't set bad values from given colormap")
 
         # --- Making the actual plot
-        image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap)
+        image = ax.imshow(im, norm=norm, extent=extent, origin='lower', cmap=cmap, interpolation=interpolation)
 
         if limit is not None:
             limits = [limit, -limit, -limit, limit]
