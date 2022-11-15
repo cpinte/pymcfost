@@ -3,7 +3,7 @@ import subprocess
 
 _mcfost_bin = "mcfost"
 
-def run(filename, options="", delete_previous=False, notebook=False, logfile=None):
+def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False):
 
     if not isinstance(filename, str):
         raise TypeError("First argument to run must be a filename.")
@@ -22,12 +22,20 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
     if delete_previous:
         subprocess.call("rm -rf "+root_dir+"/data_*", shell = True)
 
+    if silent:
+        if logfile is None:
+            logfile = "mcfost.log"
+
     # Saving output in a log file
     if logfile is not None:
         options+= " > "+logfile
 
-    print("pymcfost: Running mcfost ...")
+    if not silent:
+        print("pymcfost: Running mcfost ...")
+
     r = subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True)
     if r.returncode:
         raise OSError("mcfost did not run as expected, check mcfost's output")
-    print("pymcfost: Done")
+
+    if not silent:
+        print("pymcfost: Done")
