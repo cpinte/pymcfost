@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from scipy import interpolate
 from scipy.ndimage import convolve1d
+import scipy.constants as sc
 
 try:
     import progressbar
@@ -64,6 +65,8 @@ class Line:
                     self.velocity = self.CRVAL3 + self.CDELT3 * (np.arange(1, self.nv + 1) - self.CRPIX3)
                 else:
                     raise ValueError("Velocity type is not recognised")
+
+                self.nu = self.restfreq * (1 - self.velocity * 1000 / sc.c)
 
                 try:
                     self.star_positions = hdu[1].data
