@@ -10,7 +10,7 @@ from .utils import *
 
 class Dust_model:
 
-    def __init__(self,dir=None,**kwargs):
+    def __init__(self, dir=None, **kwargs):
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         self.dir = dir
@@ -24,6 +24,7 @@ class Dust_model:
         # Read model results
         self._read(**kwargs)
 
+
     def _read(self):
 
         try:
@@ -35,7 +36,11 @@ class Dust_model:
             self.kappa_sca = self.kappa * self.albedo
 
             self.phase_function = fits.getdata(self.dir+"/phase_function.fits.gz")
-            self.polarisability = fits.getdata(self.dir+"/polarizability.fits.gz")
+            try:
+                self.polarisability = fits.getdata(self.dir+"/polarizability.fits.gz")
+            except:
+                print("Missing polarisability")
+
 
         except OSError:
             print('cannot open dust model in', self.dir)
