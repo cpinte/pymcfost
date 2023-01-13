@@ -616,6 +616,14 @@ class Image:
     def writeto(self, filename, **kwargs):
         fits.writeto(os.path.normpath(os.path.expanduser(filename)),self.last_image, self.header, **kwargs)
 
+    def get_planet_rPA(self,iplanet):
+        "Return the projected radius (arcsec) and PA of planet #iplanet in the image"
+        dx, dy = self.star_positions[:,0,0,iplanet] - self.star_positions[:,0,0,0]
+        PA = np.rad2deg(np.arctan2(dy,-dx)) - 90
+        r = np.hypot(dx,dy)
+
+        return r, PA
+
 def spectral_index(model1, model2, i=0, iaz=0):
 
     log_nuFnu1 = np.log(np.maximum(model1.image[0, iaz, i, :, :], 1e-300))

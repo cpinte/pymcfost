@@ -400,3 +400,34 @@ def add_colorbar(mappable, shift=None, width=0.05, ax=None, trim_left=0, trim_ri
         cax = fig.add_axes([xmax + shift*dx, ymin, width * dx, dy])
         cax.xaxis.set_ticks_position('top')
         return fig.colorbar(mappable, cax=cax, orientation="vertical",**kwargs)
+
+def get_planet_r_az(disk_PA, inc, planet_r, planet_PA):
+    # For a given disk PA and inc, and planet PA, and projected separation
+    # gives the az to be passed to the planet_az option and the deprojected separation
+    # input :
+    # disk_PA, inc and  planet_PA in degrees
+    # planet_r radius in arcsec or au
+    # output :
+    #  r in same unit as planet_r
+    # planet_az in degrees (is value to be passed to mcfost)
+
+    # test.get_planet_rPA does the opposite from a mcfost image
+
+    dPA = planet_PA - disk_PA
+    az = np.arctan(np.tan(np.deg2rad(dPA)) / np.cos(np.deg2rad(inc)))
+    az = - np.rad2deg(az) # conversion to deg and correct convention for mcfost
+
+
+    y_p = planet_r * np.sin(np.deg2rad(dPA))
+    x_p = planet_r * np.cos(np.deg2rad(dPA))
+
+    x = x_p
+    y = y_p / np.cos(np.deg2rad(inc))
+
+    r = np.hypot(x,y)
+
+    # test :
+    #mcfost.get_planet_r_az(62.5,50.2, 0.60521173 * 157.2, 11.619613647460938)
+    # should give : (130.00000395126042, 62.500002877567475)
+
+    return r, az #
