@@ -572,7 +572,6 @@ class Line:
             M = M0
         elif moment == 1:
             M = M1
-            return M1
         elif moment == 2:
             M = M2
         elif moment == 8:
