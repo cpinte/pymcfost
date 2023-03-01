@@ -15,14 +15,6 @@ pymcfost offers (or will offer) the following functionalities:
  - read and plot dust models, including Mie, DHS and aggregates dust properties calculations
  - (TBD) direct interface to the ML chemical predictions
 
-## History:
-
-In case you are curous, pymcfost was born as an attempt to port in python the functions that were available in the yorick-mcfost code. The goal is to provide a simple and light interface to explore a single (or a few) model(s).
-
-The fitting routines of the yorick interface are yet to be ported into pymcfost.
-An alternative python distribution is available at https://github.com/swolff9/mcfost-python . It is more tailored towards handling large grid of models and model fitting.
-
-
 ## Installation:
 
 ```
@@ -40,6 +32,13 @@ without needing to repeat the above step):
 ```
  python3 setup.py develop
 ```
+
+## History:
+
+In case you are curous, pymcfost was born as an attempt to port in python the functions that were available in the yorick-mcfost code. The goal is to provide a simple and light interface to explore a single (or a few) model(s).
+
+The fitting routines of the yorick interface are yet to be ported into pymcfost.
+An alternative python distribution is available at https://github.com/swolff9/mcfost-python . It is more tailored towards handling large grid of models and model fitting.
 
 ## Main structural differences with mcfost-python so far:
 
