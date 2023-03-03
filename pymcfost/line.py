@@ -417,6 +417,8 @@ class Line:
         #-- Saving the last plotted quantity
         self.last_image = im
 
+        plt.sca(ax)
+
         return image
 
     def plot_line(
