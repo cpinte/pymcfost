@@ -177,6 +177,7 @@ class Image:
         if telescope_diameter is not None:
             # sigma of Gaussian is ~ 0.42 lambda/D
             psf_FWHM = 0.42 * self.wl*1e-6 /telescope_diameter * sigma_to_FWHM / arcsec
+            print("psf FWHM is ",psf_FWHM,'"')
 
         if psf_FWHM is not None:
             #print("test")
@@ -454,7 +455,7 @@ class Image:
             pola = 100 * np.sqrt((Qb / np.maximum(Ib,1e-300)) ** 2 + (Ub / np.maximum(Ib,1e-300)) ** 2)
             theta = 0.5 * np.arctan2(Ub, Qb)
             # Ref is N (vertical axis) --> sin, and Est is toward left --> -
-            pola_x = -pola * np.sin(theta)
+            pola_x = pola * np.sin(theta)
             pola_y = pola * np.cos(theta)
 
             ax.quiver(
@@ -510,6 +511,8 @@ class Image:
 
         #-- Saving the last plotted quantity
         self.last_image = im
+
+        plt.sca(ax)
 
         # --- Return
         return image
