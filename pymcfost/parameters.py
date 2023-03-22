@@ -331,8 +331,8 @@ class Params:
                 n_trans = int(line[1])
                 self.atomic.atom[k].n_trans = n_trans
 
-                self.atomic.atom[k].lower = np.zeros(n_trans, dtype=np.int)
-                self.atomic.atom[k].upper = np.zeros(n_trans, dtype=np.int)
+                self.atomic.atom[k].lower = np.zeros(n_trans, dtype=int)
+                self.atomic.atom[k].upper = np.zeros(n_trans, dtype=int)
                 for l in range(n_trans):
                     line = next(f).split()
                     self.atomic.atom[k].lower[l] = int(line[0])

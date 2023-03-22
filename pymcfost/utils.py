@@ -149,7 +149,7 @@ def make_cut(im, x0,y0,x1,y1,num=None,plot=False):
         # Extract the values along the line at the pixel spacing
         length = int(np.hypot(x1-x0, y1-y0))
         x, y = np.linspace(x0, x1, length), np.linspace(y0, y1, length)
-        zi = im[y.astype(np.int), x.astype(np.int)]
+        zi = im[y.astype(int), x.astype(int)]
 
     return zi
 
