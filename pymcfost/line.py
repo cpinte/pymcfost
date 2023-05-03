@@ -162,8 +162,7 @@ class Line:
         linewidths=None,
         zorder=None,
         origin='lower',
-        levels=4,
-        colors=None
+        levels=4
         
     ):
         # Todo:
