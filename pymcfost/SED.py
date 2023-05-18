@@ -1,7 +1,7 @@
 import os, warnings
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
+import matplotlib.colors as mcolors
 import numpy as np
 
 try:
@@ -167,7 +167,7 @@ class SED:
 
         if log:
             if Voronoi:
-                # plt.scatter(r,z/r,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                # plt.scatter(r,z/r,c=T,s=0.1, norm=mcolors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig = plt.gcf()
                 ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
                 density = ax.scatter_density(
@@ -176,11 +176,11 @@ class SED:
                     c=T,
                     cmap=plt.cm.RdYlBu_r,
                     dpi=100,
-                    norm=colors.LogNorm(vmin=Tmin, vmax=Tmax),
+                    norm=mcolors.LogNorm(vmin=Tmin, vmax=Tmax),
                 )
                 fig.colorbar(density, label="T [K]")
             else:
-                plt.pcolormesh(r, z / r, T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                plt.pcolormesh(r, z / r, T, norm=mcolors.LogNorm(vmin=Tmin, vmax=Tmax))
                 cb = plt.colorbar()
                 cb.set_label('T [K]')
             plt.xscale('log')
@@ -188,7 +188,7 @@ class SED:
             plt.ylabel("z/r")
         else:
             if Voronoi:
-                # plt.scatter(r,z,c=T,s=0.1, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                # plt.scatter(r,z,c=T,s=0.1, norm=mcolors.LogNorm(vmin=Tmin, vmax=Tmax))
                 fig = plt.gcf()
                 ax = fig.add_subplot(1, 1, 1, projection='scatter_density')
                 density = ax.scatter_density(
@@ -197,11 +197,11 @@ class SED:
                     c=T,
                     cmap=plt.cm.RdYlBu_r,
                     dpi=100,
-                    norm=colors.LogNorm(vmin=Tmin, vmax=Tmax),
+                    norm=mcolors.LogNorm(vmin=Tmin, vmax=Tmax),
                 )
                 fig.colorbar(density, label="T [K]")
             else:
-                plt.pcolormesh(r, z, T, norm=colors.LogNorm(vmin=Tmin, vmax=Tmax))
+                plt.pcolormesh(r, z, T, norm=mcolors.LogNorm(vmin=Tmin, vmax=Tmax))
                 cb = plt.colorbar()
                 cb.set_label('T [K]')
             plt.xlabel("r [au]")

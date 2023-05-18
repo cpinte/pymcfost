@@ -1,7 +1,7 @@
 import os, warnings
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
-import matplotlib.colors as colors
+import matplotlib.colors as mcolors
 from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -325,11 +325,11 @@ class Line:
         if color_scale == 'log':
             if fmin <= 0.0:
                 fmin = fmax / dynamic_range
-            norm = colors.LogNorm(vmin=fmin, vmax=fmax, clip=True)
+            norm = mcolors.LogNorm(vmin=fmin, vmax=fmax, clip=True)
         elif color_scale == 'lin':
-            norm = colors.Normalize(vmin=fmin, vmax=fmax, clip=True)
+            norm = mcolors.Normalize(vmin=fmin, vmax=fmax, clip=True)
         elif color_scale == 'sqrt':
-            norm = colors.PowerNorm(0.5, vmin=fmin, vmax=fmax, clip=True)
+            norm = mcolors.PowerNorm(0.5, vmin=fmin, vmax=fmax, clip=True)
         else:
             raise ValueError("Unknown color scale: " + color_scale)
 

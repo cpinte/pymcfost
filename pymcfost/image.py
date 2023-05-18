@@ -4,7 +4,7 @@ import os
 import astropy.io.fits as fits
 from astropy.convolution import Gaussian2DKernel, convolve, convolve_fft, AiryDisk2DKernel
 import matplotlib.cm as cm
-import matplotlib.colors as colors
+import matplotlib.colors as mcolors
 from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -183,7 +183,7 @@ class Image:
             #print("test")
             # sigma in pixels
             sigma = psf_FWHM / (self.pixelscale * 2*np.sqrt(2*np.log(2)))
-            beam = Gaussian2DKernel(sigma)
+            beam = Gaussian2DKernel(sigma,x_size=int(15*sigma),y_size=int(15*sigma))
             i_convolve = True
             bmin = psf_FWHM
             bmaj = psf_FWHM
@@ -378,17 +378,17 @@ class Image:
         if scale is None:
             scale = _scale
         if scale == 'symlog':
-            norm = colors.SymLogNorm(1e-6 * vmax, vmin=vmin, vmax=vmax, clip=True)
+            norm = mcolors.SymLogNorm(1e-6 * vmax, vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'log':
             if vmin <= 0.0:
                 vmin = 1e-5 * vmax
             if vmin < 0.9e-5 * vmax:
                 print("WARNING : vmin ~< 1e-6 vmax may crash with recent versions of matplotlib")
-            norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
+            norm = mcolors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'lin':
-            norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
+            norm = mcolors.Normalize(vmin=vmin, vmax=vmax, clip=True)
         elif color_scale == 'sqrt':
-            norm = colors.PowerNorm(0.5, vmin=vmin, vmax=vmax, clip=True)
+            norm = mcolors.PowerNorm(0.5, vmin=vmin, vmax=vmax, clip=True)
         else:
             raise ValueError("Unknown color scale: " + scale)
 

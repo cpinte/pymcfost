@@ -136,7 +136,7 @@ def make_cut(im, x0,y0,x1,y1,num=None,plot=False):
     if plot:
         vmax = np.max(im)
         vmin = vmax * 1e-6
-        norm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
+        norm = mcolors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         plt.imshow(im,origin="lower", norm=norm)
         plt.plot([x0,x1],[y0,y1])
 
