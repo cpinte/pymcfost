@@ -162,8 +162,8 @@ class Line:
         linewidths=None,
         zorder=None,
         origin='lower',
-        levels=4
-        
+        levels=None,
+        colors=None
     ):
         # Todo:
         # - print molecular info (eg CO J=3-2)
@@ -364,7 +364,7 @@ class Line:
 
         if title is not None:
             ax.set_title(title,size=title_size)
- 
+
         # start from casa - contours
         if plot_type=="imshow":
             image = ax.imshow(
@@ -389,6 +389,8 @@ class Line:
                 zorder=zorder
             )
         elif plot_type=="contour":
+            if colors is not None:
+                cmap=None
             image = ax.contour(
                 im,
                 extent=extent,
@@ -401,7 +403,7 @@ class Line:
                 colors=colors
             )
         # end from casa - contours
-        
+
         # -- Color bar
         if colorbar:
             cb = add_colorbar(image)
