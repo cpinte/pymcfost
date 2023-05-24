@@ -413,7 +413,7 @@ class Line:
                     cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)
                 else:
                     cb.set_label("Flux (" + formatted_unit + ".km.s$^{-1}$)",size=colorbar_size)
-            elif moment == 1:
+            elif moment == 1 or moment == 9:
                 cb.set_label("Velocity (km.s$^{-1})$",size=colorbar_size)
             elif moment == 2:
                 cb.set_label("Velocity dispersion (km.s$^{-1}$)",size=colorbar_size)
