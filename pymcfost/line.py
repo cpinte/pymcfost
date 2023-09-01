@@ -23,8 +23,8 @@ class Line:
 
     _line_file = "lines.fits.gz"
 
-    def __init__(self, dir=None, **kwargs):
-
+    def __init__(self, dir=None, line_file=None, **kwargs):
+        
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         self.dir = dir
@@ -34,6 +34,10 @@ class Line:
 
         # Read parameter file
         self.P = Params(para_file)
+        
+        # If user specified line_file, overwrite the default
+        if line_file is not None:
+            self._line_file = line_file
 
         # Read model results
         self._read(**kwargs)
