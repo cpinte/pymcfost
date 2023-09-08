@@ -28,3 +28,6 @@ dynamic = ["version"]
 
 [project.urls]
 homepage = "http://github.com/cpinte/pymcfost"
+
+[tool.setuptools]
+packages = ["pymcfost"]
