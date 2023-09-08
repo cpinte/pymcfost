@@ -23,6 +23,7 @@ dependencies = [
     "scipy",
     "matplotlib",
     "progressbar",
+    "cmasher",
 ]
 dynamic = ["version"]
 
