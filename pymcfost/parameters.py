@@ -65,19 +65,21 @@ class Simu:
 
 class Params:
 
-    simu = Simu()
-    phot = Photons()
-    wavelengths = Wavelengths()
-    map = Map()
-    grid = Grid()
-    zones = []
-    mol = Mol()
-    atomic = Atomic()
-    stars = []
-
     _minimum_version = 3.0
 
     def __init__(self, filename=None, **kwargs):
+        
+        # Instantiate empty classes and lists to store properties
+        self.simu = Simu()
+        self.phot = Photons()
+        self.wavelengths = Wavelengths()
+        self.map = Map()
+        self.grid = Grid()
+        self.zones = []
+        self.mol = Mol()
+        self.atomic = Atomic()
+        self.stars = []
+        
         self.filename = filename
         self._read(**kwargs)
 
