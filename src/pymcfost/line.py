@@ -21,9 +21,9 @@ from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy,
 DEFAULT_LINE_FILE = "lines.fits.gz"
 
 class Line:
-    
+
     def __init__(self, dir=None, line_file=None, **kwargs):
-        
+
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         self.dir = dir
@@ -33,7 +33,7 @@ class Line:
 
         # Read parameter file
         self.P = Params(para_file)
-        
+
         # If user specified line_file
         if line_file is not None:
             self._line_file = line_file
@@ -419,7 +419,7 @@ class Line:
                     cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)
                 else:
                     cb.set_label("Flux (" + formatted_unit + ".km.s$^{-1}$)",size=colorbar_size)
-            elif moment == 1:
+            elif moment == 1 or moment == 9:
                 cb.set_label("Velocity (km.s$^{-1})$",size=colorbar_size)
             elif moment == 2:
                 cb.set_label("Velocity dispersion (km.s$^{-1}$)",size=colorbar_size)
