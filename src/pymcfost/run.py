@@ -3,6 +3,8 @@ import subprocess
 
 # _mcfost_bin = "mcfost"
 
+
+# Add _mcfost_bin and _mcfost_utils
 def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False, _mcfost_bin="mcfost", _mcfost_utils="mcfost/utils"):
 
     if not isinstance(filename, str):
