@@ -1,9 +1,9 @@
 import os
 import subprocess
 
-_mcfost_bin = "mcfost"
+# _mcfost_bin = "mcfost"
 
-def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False):
+def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False, _mcfost_bin="mcfost", _mcfost_utils="mcfost/utils"):
 
     if not isinstance(filename, str):
         raise TypeError("First argument to run must be a filename.")
@@ -33,7 +33,11 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
     if not silent:
         print("pymcfost: Running mcfost ...")
 
-    r = subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True)
+    # Setup environment
+    my_env = os.environ.copy()
+    my_env['MCFOST_UTILS'] = _mcfost_utils
+
+    r = subprocess.run(_mcfost_bin+" "+filename+" "+options, shell=True, env=my_env)
     if r.returncode:
         raise OSError("mcfost did not run as expected, check mcfost's output")
 
