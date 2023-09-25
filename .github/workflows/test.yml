@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.7"
 
-      - name: get working directory
+      - name: Get working directory
         run: |
           echo $HOME
           echo $PWD
@@ -22,4 +22,5 @@ jobs:
 
       - name: Install dependencies
         run: ｜
-          python3 setup.py install
+          python -m pip install --upgrade pip
+          python setup.py install
