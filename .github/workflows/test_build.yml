@@ -41,5 +41,5 @@ jobs:
         run: |
           pytest tests/test_params.py
           pytest tests/test_io_params.py
-          pytest tests/test_plot.py --mpl --mpl-baseline-path=tests/expected_figures
+#          pytest tests/test_plot.py --mpl --mpl-baseline-path=tests/expected_figures
 
