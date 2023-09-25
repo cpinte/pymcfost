@@ -4,10 +4,18 @@ on: [push]
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [linux, macos]
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+
+        include:
+          - os: linux
+            os-version: ubuntu-latest
+          - os: macos
+            os-version: macos-latest
+
+    runs-on: ${{ matrix.os-version }}
 
 
     steps:
@@ -17,18 +25,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-#      - name: Get working directory
-#        run: |
-#          echo $HOME
-#          echo $PWD
-#          ls
-#          which python
-#          which pip
-
-#      - name: Display Python version
-#        run: python -c "import sys; print(sys.version)"
-
 
       - name: Install pymcfost with dependecies
         run: |
