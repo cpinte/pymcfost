@@ -20,6 +20,7 @@ jobs:
           echo $PWD
           ls
           which python
+          which pip
 
       - name: Install dependencies
         run: pip test
