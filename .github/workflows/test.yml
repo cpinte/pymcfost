@@ -18,5 +18,8 @@ jobs:
         run: |
           echo $HOME
           echo $PWD
+          ls
+
+      - name: Install dependencies
+        run: |
           
-      
