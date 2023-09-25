@@ -1,0 +1,22 @@
+name: test package
+
+on: [push]
+
+jobs:
+  build-python-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+
+      - name: get working directory
+        run: |
+          echo $HOME
+          echo $PWD
+          
+      
