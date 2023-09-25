@@ -1,4 +1,4 @@
-name: test package on linux
+name: test package on both linux and macos in different python versions
 
 on: [push]
 
@@ -32,10 +32,13 @@ jobs:
           python -m pip install .
 
       - name: Install pytest
-        run: pip install pytest
+        run: |
+          pip install pytest
+          pip install pytest-mpl
 
       - name: Run tests
         run: |
-          pytest tests/test_params.py
-          pytest tests/test_io_params.py
-#          python tests/test_io
+#          pytest tests/test_params.py
+#          pytest tests/test_io_params.py
+#          python tests/test_plot.py --mpl --mpl-baseline-path=expected_figures
+           python tests/test_plot.py
