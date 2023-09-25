@@ -19,15 +19,22 @@ jobs:
           echo $HOME
           echo $PWD
           ls
-          which python
-          which pip
+#          which python
+#          which pip
 
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+#      - name: Display Python version
+#        run: python -c "import sys; print(sys.version)"
 
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest
-          python -m pip install .
+
+      - name: Install pymcfost
+        run: python -m pip install .
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run tests
+        run: pytest tests/test
