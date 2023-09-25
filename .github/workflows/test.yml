@@ -21,5 +21,5 @@ jobs:
           ls
 
       - name: Install dependencies
-        run: |
-          
+        run: ｜
+          python3 setup.py install
