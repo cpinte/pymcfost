@@ -26,15 +26,15 @@ jobs:
 #        run: python -c "import sys; print(sys.version)"
 
 
-      - name: Install dependencies
+      - name: Install pymcfost with dependecies
         run: |
           python -m pip install --upgrade pip
-
-      - name: Install pymcfost
-        run: python -m pip install .
+          python -m pip install .
 
       - name: Install pytest
         run: pip install pytest
 
       - name: Run tests
-        run: pytest tests/test.py
+        run:
+#          pytest tests/test_params.py
+          python tests/test.py

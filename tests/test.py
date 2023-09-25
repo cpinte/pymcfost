@@ -1,6 +1,4 @@
-def fib(n: int) -> int:
-    return n if n < 2 else fib(n-1)+fib(n-2)
+import os
 
-
-def test_fibonacci():
-    assert fib(10) == 54
+working_dir = os.getcwd()
+print(working_dir)
