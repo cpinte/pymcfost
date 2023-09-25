@@ -37,9 +37,9 @@ jobs:
           pip install pytest-mpl
 
       - name: Run tests
-        run: python tests/test_plot.py
-#        run: |
-#          pytest tests/test_params.py
-#          pytest tests/test_io_params.py
-#          python tests/test_plot.py --mpl --mpl-baseline-path=expected_figures
+#        run: python tests/test_plot.py
+        run: |
+          pytest tests/test_params.py
+          pytest tests/test_io_params.py
+          pytest tests/test_plot.py --mpl --mpl-baseline-path=tests/expected_figures
 
