@@ -33,8 +33,7 @@ jobs:
           python -m pip install .
 
       - name: Install pytest
-        run: |
-          pip install pytest
+        run: pip install pytest
 
       - name: Run tests
         run: |
