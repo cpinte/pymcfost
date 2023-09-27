@@ -1,5 +1,6 @@
 import pytest
 from pymcfost.parameters import _word_to_bool
+import os
 
 
 
