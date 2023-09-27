@@ -7,12 +7,19 @@ import pytest
 import os
 working_dir = os.getcwd()
 
+
+
 data_dir = working_dir + "/tests/test_ref4.0"
 
 
 
 out_path = working_dir + '/tests/actual'
 expected = working_dir + '/tests/expected_figures'
+
+if os.path.exists(expected) == False:
+    os.system('wget http://www.physics.usyd.edu.au/~zwan0382/pymcfost/testdata.tar')
+    os.system('tar -xvf testdata.tar -C ./tests/')
+
 if os.path.exists(out_path) == False: os.mkdir(out_path)
 
 def data_th_plot_T(path):
