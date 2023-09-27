@@ -23,7 +23,7 @@ class SED:
     _temperature_file = "Temperature.fits.gz"
     _nlte_temperature_file = "Temperature_nLTE.fits.gz"
 
-    def __init__(self, dir=None, _mcfost_bin="mcfost", _mcfost_utils="mcfost/utils", **kwargs):
+    def __init__(self, dir=None, **kwargs):
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         if dir[-7:] != "data_th":
@@ -40,8 +40,6 @@ class SED:
         # Read model results
         self._read(**kwargs)
 
-        self._mcfost_bin = _mcfost_bin
-        self._mcfost_utils = _mcfost_utils
 
     def _read(self):
         # Read SED files

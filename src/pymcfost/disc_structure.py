@@ -139,7 +139,7 @@ def check_grid(model):
             grid = model.disc.grid
         except:
             print("No grid structure, trying to create it ...")
-            run(model.P.filename, options=model.P.options+" -disk_struct", _mcfost_bin=model._mcfost_bin, _mcfost_utils=model._mcfost_utils)
+            run(model.P.filename, options=model.P.options+" -disk_struct")
             try:
                 print("Trying to read grid structure again ...")
                 model.disc = Disc(model.basedir)
