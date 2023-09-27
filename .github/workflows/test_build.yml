@@ -33,8 +33,9 @@ jobs:
           python -m pip install .
 
       - name: Install pytest
-        run: pip install pytest
-
+        run: |
+          pip install pytest
+#          pip install pytest-mpl
 
       - name: Run tests
         run: |
