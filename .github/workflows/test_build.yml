@@ -33,14 +33,10 @@ jobs:
           python -m pip install .
 
       - name: Install pytest
-        run: |
-          pip install pytest
-#          pip install pytest-mpl
-
+        run: pip install pytest
       - name: Run tests
         run: |
           pytest tests/test_params.py
           pytest tests/test_io_params.py
-#          pytest tests/test_plot.py --mpl --mpl-baseline-path=tests/expected_figures
           pytest tests/test_plot.py
 
