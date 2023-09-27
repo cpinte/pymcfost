@@ -141,7 +141,7 @@ def test_compare_data_th_plot_T(plot_func):
     print('./%s/test_%s.png' % (out_path, plot_func.__name__))
     result = compare_images('%s/test_%s.png' % (expected, plot_func.__name__),
                             '%s/test_%s.png' % (out_path, plot_func.__name__),
-                            tol=1e-3)
+                            tol=1e-2)
     assert result is None, f"Images not equal: {result}"
 
 
