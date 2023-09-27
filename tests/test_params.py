@@ -1,11 +1,6 @@
 import pytest
 from pymcfost.parameters import _word_to_bool
-import os
 
-
-
-os.system('wget http://www.physics.usyd.edu.au/~zwan0382/pymcfost/testdata.tar')
-os.system('tar -xvf testdata.tar -C ./tests/')
 
 true_strings = ["True", ".True.", "TRUE", ".TRUE.", "true", ".true.", "t", ".t.", "T", ".T."]
 @pytest.mark.parametrize("string", true_strings)
