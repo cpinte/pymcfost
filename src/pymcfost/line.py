@@ -18,10 +18,9 @@ except ImportError:
 from .parameters import Params, find_parameter_file
 from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy, add_colorbar
 
+DEFAULT_LINE_FILE = "lines.fits.gz"
 
 class Line:
-
-    _line_file = "lines.fits.gz"
 
     def __init__(self, dir=None, line_file=None, **kwargs):
 
@@ -35,9 +34,12 @@ class Line:
         # Read parameter file
         self.P = Params(para_file)
 
-        # If user specified line_file, overwrite the default
+        # If user specified line_file
         if line_file is not None:
             self._line_file = line_file
+        # otherwise
+        else:
+            self._line_file = DEFAULT_LINE_FILE
 
         # Read model results
         self._read(**kwargs)
@@ -417,7 +419,7 @@ class Line:
                     cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)
                 else:
                     cb.set_label("Flux (" + formatted_unit + ".km.s$^{-1}$)",size=colorbar_size)
-            elif moment == 1:
+            elif moment == 1 or moment == 9:
                 cb.set_label("Velocity (km.s$^{-1})$",size=colorbar_size)
             elif moment == 2:
                 cb.set_label("Velocity dispersion (km.s$^{-1}$)",size=colorbar_size)
