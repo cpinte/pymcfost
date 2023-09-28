@@ -5,16 +5,10 @@ from copy import copy
 import pytest
 from pymcfost import Params
 
-
 test_dir = Path(__file__).parent
 
 output_dir = test_dir / "artifacts"
 input_dir = test_dir / "corpus"
-
-if os.path.exists(str(input_dir)) == False:
-    os.system('wget http://www.physics.usyd.edu.au/~zwan0382/pymcfost/testdata.tar.gz')
-    os.system('tar -xvf testdata.tar.gz -C ./tests/')
-
 corpus = list(input_dir.glob("*.para"))
 
 
