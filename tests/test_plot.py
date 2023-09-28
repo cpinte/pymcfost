@@ -7,8 +7,6 @@ import pytest
 import os
 working_dir = os.getcwd()
 
-
-
 data_dir = working_dir + "/tests/test_ref4.0"
 out_path = working_dir + '/tests/actual'
 expected = working_dir + '/tests/expected_figures'
@@ -126,18 +124,18 @@ def data_CO_plot_map2(path):
     fig.savefig('%s/test_data_CO_plot_map2.png' % path)
 
 
-
-
-plot_functions = [data_th_plot_T,
-                  data_th_plot_T_log,
-                  data_th_plot_0,
-                  data_th_plot_0_contrib,
-                  data_1_0_scattered_light,
-                  data_1_0_polarisation,
-                  data_1300_scattered_light,
-                  data_CO_plot_line,
-                  data_CO_plot_map1,
-                  data_CO_plot_map2]
+plot_functions = [
+    data_th_plot_T,
+    data_th_plot_T_log,
+    data_th_plot_0,
+    data_th_plot_0_contrib,
+    data_1_0_scattered_light,
+    data_1_0_polarisation,
+    data_1300_scattered_light,
+    data_CO_plot_line,
+    data_CO_plot_map1,
+    data_CO_plot_map2,
+    ]
 
 @pytest.mark.parametrize("plot_func", plot_functions)
 def test_compare_data_th_plot_T(plot_func):
