@@ -36,7 +36,5 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/test_params.py
-          pytest tests/test_io_params.py
-          pytest tests/test_plot.py
+          pytest tests/test*.py
 
