@@ -68,7 +68,7 @@ class Params:
     _minimum_version = 3.0
 
     def __init__(self, filename=None, **kwargs):
-
+        
         # Instantiate empty classes and lists to store properties
         self.simu = Simu()
         self.phot = Photons()
@@ -79,7 +79,7 @@ class Params:
         self.mol = Mol()
         self.atomic = Atomic()
         self.stars = []
-
+        
         self.filename = filename
         self._read(**kwargs)
 
