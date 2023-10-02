@@ -12,7 +12,7 @@ out_path = working_dir + '/tests/actual'
 expected = working_dir + '/tests/expected_figures'
 
 if os.path.exists(expected) == False:
-    os.system('wget http://www.physics.usyd.edu.au/~zwan0382/pymcfost/testdata.tar.gz')
+    os.system('wget http://ipag.osug.fr/public/pintec/pymcfost/testdata.tar.gz')
     os.system('tar -xvf testdata.tar.gz -C ./tests/')
 
 if os.path.exists(out_path) == False: os.mkdir(out_path)
