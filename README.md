@@ -43,7 +43,7 @@ An alternative python distribution is available at https://github.com/swolff9/mc
 
 ## Main structural differences with mcfost-python so far
 
-- python >= 3.7 vs python 2.x
+- python >= 3.8 vs python 2.x
 - only parameter file >= 3.0
 - handles parameter files with mutiple zones, dust population, molecules, stars, etc. Parameter files are stored in objects rather than dicts, allowing more flexibility.
 - does not and will not handle observational data, only models

@@ -1,0 +1,40 @@
+name: test package on both linux and macos in different python versions
+
+on: [push]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [linux, macos]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+        include:
+          - os: linux
+            os-version: ubuntu-latest
+          - os: macos
+            os-version: macos-latest
+
+    runs-on: ${{ matrix.os-version }}
+
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pymcfost with dependecies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run tests
+        run: |
+          pytest tests/test*.py
+
