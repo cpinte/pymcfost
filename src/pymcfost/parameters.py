@@ -68,7 +68,7 @@ class Params:
     _minimum_version = 3.0
 
     def __init__(self, filename=None, **kwargs):
-        
+
         # Instantiate empty classes and lists to store properties
         self.simu = Simu()
         self.phot = Photons()
@@ -79,7 +79,7 @@ class Params:
         self.mol = Mol()
         self.atomic = Atomic()
         self.stars = []
-        
+
         self.filename = filename
         self._read(**kwargs)
 
@@ -166,8 +166,11 @@ class Params:
         self.map.PA = float(line[0])
 
         # -- Scattering method --
-        line = next(f).split()
-        self.simu.scattering_method = int(line[0])
+        if (self.simu.version < 4.1):
+            line = next(f).split()
+            self.simu.scattering_method = int(line[0])
+        else:
+            self.simu.scattering_method = 0
 
         line = next(f).split()
         self.simu.phase_function_method = int(line[0])
@@ -271,10 +274,17 @@ class Params:
         self.mol.compute_pop = _word_to_bool(line[0])
         self.mol.compute_pop_accurate = _word_to_bool(line[1])
         self.mol.LTE = _word_to_bool(line[2])
-        self.mol.profile_width = float(line[3])
+        if (self.simu.version < 4.1):
+            self.mol.profile_width = float(line[3])
+        else:
+            self.mol.profile_width = 15.0
 
         line = next(f).split()
         self.mol.v_turb = float(line[0])
+        if (self.simu.version > 4.0):
+            self.mol.v_turb_unit = line[1]
+        else:
+            self.mol.v_turb_unit = "km/s"
 
         line = next(f).split()
         n_mol = int(line[0])
@@ -287,9 +297,11 @@ class Params:
             self.mol.molecule[k].file = line[0]
             self.mol.molecule[k].level_max = int(line[1])
 
-            line = next(f).split()
-            self.mol.molecule[k].v_max = float(line[0])
-            self.mol.molecule[k].nv = int(line[1])
+            if (self.simu.version < 4.1):
+                line = next(f).split()
+                self.mol.molecule[k].v_max = float(line[0])
+                self.mol.molecule[k].v_min = - self.mol.molecule[k].v_max
+                self.mol.molecule[k].nv = 2*int(line[1])+1
 
             line = next(f).split()
             self.mol.molecule[k].cst_abundance = _word_to_bool(line[0])
@@ -305,6 +317,13 @@ class Params:
             self.mol.molecule[k].transitions = list(
                 map(int, line[0:nTrans])
             )  # convert list of str to int
+
+            if (self.simu.version > 4.0):
+                line = next(f).split()
+                self.mol.molecule[k].v_min = float(line[0])
+                self.mol.molecule[k].v_max = float(line[1])
+                self.mol.molecule[k].nv = int(line[2])
+
 
         if (self.simu.version > 3.0):
             # -- Atom settings --
