@@ -403,7 +403,7 @@ class Params:
         """
 
         # -- Photon packets --
-        txt = f"""4.0                       mcfost version\n
+        txt = f"""4.1                       mcfost version\n
 #-- Number of photon packages --
   {self.phot.nphot_T:<10.5g}              nbr_photons_eq_th  : T computation
   {self.phot.nphot_SED:<10.5g}              nbr_photons_lambda : SED computation
@@ -431,7 +431,6 @@ class Params:
 
         # -- Scattering method --
         txt += f"""#-- Scattering method --
-  {self.simu.scattering_method}                       0=auto, 1=grain prop, 2=cell prop
   {self.simu.phase_function_method}                       1=Mie, 2=hg (2 implies the loss of polarizarion)\n\n"""
 
         # -- Symetries --
@@ -479,16 +478,17 @@ class Params:
         # -- Molecular settings --
         txt += f"""#-- Molecular RT settings --
   {self.mol.compute_pop}  {self.mol.compute_pop_accurate}  {self.mol.LTE} {self.mol.profile_width}      lpop, laccurate_pop, LTE, profile width
-  {self.mol.v_turb}                        v_turb [km/s]
+  {self.mol.v_turb} {self.mol.v_turb_unit}                       v_turb, unit
   {self.mol.n_mol}                          nmol\n"""
         for k in range(self.mol.n_mol):
             txt += f"""  {self.mol.molecule[k].file} {self.mol.molecule[k].level_max}          molecular data filename, level_max
-  {self.mol.molecule[k].v_max} {self.mol.molecule[k].nv}                 vmax (km.s-1), n_speed
   {self.mol.molecule[k].cst_abundance} {self.mol.molecule[k].abundance} {self.mol.molecule[k].abundance_file}   cst molecule abundance ?, abundance, abundance file
   {self.mol.molecule[k].ray_tracing}  {self.mol.molecule[k].n_trans}                   ray tracing ?,  number of lines in ray-tracing\n """
             for j in range(self.mol.molecule[k].n_trans):
                 txt += f" {self.mol.molecule[k].transitions[j]}"
             txt += f" transition numbers\n"
+        txt += f"{self.mol.molecule[k].v_min} {self.mol.molecule[k].v_max} {self.mol.molecule[k].nv}                 vmin, vmax (km.s-1), n_speed\n"
+
         txt += f"\n"
 
          # -- Atomic settings --
