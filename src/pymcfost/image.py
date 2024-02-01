@@ -105,8 +105,10 @@ class Image:
         telescope_diameter=None,
         Jy=False,
         mJy=False,
+        MJy=False,
         muJy=False,
         per_arcsec2=False,
+        per_str=False,
         per_beam=False,
         shift_dx=0,
         shift_dy=0,
@@ -114,7 +116,9 @@ class Image:
         sink_particle_size=6,
         sink_particle_color="cyan",
         norm=False,
-        interpolation=None
+        interpolation=None,
+        beam_color='grey',
+        mask_color='grey'
     ):
         # Todo:
         #  - plot a selected contribution
@@ -244,20 +248,40 @@ class Image:
         if Jy:
             if not self.is_casa:
                 I = Wm2_to_Jy(I, self.freq)
+                if pola_needed:
+                    Q = Wm2_to_Jy(Q, self.freq)
+                    U = Wm2_to_Jy(U, self.freq)
 
         # -- Conversion to mJy
         if mJy:
             if not self.is_casa:
                 I = Wm2_to_Jy(I, self.freq) * 1e3
+                if pola_needed:
+                    Q = Wm2_to_Jy(Q, self.freq) * 1e3
+                    U = Wm2_to_Jy(U, self.freq) * 1e3
             else:
-                I *= 1e6
+                I *= 1e3
 
         # -- Conversion to microJy
         if muJy:
             if not self.is_casa:
                 I = Wm2_to_Jy(I, self.freq) * 1e6
+                if pola_needed:
+                    Q = Wm2_to_Jy(Q, self.freq) * 1e6
+                    U = Wm2_to_Jy(U, self.freq) * 1e6
             else:
                 I *= 1e6
+
+        # -- Conversion to MJy
+        if MJy:
+            if not self.is_casa:
+                I = Wm2_to_Jy(I, self.freq) * 1e-6
+                if pola_needed:
+                    Q = Wm2_to_Jy(Q, self.freq) * 1e-6
+                    U = Wm2_to_Jy(U, self.freq) * 1e-6
+            else:
+                I *= 1e-6
+
 
         # --- Coronagraph: in mas
         if coronagraph is not None:
@@ -345,6 +369,9 @@ class Image:
         if mJy:
             unit = "mJy.pixel-1"
 
+        if MJy:
+            unit = "MJy.pixel-1"
+
         if rescale_r2:
             unit = "arbitrary units" # max == 1
 
@@ -352,6 +379,10 @@ class Image:
         if per_arcsec2:
             im = im / self.pixelscale**2
             unit = unit.replace("pixel-1", "arcsec-2")
+
+        if per_str:
+            im = im / self.pixelscale**2 * (180/np.pi * 3600)**2
+            unit = unit.replace("pixel-1", "str-1")
 
         if per_beam:
             beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
@@ -387,7 +418,7 @@ class Image:
             norm = mcolors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
         elif scale == 'lin':
             norm = mcolors.Normalize(vmin=vmin, vmax=vmax, clip=True)
-        elif color_scale == 'sqrt':
+        elif scale == 'sqrt':
             norm = mcolors.PowerNorm(0.5, vmin=vmin, vmax=vmax, clip=True)
         else:
             raise ValueError("Unknown color scale: " + scale)
@@ -479,7 +510,7 @@ class Image:
                 height=bmaj,
                 angle=-bpa,
                 fill=True,
-                color="grey",
+                color=beam_color,
             )
             ax.add_patch(beam)
 
@@ -492,7 +523,7 @@ class Image:
                 width=2 * mask,
                 height=2 * mask,
                 fill=True,
-                color='grey',
+                color=mask_color,
             )
             ax.add_patch(mask)
 
