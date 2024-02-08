@@ -485,6 +485,9 @@ class Image:
 
             pola = 100 * np.sqrt((Qb / np.maximum(Ib,1e-300)) ** 2 + (Ub / np.maximum(Ib,1e-300)) ** 2)
             theta = 0.5 * np.arctan2(Ub, Qb)
+            if xaxis_factor < 0:
+                theta += pi/2
+
             # Ref is N (vertical axis) --> sin, and Est is toward left --> -
             pola_x = pola * np.sin(theta)
             pola_y = pola * np.cos(theta)
