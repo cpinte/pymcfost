@@ -473,7 +473,7 @@ class Image:
 
         # --- Overplotting polarisation vectors
         if pola_vector:
-            X = (np.arange(1, self.nx + 1) - self.cx) * pix_scale
+            X = (np.arange(1, self.nx + 1) - self.cx) * pix_scale * xaxis_factor
             Y = (np.arange(1, self.ny + 1) - self.cy) * pix_scale
             X, Y = np.meshgrid(X, Y)
 
