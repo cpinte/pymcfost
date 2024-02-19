@@ -401,7 +401,7 @@ def add_colorbar(mappable, shift=None, width=0.05, ax=None, trim_left=0, trim_ri
         cax.xaxis.set_ticks_position('top')
         return fig.colorbar(mappable, cax=cax, orientation="vertical",**kwargs)
 
-def get_planet_r_az(disk_PA, inc, planet_r, planet_PA):
+def get_planet_r_az(disk_PA, disk_inc, planet_r, planet_PA):
     # For a given disk PA and inc, and planet PA, and projected separation
     # gives the az to be passed to the planet_az option and the deprojected separation
     # input :
@@ -412,9 +412,11 @@ def get_planet_r_az(disk_PA, inc, planet_r, planet_PA):
     # planet_az in degrees (is value to be passed to mcfost)
 
     # test.get_planet_rPA does the opposite from a mcfost image
+    # Note this basically the same function as dynamite.to_mcfost
+    # We just keep it here for conveniencefor now
 
     dPA = planet_PA - disk_PA
-    az = np.arctan(np.tan(np.deg2rad(dPA)) / np.cos(np.deg2rad(inc)))
+    az = np.arctan(np.tan(np.deg2rad(dPA)) / np.cos(np.deg2rad(disk_inc)))
     az = - np.rad2deg(az) # conversion to deg and correct convention for mcfost
 
 
@@ -422,7 +424,7 @@ def get_planet_r_az(disk_PA, inc, planet_r, planet_PA):
     x_p = planet_r * np.cos(np.deg2rad(dPA))
 
     x = x_p
-    y = y_p / np.cos(np.deg2rad(inc))
+    y = y_p / np.cos(np.deg2rad(disk_inc))
 
     r = np.hypot(x,y)
 
@@ -430,4 +432,16 @@ def get_planet_r_az(disk_PA, inc, planet_r, planet_PA):
     #mcfost.get_planet_r_az(62.5,50.2, 0.60521173 * 157.2, 11.619613647460938)
     # should give : (130.00000395126042, 62.500002877567475)
 
-    return r, az
+    # mcfost inclination is oppositte to dynamite
+    if (disk_inc<0):
+        mcfost_inc=-disk_inc
+    else: # to avoid the bug in red/blue PA with negative inclination in mcfost
+        mcfost_inc=180-disk_inc
+        az = -az
+
+    print("MCFOST parameter should be:")
+    print("i=",mcfost_inc,"deg")
+    print("planet r=",r,"au")
+    print("planet az=",az,"deg (for cmd line option)")
+
+    return mcfost_inc, r, az
