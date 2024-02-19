@@ -320,6 +320,9 @@ class Image:
         elif type == 'PI':
             im = np.sqrt(np.float64(Q) ** 2 + np.float64(U) ** 2)
             _scale = 'log'
+        elif type == 'PA':
+            im = (0.5 * np.arctan2(U, Q) + 4*np.pi)%2*np.pi
+            _scale = 'lin'
         elif type in ('Qphi', 'Uphi'):
             X = np.arange(1, self.nx + 1) - self.cx
             Y = np.arange(1, self.ny + 1) - self.cy
