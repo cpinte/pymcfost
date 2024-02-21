@@ -9,7 +9,7 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 from scipy.ndimage import convolve1d
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None, rms=0):
+def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None, rms=0, pola_needed=False, rms_q=0.0, rms_u=0.0):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve spatially with beam (bmin, bmaj in arsec, bpa in degrees)
@@ -48,9 +48,17 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
         if model.is_casa:
             image = model.image[:, :]
         else:
-            # Convert to Jy
-            image = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)
+            if pola_needed==False:
+                # Convert to Jy
+                image = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)
+            else:
+                # Convert to Jy
+                image_I = Wm2_to_Jy(model.image[0, iaz, i, :, :], sc.c / model.wl)
+                image_Q = Wm2_to_Jy(model.image[1, iaz, i, :, :], sc.c / model.wl)
+                image_U = Wm2_to_Jy(model.image[2, iaz, i, :, :], sc.c / model.wl)
     else:  # cube
+        if pola_needed==True:
+            raise Exception("ERROR: can only create Q, U fits for images, not cubes")
         if model.is_casa:
             # -- continuum subtraction
             if subtract_cont:
@@ -65,8 +73,13 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
                 image = model.lines[iaz, i, iTrans,:,:,:]
 
             # Convert to Jy
-            image = Wm2_to_Jy(image, model.freq[iTrans])
+            #image = Wm2_to_Jy(image, model.freq[iTrans])
+            image = Wm2_to_Jy(image, model.freq)
 
+    if pola_needed==False:
+        imagelist=[image]
+    else:
+        imagelist=[image_I, image_Q, image_U]
     #-- writing fits file
     hdr = fits.Header()
     hdr["EXTEND"] = True
@@ -84,6 +97,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     hdr["CUNIT2"] = "deg"
 
     if is_image:
+    
         # 3rd axis
         hdr["CTYPE3"] = "STOKES"
         hdr["CRVAL3"] = 1.0
@@ -102,7 +116,11 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
         hdr["CDELT3"] = model.dv * 1000
         hdr["CUNIT3"] = "m/s"
 
-    hdr["RESTFREQ"] = model.freq[iTrans]  # Hz
+    #hdr["RESTFREQ"] = model.freq[iTrans]  # Hz
+    if is_image:
+        hdr["RESTFREQ"] = model.freq
+    else:
+        hdr["RESTFREQ"] = model.freq[iTrans]  # Hz 
     hdr["BUNIT"] = "JY/BEAM"
     hdr["BTYPE"] = "Intensity"
     hdr["BMAJ"] = bmaj/3600.
@@ -118,37 +136,87 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     sigma_x = bmin / model.pixelscale * FWHM_to_sigma  # in pixels
     sigma_y = bmaj / model.pixelscale * FWHM_to_sigma  # in pixels
     beam = Gaussian2DKernel(sigma_x, sigma_y, bpa * np.pi / 180)
-
-    if image.ndim == 2:
-        image = convolve_fft(image, beam)
-    else:
-        for iv in range(image.shape[0]):
-            image[iv,:,:] = convolve_fft(image[iv,:,:], beam)
-
+   
+    for img in imagelist:
+            if img.ndim == 2:
+                img = convolve_fft(img, beam)
+            else:
+                for iv in range(img.shape[0]):
+                    img[iv,:,:] = convolve_fft(img[iv,:,:], beam)
     #-- Jy/pixel to Jy/beam
     beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
     pix_area = model.pixelscale**2
-    image *= beam_area/pix_area
-
-    print(f"Peak flux is {np.max(image)} Jy/beam")
+    
+    for img in imagelist:
+            img *= beam_area/pix_area
+            print(f"Peak flux is {np.max(img)} Jy/beam")
 
 	#-- This is for testing purpose only so far: this needs to be updated and to come before
 	#--  - compute the scale factor in 1 channel once,
 	#--  - then add noise before spatial and spectral convolution so we do not convolve twice
-    if rms > 0.0:
-        noise = np.random.randn(image.size).reshape(image.shape)
-        for iv in range(image.shape[0]):
-            noise[iv,:,:] = convolve_fft(noise[iv,:,:], beam)
-        if Delta_v is not None:
-            noise =  model._spectral_convolve(noise, Delta_v)
-        #print(np.std(noise), beam_area/pix_area)
-        noise *= rms / np.std(noise)
-        image += noise
+    if pola_needed==False:
+        if rms > 0.0:
+            noise = np.random.randn(image.size).reshape(image.shape)
+            if img.ndim == 2:
+                noise = convolve_fft(noise, beam)
+            elif img.ndim != 2:
+                for iv in range(image.shape[0]):
+                    noise[iv,:,:] = convolve_fft(noise[iv,:,:], beam)
+            if Delta_v is not None:
+                noise =  model._spectral_convolve(noise, Delta_v)
+            #print(np.std(noise), beam_area/pix_area)
+            noise *= rms / np.std(noise)
+            image += noise
+    else:
+        if rms > 0.0:
+            noise = np.random.randn(image_I.size).reshape(image_I.shape)
+            if img.ndim == 2:
+                noise = convolve_fft(noise, beam)
+            if Delta_v is not None:
+                noise =  model._spectral_convolve(noise, Delta_v)
+            #print(np.std(noise), beam_area/pix_area)
+            noise *= rms / np.std(noise)
+            image_I += noise
+        if rms_q > 0.0:
+            noise = np.random.randn(image_Q.size).reshape(image_Q.shape)
+            if img.ndim == 2:
+                noise = convolve_fft(noise, beam)
+            if Delta_v is not None:
+                noise =  model._spectral_convolve(noise, Delta_v)
+            #print(np.std(noise), beam_area/pix_area)
+            noise *= rms_q / np.std(noise)
+            image_Q += noise
+        if rms_u > 0.0:
+            noise = np.random.randn(image_U.size).reshape(image_U.shape)
+            if img.ndim == 2:
+                noise = convolve_fft(noise, beam)
+            if Delta_v is not None:
+                noise =  model._spectral_convolve(noise, Delta_v)
+            #print(np.std(noise), beam_area/pix_area)
+            noise *= rms_U / np.std(noise)
+            image_U += noise
 
-    hdu = fits.PrimaryHDU(image, header=hdr)
-    hdul = fits.HDUList(hdu)
+    if pola_needed==False:
+        hdu = fits.PrimaryHDU(image, header=hdr)
+        hdul = fits.HDUList(hdu)
 
-    hdul.writeto(workdir + simu_name + ".fits", overwrite=True)
+        hdul.writeto(workdir + simu_name + ".fits", overwrite=True)
+    else: 
+        hdu = fits.PrimaryHDU(image_I, header=hdr)
+        hdul = fits.HDUList(hdu)
+        hdul.writeto(workdir + simu_name + "_I.fits", overwrite=True)
+
+        hdr_q = hdr
+        hdr_q["CRVAL3"] = 2.0
+        hdu = fits.PrimaryHDU(image_Q, header=hdr_q)
+        hdul = fits.HDUList(hdu)
+        hdul.writeto(workdir + simu_name + "_Q.fits", overwrite=True)
+
+        hdr_u = hdr
+        hdr_u["CRVAL3"] = 3.0
+        hdu = fits.PrimaryHDU(image_U, header=hdr_u)
+        hdul = fits.HDUList(hdu)
+        hdul.writeto(workdir + simu_name + "_U.fits", overwrite=True)
 
 #	if rms > 0.0:
 #		noise = np.random.randn(cube.size).reshape(cube.shape)
