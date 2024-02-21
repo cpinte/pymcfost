@@ -234,6 +234,9 @@ class Line:
             if plot_beam is None:
                 plot_beam = True
 
+        if plot_beam is None:
+            plot_beam = False
+
         # -- Selecting convolution function
         if conv_method is None:
             conv_method = convolve_fft
@@ -245,6 +248,7 @@ class Line:
                 iaz=iaz,
                 iTrans=iTrans,
                 moment=moment,
+                i_convolve = i_convolve,
                 beam=beam,
                 conv_method=conv_method,
                 subtract_cont=subtract_cont,
@@ -276,11 +280,12 @@ class Line:
                 raise ValueError("plot_map needs either v or iv")
             im = cube[iv, :, :]
 
-        # -- Convolve image
-        if i_convolve:
-            im = conv_method(im, beam)
-            if plot_beam is None:
-                plot_beam = True
+            # -- Convolve image
+            if i_convolve:
+                im = conv_method(im, beam)
+
+        if plot_beam is None:
+            plot_beam = True
 
         # -- Conversion to brightness temperature
         if Tb:
@@ -515,7 +520,7 @@ class Line:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-    def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0,
+    def get_moment_map(self, i=0, iaz=0, iTrans=0, moment=0, i_convolve=False,
                        beam=None, conv_method=None,subtract_cont=False,M0_threshold=None,
                        iv_support=None, v_minmax = None):
         """
@@ -548,13 +553,12 @@ class Line:
             cube = cube[iv_support,:,:]
 
         # Moment 0, 1 and 2
-        if beam is None:
+        if moment == 0: # We do not need to convolve the whole cube
             M0 = np.sum(cube, axis=0) * dv
-        else:
-            if moment == 0:
-                M0 = np.sum(cube, axis=0) * dv
+            if i_convolve:
                 M0 = conv_method(M0, beam)
-            else:  # We need to convolve each channel indidually
+        else:  # We need to convolve each channel indidually
+            if i_convolve:
                 print("Convolving individual channel maps, this may take a bit of time ....")
                 try:
                     bar = progressbar.ProgressBar(
@@ -575,53 +579,55 @@ class Line:
                         pass
                     channel = np.copy(cube[iv, :, :])
                     cube[iv, :, :] = conv_method(channel, beam)
-                M0 = np.sum(cube, axis=0) * dv
                 try:
                     bar.finish()
                 except:
                     pass
 
-        if moment >= 1:
-            M1 = np.sum(cube[:, :, :] * v[:, np.newaxis, np.newaxis], axis=0) * dv / M0
+            if moment <=2:
+                M0 = np.sum(cube, axis=0) * dv
 
-        if moment == 2:
-            M2 = np.sqrt(np.sum(cube[:, :, :]
-                    * (v[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
-                    axis=0,) * dv / M0)
+            if moment >= 1 and moment <=2:
+                M1 = np.sum(cube[:, :, :] * v[:, np.newaxis, np.newaxis], axis=0) * dv / M0
 
-        # Peak flux
-        if moment == 8:
-            M8 = np.max(cube, axis=0)
+            if moment == 2:
+                M2 = np.sqrt(np.sum(cube[:, :, :]
+                                    * (v[:, np.newaxis, np.newaxis] - M1[np.newaxis, :, :])**2,
+                                    axis=0,) * dv / M0)
 
-        # Velocity of the peak
-        if moment == 9:
-            vmax_index = np.argmax(cube, axis=0)
-            M9 = v[(vmax_index)]
+            # Peak flux
+            if moment == 8:
+                M8 = np.max(cube, axis=0)
 
-            #print(vmax_index.shape)
-            #
-            ## Extract the maximum and neighboring pixels
-            #print("test1")
-            #f_max = cube[(vmax_index)]
-            #print(f_max.shape)
-            #print("test2")
-            #f_minus = cube[(vmax_index-1)]
-            #print("test3")
-            #f_plus = cube[(vmax_index+1)]
-            #
-            ## Work out the polynomial coefficients
-            #print("test4")
-            #a0 = 13. * f_max / 12. - (f_plus + f_minus) / 24.
-            #print("test5")
-            #a1 = 0.5 * (f_plus - f_minus)
-            #print("test6")
-            #a2 = 0.5 * (f_plus + f_minus - 2*f_max)
-            #
-            ## Compute the maximum of the quadratic
-            #x_max = idx - 0.5 * a1 / a2
-            #y_max = a0 - 0.25 * a1**2 / a2
-            #
-            #M9 = xmax
+            # Velocity of the peak
+            if moment == 9:
+                vmax_index = np.argmax(cube, axis=0)
+                M9 = v[(vmax_index)]
+
+                #print(vmax_index.shape)
+                #
+                ## Extract the maximum and neighboring pixels
+                #print("test1")
+                #f_max = cube[(vmax_index)]
+                #print(f_max.shape)
+                #print("test2")
+                #f_minus = cube[(vmax_index-1)]
+                #print("test3")
+                #f_plus = cube[(vmax_index+1)]
+                #
+                ## Work out the polynomial coefficients
+                #print("test4")
+                #a0 = 13. * f_max / 12. - (f_plus + f_minus) / 24.
+                #print("test5")
+                #a1 = 0.5 * (f_plus - f_minus)
+                #print("test6")
+                #a2 = 0.5 * (f_plus + f_minus - 2*f_max)
+                #
+                ## Compute the maximum of the quadratic
+                #x_max = idx - 0.5 * a1 / a2
+                #y_max = a0 - 0.25 * a1**2 / a2
+                #
+                #M9 = xmax
 
         if moment == 0:
             M = M0

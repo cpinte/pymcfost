@@ -508,7 +508,7 @@ class Params:
         txt += f"""#-- Star properties --
   {self.simu.n_stars}  Number of stars\n"""
         for k in range(self.simu.n_stars):
-            txt += f"""  {self.stars[k].Teff} {self.stars[k].R} {self.stars[k].M} {self.stars[k].x} {self.stars[k].y} {self.stars[k].x} {self.stars[k].is_bb}  Temp, radius (solar radius),M (solar mass),x,y,z (AU), is a blackbody?
+            txt += f"""  {self.stars[k].Teff} {self.stars[k].R} {self.stars[k].M} {self.stars[k].x} {self.stars[k].y} {self.stars[k].z} {self.stars[k].is_bb}  Temp, radius (solar radius),M (solar mass),x,y,z (AU), is a blackbody?
   {self.stars[k].file}
   {self.stars[k].fUV} {self.stars[k].slope_UV}     fUV, slope_UV\n"""
 
