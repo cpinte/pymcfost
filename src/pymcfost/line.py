@@ -17,6 +17,7 @@ except ImportError:
 
 from .parameters import Params, find_parameter_file
 from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy, add_colorbar
+from .wake import  plot_wake
 
 DEFAULT_LINE_FILE = "lines.fits.gz"
 
@@ -680,3 +681,17 @@ class Line:
         cube = convolve1d(cube, w, mode='constant',axis=0, cval=0.)
 
         return cube
+
+    def plot_wake(self,i=0,i_planet=1,HonR=0.1,q=0.25, **kwargs):
+
+        inclinations = self.P.calc_inclinations()
+
+        # plot_wake uses the dynamite convention
+        if (self.P.map.RT_imax<90):
+            inc = -inclinations[i]
+        else:
+            inc= 180 -inclinations[i]
+
+        xy = self.star_positions[:,0,0,i_planet]
+
+        plot_wake(xy,inc,-self.P.map.PA,HonR,q, **kwargs)

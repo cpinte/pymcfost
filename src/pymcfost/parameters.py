@@ -522,7 +522,7 @@ class Params:
     def calc_inclinations(self):
         # Calculate the inclinations for the ray-traced SEDs and images
         if self.map.RT_ntheta == 1:
-            return self.map.RT_imin
+            return [self.map.RT_imin]
         else:
             cos_min, cos_max = np.cos(np.deg2rad([self.map.RT_imin, self.map.RT_imax]))
             if self.map.lRT_centered:
