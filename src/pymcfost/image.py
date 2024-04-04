@@ -98,7 +98,6 @@ class Image:
         title=None,
         limit=None,
         limits=None,
-        coronagraph=None,
         rescale_r2 = False,
         clear=False,
         Tb=False,
@@ -281,22 +280,6 @@ class Image:
                     U = Wm2_to_Jy(U, self.freq) * 1e-6
             else:
                 I *= 1e-6
-
-
-        # --- Coronagraph: in mas
-        if coronagraph is not None:
-            halfsize = np.asarray(self.image.shape[-2:]) / 2
-            posx = np.linspace(-halfsize[0]+shift_dx/pix_scale,
-                                halfsize[0]+shift_dx/pix_scale, self.nx)
-            posy = np.linspace(-halfsize[1]-shift_dy/pix_scale,
-                                halfsize[1]-shift_dy/pix_scale, self.ny)
-            meshx, meshy = np.meshgrid(posx, posy)
-            radius_pixel = np.sqrt(meshx ** 2 + meshy ** 2)
-            radius_mas = radius_pixel * pix_scale * 1000
-            I[radius_mas < coronagraph] = 0.0
-            if pola_needed:
-                Q[radius_mas < coronagraph] = 0.0
-                U[radius_mas < coronagraph] = 0.0
 
         # --- Selecting image to plot
         unit = self.unit
@@ -522,8 +505,8 @@ class Image:
 
         # --- Adding mask
         if mask is not None:
-            dx = 0.5
-            dy = 0.5
+            dx = 0.0
+            dy = 0.0
             mask = Ellipse(
                 ax.transLimits.inverted().transform((dx, dy)),
                 width=2 * mask,
