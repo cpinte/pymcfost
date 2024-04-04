@@ -506,8 +506,8 @@ class Image:
 
         # --- Adding mask
         if mask is not None:
-            dx = 0.0
-            dy = 0.0
+            dx = 0.5
+            dy = 0.5
             mask = Ellipse(
                 ax.transLimits.inverted().transform((dx, dy)),
                 width=2 * mask,
