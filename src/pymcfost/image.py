@@ -114,6 +114,7 @@ class Image:
         plot_stars=False,
         sink_particle_size=6,
         sink_particle_color="cyan",
+        sink_particle_maker=None,
         norm=False,
         interpolation=None,
         beam_color='grey',
@@ -527,7 +528,7 @@ class Image:
                 x_stars = self.star_positions[0,iaz,i,plot_stars] * factor * (-xaxis_factor)
                 y_stars = self.star_positions[1,iaz,i,plot_stars] * factor
             ax.scatter(x_stars-shift_dx, y_stars-shift_dy,
-                        color=sink_particle_color,s=sink_particle_size)
+                       color=sink_particle_color,s=sink_particle_size,marker=sink_particle_marker)
 
         #-- Saving the last plotted quantity
         self.last_image = im
