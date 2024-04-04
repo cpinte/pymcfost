@@ -114,7 +114,7 @@ class Image:
         plot_stars=False,
         sink_particle_size=6,
         sink_particle_color="cyan",
-        sink_particle_maker=None,
+        sink_particle_marker=None,
         norm=False,
         interpolation=None,
         beam_color='grey',
