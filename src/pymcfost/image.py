@@ -473,11 +473,14 @@ class Image:
             pola = 100 * np.sqrt((Qb / np.maximum(Ib,1e-300)) ** 2 + (Ub / np.maximum(Ib,1e-300)) ** 2)
             theta = 0.5 * np.arctan2(Ub, Qb)
             if xaxis_factor < 0:
-                theta += pi/2
+                theta += np.pi/2 #RH - commenting this out to test fix for plotting vecotrs 21/2
 
             # Ref is N (vertical axis) --> sin, and Est is toward left --> -
-            pola_x = pola * np.sin(theta)
-            pola_y = pola * np.cos(theta)
+            #pola_x = pola * np.sin(theta)
+            #pola_y = pola * np.cos(theta)
+            # RH - switching sin and cos to test fix for plotting vecotrs 21/2
+            pola_x = pola * np.cos(theta)
+            pola_y = pola * np.sin(theta)
 
             ax.quiver(
                 Xb,
