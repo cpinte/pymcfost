@@ -129,7 +129,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     hdr["BMIN"] = bmin/3600.
     hdr["BPA"] = bpa
 
-    # Convolve spectrally
+    # Convolve spend
     if Delta_v is not None:
         image = model._spectral_convolve(image, Delta_v)
 
@@ -146,7 +146,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
     for k, img in enumerate(imagelist):
         if img.ndim == 2:
             img = convolve_fft(img, beam)
-        else:
+        elif img.ndim == 3:
             for iv in range(img.shape[0]):
                 img[iv,:,:] = convolve_fft(img[iv,:,:], beam)
 
@@ -169,11 +169,11 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
             noise *= rms / np.std(noise)
             img += noise
 
-            # Updating header keyword
-            hdr["CRVAL3"] = float(k+1)
-            hdu = fits.PrimaryHDU(img, header=hdr)
-            hdul = fits.HDUList(hdu)
-            hdul.writeto(workdir + simu_name + extension[k] + ".fits", overwrite=True)
+        # Updating header keyword
+        hdr["CRVAL3"] = float(k+1)
+        hdu = fits.PrimaryHDU(img, header=hdr)
+        hdul = fits.HDUList(hdu)
+        hdul.writeto(workdir + simu_name + extension[k] + ".fits", overwrite=True)
 
 
 def CASA_simdata(
