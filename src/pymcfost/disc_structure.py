@@ -64,13 +64,13 @@ class Disc:
     def add_spiral(
         self, a=30, sigma=10, f=1, theta0=0, rmin=None, rmax=None, n_az=None
     ):
-        """ Add a geometrucal spiral on a 2D (or 3D) mcfost density grid
+        """ Add a geometrical spiral on a 2D (or 3D) mcfost density grid
         and return a 3D array which can be directly written as a fits
         file for mcfost to read
 
         geometrical spiral r = a (theta - theta0)
         surface density is mutiply by f at the crest of the spiral
-        the spiral has a Gaussin profil in (x,y) with sigma given in au
+        the spiral has a Gaussian profil in (x,y) with sigma given in au
         """
 
         if self.grid.ndim <= 2:
@@ -121,6 +121,44 @@ class Disc:
 
         return self.gas_density[np.newaxis, :, :] * correct[:, np.newaxis, :]
 
+
+   def add_banana(
+           self, r0=None, phi0=None, f=1, delta_r=None, delta_phi=None, n_az=None
+    ):
+        """ Add a geometrical banana on a 2D (or 3D) mcfost density grid
+        and return a 3D array which can be directly written as a fits
+        file for mcfost to read
+
+        surface density is mutiply by (1+f) at the crest of the banana
+        the banana has a Gaussian profil in (r,phi) with sigma given in au, degrees
+        """
+
+        if self.grid.ndim <= 2:
+            ValueError("Can only add a banana on a cylindrical or spherical grid")
+
+        if n_az is None:
+            n_az = self.grid.shape[1]
+        phi = np.linspace(0, 2 * np.pi, n_az, endpoint=False)
+
+        r = self.grid[0, 0, 0, :]
+
+        # r is radius of each cell hypot(x.y)
+        # phi is angle of each cell arctan2(y,x)
+        # r = np.hypot(x,y)
+        # phi = np.arctan2(y,x)
+
+        correct = 1 + f * (np.exp(-0.5 * ((r-r0)/delta_r)**2)[np.newaxis, :] * (np.exp(-0.5 * ((phi-phi0)/delta_phi)**2)[:, np.newaxis]
+
+        # We want to conserve mass
+        #correct = correct/np.mean(correct)
+
+        #x = r[np.newaxis, :] * np.cos(phi[:, np.newaxis])
+        #y = r[np.newaxis, :] * np.sin(phi[:, np.newaxis])
+        #triang = tri.Triangulation(x.flatten(), y.flatten())
+        #plt.tripcolor(triang, correct.flatten(), shading='flat')
+
+        #return self.gas_density[np.newaxis, :, :] * correct[:, np.newaxis, :]
+        return self.surface_density[:,np.newaxis] * correct[:,:]
 
 
 def check_grid(model):
