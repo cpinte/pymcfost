@@ -366,16 +366,19 @@ class Image:
         if per_arcsec2:
             im = im / self.pixelscale**2
             unit = unit.replace("pixel-1", "arcsec-2")
+            unit = unit.replace("/pixel", "/arcsec2")
 
         if per_str:
             im = im / self.pixelscale**2 * (180/np.pi * 3600)**2
             unit = unit.replace("pixel-1", "str-1")
+            unit = unit.replace("/pixel", "/str")
 
         if per_beam:
             beam_area = bmin * bmaj * np.pi / (4.0 * np.log(2.0))
             pix_area = self.pixelscale**2
             im *= beam_area/pix_area
             unit = unit.replace("pixel-1", "beam-1")
+            unit = unit.replace("/pixel", "/beam")
 
         if norm:
             im = im / np.max(im)
