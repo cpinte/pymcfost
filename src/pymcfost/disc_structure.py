@@ -122,8 +122,8 @@ class Disc:
         return self.gas_density[np.newaxis, :, :] * correct[:, np.newaxis, :]
 
 
-   def add_banana(
-           self, r0=None, phi0=None, f=1, delta_r=None, delta_phi=None, n_az=None
+    def add_banana(
+           self, r0=None, phi0=None, f=1, delta_r=None, delta_phi=None, n_az=None, sigma=None
     ):
         """ Add a geometrical banana on a 2D (or 3D) mcfost density grid
         and return a 3D array which can be directly written as a fits
@@ -132,7 +132,10 @@ class Disc:
         surface density is mutiply by (1+f) at the crest of the banana
         the banana has a Gaussian profil in (r,phi) with sigma given in au, degrees
         """
-
+        phi0 = np.radians(phi0)
+        delta_phi = np.radians(delta_phi)
+        
+        sigma_data = fits.open(sigma)[0].data
         if self.grid.ndim <= 2:
             ValueError("Can only add a banana on a cylindrical or spherical grid")
 
@@ -147,7 +150,8 @@ class Disc:
         # r = np.hypot(x,y)
         # phi = np.arctan2(y,x)
 
-        correct = 1 + f * (np.exp(-0.5 * ((r-r0)/delta_r)**2)[np.newaxis, :] * (np.exp(-0.5 * ((phi-phi0)/delta_phi)**2)[:, np.newaxis]
+        correct = 1 + f * (np.exp(-0.5 * ((r-r0)/delta_r)**2)[np.newaxis, :] * (np.exp(-0.5 * ((phi-phi0)/delta_phi)**2)[:, np.newaxis]))
+        return sigma_data*correct
 
         # We want to conserve mass
         #correct = correct/np.mean(correct)
@@ -158,7 +162,7 @@ class Disc:
         #plt.tripcolor(triang, correct.flatten(), shading='flat')
 
         #return self.gas_density[np.newaxis, :, :] * correct[:, np.newaxis, :]
-        return self.surface_density[:,np.newaxis] * correct[:,:]
+        #return self.surface_density[:,np.newaxis] * correct[:,:]
 
 
 def check_grid(model):
