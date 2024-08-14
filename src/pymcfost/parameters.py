@@ -469,7 +469,7 @@ class Params:
                 f"  {self.zones[k].n_species}                      Number of species\n"
             )
             for j in range(self.zones[k].n_species):
-                txt += f"  Mie {self.zones[k].dust[j].n_components} {self.zones[k].dust[j].mixing_rule} {self.zones[k].dust[j].porosity:<5.2f} {self.zones[k].dust[j].mass_fraction:<5.2f} {self.zones[k].dust[j].DHS_Vmax}    Grain type (Mie or DHS), N_components, mixing rule (1 = EMT or 2 = coating),  porosity, mass fraction, Vmax (for DHS)\n"
+                txt += f" {self.zones[k].dust[j].type} {self.zones[k].dust[j].n_components} {self.zones[k].dust[j].mixing_rule} {self.zones[k].dust[j].porosity:<5.2f} {self.zones[k].dust[j].mass_fraction:<5.2f} {self.zones[k].dust[j].DHS_Vmax}    Grain type (Mie or DHS), N_components, mixing rule (1 = EMT or 2 = coating),  porosity, mass fraction, Vmax (for DHS)\n"
                 for l in range(self.zones[k].dust[j].n_components):
                     txt += f"  {self.zones[k].dust[j].component[l].file}  {self.zones[k].dust[j].component[l].volume_fraction}     Optical indices file, volume fraction\n"
                 txt += f"""  {self.zones[k].dust[j].heating_method}                          Heating method : 1 = RE + LTE, 2 = RE + NLTE, 3 = NRE
