@@ -174,6 +174,7 @@ def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",be
         hdr["CRVAL3"] = float(k+1)
         hdu = fits.PrimaryHDU(img, header=hdr)
         hdul = fits.HDUList(hdu)
+        print(workdir + simu_name + extension[k] + ".fits")
         hdul.writeto(workdir + simu_name + extension[k] + ".fits", overwrite=True)
 
 

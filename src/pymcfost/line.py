@@ -134,6 +134,7 @@ class Line:
         color_scale=None,
         colorbar=True,
         colorbar_size=10,
+        colorbar_label=True,
         cmap=None,
         ax=None,
         no_xlabel=False,
@@ -170,7 +171,8 @@ class Line:
         zorder=None,
         origin='lower',
         levels=None,
-        colors=None
+        colors=None,
+        colorbar_side="right"
     ):
         # Todo:
         # - print molecular info (eg CO J=3-2)
@@ -420,22 +422,23 @@ class Line:
 
         # -- Color bar
         if colorbar:
-            cb = add_colorbar(image)
+            cb = add_colorbar(image,side=colorbar_side)
             formatted_unit = unit.replace("-1", "$^{-1}$").replace("-2", "$^{-2}$")
-            if moment == 0:
-                if Tb:
-                    cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)
+            if colorbar_label:
+                if moment == 0:
+                    if Tb:
+                        cb.set_label("\int T$_\mathrm{b}\,\mathrm{d}v$ (K.km.s$^{-1}$)",size=colorbar_size)
+                    else:
+                        cb.set_label("Flux (" + formatted_unit + ".km.s$^{-1}$)",size=colorbar_size)
+                elif moment == 1 or moment == 9:
+                    cb.set_label("Velocity (km.s$^{-1})$",size=colorbar_size)
+                elif moment == 2:
+                    cb.set_label("Velocity dispersion (km.s$^{-1}$)",size=colorbar_size)
                 else:
-                    cb.set_label("Flux (" + formatted_unit + ".km.s$^{-1}$)",size=colorbar_size)
-            elif moment == 1 or moment == 9:
-                cb.set_label("Velocity (km.s$^{-1})$",size=colorbar_size)
-            elif moment == 2:
-                cb.set_label("Velocity dispersion (km.s$^{-1}$)",size=colorbar_size)
-            else:
-                if Tb:
-                    cb.set_label("T$_\mathrm{b}$ (K)",size=colorbar_size)
-                else:
-                    cb.set_label("Flux (" + formatted_unit + ")",size=colorbar_size)
+                    if Tb:
+                        cb.set_label("T$_\mathrm{b}$ (K)",size=colorbar_size)
+                    else:
+                        cb.set_label("Flux (" + formatted_unit + ")",size=colorbar_size)
 
         # -- Adding velocity
         if moment is None:
