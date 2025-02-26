@@ -755,7 +755,7 @@ class Line:
 
         return cube
 
-    def plot_wake(self,i=0,i_planet=1,HonR=0.1,q=0.25, **kwargs):
+    def plot_wake(self,i=0,i_planet=1,HonR=0.1,q=0.25, ax=None, **kwargs):
 
         inclinations = self.P.calc_inclinations()
 
@@ -767,4 +767,4 @@ class Line:
 
         xy = self.star_positions[:,0,0,i_planet]
 
-        plot_wake(xy,inc,-self.P.map.PA,HonR,q, **kwargs)
+        plot_wake(xy,inc,-self.P.map.PA,HonR,q, ax=ax, **kwargs)

@@ -16,16 +16,26 @@ def get_wake_cartesian(rp,phip,npts,rmin,rmax,HonR,q,sign):
                           - 3./((2.*q-1.)*(q+1.)))
     xx = rplot*np.cos(phi)
     yy = rplot*np.sin(phi)
+
     return xx,yy
 
-def plot_wake(xy_obs,inc,PA,HonR,q,color="black"):
+
+def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,color="black",ax=None):
     '''
        plot planet wake
        and rotate to the observational viewpoint
 
-    designed to work with dynamite inclination : if inc > 0, rotation is clockwise in plane of teh sky
+       This code is designed to work with dynamite inclination :
+        if inc > 0, rotation is clockwise in plane of the sky
+
+
+    z_func needs to be in same units as zy_obs
 
     '''
+
+    if ax is None:
+        ax = plt.gca()
+
     inc = np.deg2rad(inc)
     PA = np.deg2rad(PA)
 
@@ -39,19 +49,30 @@ def plot_wake(xy_obs,inc,PA,HonR,q,color="black"):
     # planet location in the unrotated plane
     rp = np.sqrt(x_p**2 + y_p**2)
     phip = np.arctan2(y_p,x_p)
-    #print("rp = ",rp," phi planet = ",phip*180./np.pi)
+    print("plot_wake: rp = ",rp," phi planet = ",phip*180./np.pi)
 
     # radial range over which to plot the wake
     rmin = 1.e-3
     rmax = 3.*rp
     npts = 1000
 
+
     # outer wake
     xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmax,HonR,q,np.sign(inc))
-    xp,yp = rotate_to_obs_plane(xx,yy,inc,PA)
-    plt.plot(xx,yy,color=color)
+    if z_func is None:
+        zz = np.zeros(npts)
+    else:
+        zz = z_func(np.hypot(xx,yy))
+    xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
+    ax.plot(xx,yy,color=color)
 
     # inner wake
     xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmin,HonR,q,np.sign(inc))
-    xp,yp = rotate_to_obs_plane(xx,yy,inc,PA)
-    plt.plot(xx,yy,color=color)
+    if z_func is None:
+        zz = np.zeros(npts)
+    else:
+        zz = z_func(np.hypot(xx,yy))
+    xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
+
+    xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
+    ax.plot(xx,yy,color=color)

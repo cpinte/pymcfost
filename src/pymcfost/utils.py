@@ -347,13 +347,13 @@ def rotate_coords(x,y,z,inc,PA):
     xrot = rotate_vec(xvec,k,inc)
     return xrot[0],xrot[1],xrot[2]
 
-def rotate_to_obs_plane(x,y,inc,PA):
+def rotate_to_obs_plane(x,y,z,inc,PA):
     '''
-       same as rotate_coords but takes 2D x,y as arrays
+       same as rotate_coords but takes x,y,z as arrays
     '''
     for i,xx in enumerate(x):    # this can probably be done more efficiently
-        x[i],y[i],dum = rotate_coords(x[i],y[i],0.,inc,PA)
-    return x,y
+        x[i],y[i],z[i] = rotate_coords(x[i],y[i],z[i],inc,PA)
+    return x,y,z
 
 def planet_position(model, i_planet, i_star, ):
     '''
