@@ -32,23 +32,61 @@ Basic Usage
 .. code-block:: python
 
    from pymcfost import Image
+   import matplotlib.plt as plt
    
    # Load an image from a directory containing MCFOST output
    image = Image(dir="path/to/mcfost/data")
    
    # Plot the image
+   image.plot()
+
+   # save image to file
+   plt.savefig('mcfost-image.pdf',bbox_inches='tight')
+
+   # also show on screen
+   plt.show()
+
+Advanced usage
+~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from pymcfost import Image
+   import matplotlib.plt as plt
+
+   # Load an image from a directory containing MCFOST output
+   image = Image(dir="path/to/mcfost/data")
+
+   # set up the plotting page
+   fig, axes = plt.subplots(1,1,figsize=(8,8))
+
+   # Plot the image
    image.plot(
+       ax=axes,
        i=0,              # inclination index
        iaz=0,           # azimuth angle index
-       vmin=None,       # minimum value for colorscale
-       vmax=None,       # maximum value for colorscale
+       vmin=0.,       # minimum value for colorscale
+       vmax=50.,       # maximum value for colorscale
        dynamic_range=1e6, # ratio between max and min values
        colorbar=True,   # show colorbar
        psf_FWHM=None,   # convolve with Gaussian beam of this FWHM (in arcsec)
        plot_stars=True  # show stellar positions
+       Tb=True          # use brightness temperature
    )
 
-   # Calculate visibilities
+   plt.show()
+
+Plotting model visibilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from pymcfost import Image
+
+   # Load an image from a directory containing MCFOST output
+   image = Image(dir="path/to/mcfost/data")
+
+   # Calculate and plot model visibilities
    baselines, vis, fim = image.calc_vis(
        i=0,       # inclination index  
        iaz=0,     # azimuth index
