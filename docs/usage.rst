@@ -4,7 +4,7 @@ Usage
 The pymcfost package provides classes to work with MCFOST image and line data.
 
 Running MCFOST
--------------
+--------------
 
 The package provides a function to run MCFOST directly:
 
@@ -22,12 +22,12 @@ The package provides a function to run MCFOST directly:
    run("model.para", silent=True, logfile="mcfost.log")
 
 Image Class
-----------
+-----------
 
 The ``Image`` class handles continuum images from MCFOST radiative transfer calculations.
 
 Basic Usage
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -56,12 +56,12 @@ Basic Usage
    )
 
 Line Class
----------
+----------
 
 The ``Line`` class handles spectral line data from MCFOST calculations.
 
 Basic Usage
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -83,12 +83,12 @@ Basic Usage
    )
 
 SED Class
---------
+---------
 
 The ``SED`` class handles spectral energy distributions and temperature structures.
 
 Basic Usage
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -118,7 +118,7 @@ Basic Usage
    )
 
 Common Parameters
----------------
+-----------------
 
 Many classes share some common parameters:
 
@@ -133,12 +133,12 @@ Many classes share some common parameters:
 The plotting methods return matplotlib objects that can be further customized. 
 
 Disc Structure
--------------
+--------------
 
 The ``Disc`` class handles the spatial structure and density distribution of the disc.
 
 Basic Usage
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -161,12 +161,12 @@ Basic Usage
    )
 
 Dust Model
----------
+----------
 
 The ``Dust_model`` class handles dust opacity properties.
 
 Basic Usage
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -185,12 +185,12 @@ Basic Usage
    dust.print_kappa(file="opacities.txt")
 
 CASA Simulations
---------------
+----------------
 
 The package provides functions to create synthetic ALMA observations using CASA.
 
 Basic Usage
-~~~~~~~~~~
+~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -220,7 +220,7 @@ Basic Usage
 The CASA simulation functions require CASA to be installed on your system.
 
 Directory Structure
------------------
+-------------------
 
 pymcfost expects MCFOST output files to be organized in specific subdirectories:
 

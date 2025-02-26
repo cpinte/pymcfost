@@ -1,5 +1,5 @@
 API Reference
-============
+=============
 
 Image
 -----
@@ -32,7 +32,7 @@ SED
    .. automethod:: __init__
 
 Disc Structure
--------------
+--------------
 
 .. autoclass:: pymcfost.disc_structure.Disc
    :members:
@@ -42,7 +42,7 @@ Disc Structure
    .. automethod:: __init__
 
 Dust Model
----------
+----------
 
 .. autoclass:: pymcfost.dust.Dust_model
    :members:
@@ -52,7 +52,7 @@ Dust Model
    .. automethod:: __init__
 
 Running MCFOST
--------------
+--------------
 
 .. automodule:: pymcfost.run
    :members:
@@ -60,7 +60,7 @@ Running MCFOST
    :show-inheritance:
 
 Utilities
---------
+---------
 
 .. automodule:: pymcfost.utils
    :members:
@@ -68,7 +68,7 @@ Utilities
    :show-inheritance:
 
 CASA Simulations
---------------
+----------------
 
 .. automodule:: pymcfost.CASA_simdata
    :members:

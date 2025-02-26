@@ -1,5 +1,5 @@
-Welcome to pymfcfost's documentation!
-======================================
+Welcome to pymcfost's documentation!
+=====================================
 
 .. toctree::
    :maxdepth: 2
