@@ -4,6 +4,26 @@ import subprocess
 _mcfost_bin = "mcfost"
 
 def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False):
+    """
+    Run MCFOST with specified parameter file and options.
+
+    Args:
+        filename (str): Path to MCFOST parameter file
+        options (str): Command line options to pass to MCFOST
+        delete_previous (bool): Whether to delete previous data_* directories
+        notebook (bool): Whether running in a Jupyter notebook
+        logfile (str, optional): File to save MCFOST output
+        silent (bool): Whether to suppress output messages
+
+    Raises:
+        TypeError: If filename is not a string
+        IOError: If parameter file does not exist
+        OSError: If MCFOST fails to run
+
+    Example:
+        >>> from pymcfost import run
+        >>> run("my_model.para", options="-img 0.8")
+    """
 
     if not isinstance(filename, str):
         raise TypeError("First argument to run must be a filename.")

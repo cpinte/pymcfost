@@ -9,14 +9,33 @@ from astropy.io import fits
 from astropy.convolution import Gaussian2DKernel, convolve_fft, convolve
 from scipy.ndimage import convolve1d
 
-def pseudo_CASA_simdata(model,i=0,iaz=0,iTrans=None,simu_name = "pseudo_casa",beam=None,bmaj=None,bmin=None,bpa=None,subtract_cont=False,Delta_v=None, rms=0, pola_needed=False, rms_q=0.0, rms_u=0.0):
+def pseudo_CASA_simdata(model, i=0, iaz=0, iTrans=None, simu_name="pseudo_casa", 
+                       beam=None, bmaj=None, bmin=None, bpa=None, subtract_cont=False, 
+                       Delta_v=None, rms=0, pola_needed=False, rms_q=0.0, rms_u=0.0):
     """
     Generate a fits file as if it was a CASA simdata output
      - convolve spatially with beam (bmin, bmaj in arsec, bpa in degrees)
      - convolve spectrally with Delta_v in km/s
      - todo : resample in velocity as required
-
+     
     Basically generate a CASA fits file with perfect uv coverage
+ 
+    Args:
+        model (Image or Line): MCFOST model to simulate
+        i (int): Inclination index
+        iaz (int): Azimuth angle index
+        iTrans (int, optional): Transition index for line data
+        simu_name (str): Base name for output files
+        beam (array-like, optional): Custom beam kernel
+        bmaj (float, optional): Beam major axis FWHM in arcsec
+        bmin (float, optional): Beam minor axis FWHM in arcsec
+        bpa (float, optional): Beam position angle in degrees
+        subtract_cont (bool): Whether to subtract continuum from line data
+        Delta_v (float, optional): Spectral resolution in km/s
+        rms (float): RMS noise level to add
+        pola_needed (bool): Whether to include polarization (Q,U)
+        rms_q (float): RMS noise level for Q Stokes parameter
+        rms_u (float): RMS noise level for U Stokes parameter
     """
 
     workdir = "CASA/"
@@ -204,15 +223,47 @@ def CASA_simdata(
     n_iter=10000,
     hourangle="transit"):
     """
-    Prepare a MCFOST model for the CASA alma simulator
+    Prepare and run a MCFOST model through the CASA simulator.
+
+    This function generates the necessary files for CASA simulation and runs the 
+    ALMA simulator to create synthetic observations.
 
     Generates 2 files:
       - a python CASA script
       - a fits file with the required dimensions and  keywords
 
-    Then run the simulator and export a fits file with the results
+    Args:
+        model (Image or Line): MCFOST model to simulate
+        i (int): Inclination index
+        iaz (int): Azimuth angle index
+        obstime (float): Total observation time in seconds
+        config (str or list): ALMA configuration(s) to use
+        resol (float, optional): Desired angular resolution in arcsec
+        sampling_time (float, optional): Integration time per visibility in seconds
+        pwv (float): Precipitable water vapor in mm
+        decl (str): Source declination
+        phase_noise (bool): Whether to include phase noise
+        name (str): Base name for simulation
+        iTrans (int, optional): Transition index for line data
+        rt (bool): Whether model is ray-traced
+        only_prepare (bool): Only prepare files without running CASA
+        interferometer (str): Which interferometer to simulate ('alma')
+        mosaic (bool): Whether to create a mosaic
+        mapsize (float, optional): Size of map in arcsec
+        channels (int or list): Channel selection for line data
+        width (float, optional): Channel width in GHz
+        correct_flux (float): Flux correction factor
+        simu_name (str, optional): Custom name for simulation files
+        ms (str, optional): Input measurement set for custom simulation
+        n_iter (int): Number of clean iterations
+        hourangle (str): Hour angle for observation
 
-    Tested to work with CASA 5.4.0-68 on MacOS : command line to call CASA is assumed to be "casa"
+    Returns:
+        str: Name of simulation if successful
+
+    Notes:
+        Requires CASA to be installed and accessible from command line.
+        Tested with CASA 5.4.0-68 on MacOS.
     """
 
     workdir = "CASA/"
@@ -472,6 +523,19 @@ async = False
 
 
 def _run_CASA(simu_name, node_dir=""):
+    """
+    Run a prepared CASA simulation.
+
+    Internal function to execute CASA with prepared simulation files.
+
+    Args:
+        simu_name (str): Name of simulation
+        node_dir (str): Subdirectory for node-specific files
+
+    Returns:
+        str: Name of simulation if successful
+    """
+
     print("Starting casa ...")
 
     workdir = "CASA/" + node_dir + "/"
@@ -506,6 +570,15 @@ def _run_CASA(simu_name, node_dir=""):
 
 
 def _CASA_clean(workdir):
+    """
+    Clean up CASA working directory.
+
+    Internal function to remove temporary CASA files.
+
+    Args:
+        workdir (str): Working directory to clean
+    """
+
     cmd = (
         "rm -rf "
         + workdir

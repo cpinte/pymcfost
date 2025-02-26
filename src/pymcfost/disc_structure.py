@@ -8,7 +8,32 @@ from .parameters import Params, find_parameter_file
 from .run import run
 
 class Disc:
+    """
+    A class to handle MCFOST disc structure data.
+
+    This class reads and processes MCFOST disc structure outputs, providing methods 
+    to access the spatial grid, gas density, and add geometric features.
+
+    Attributes:
+        dir (str): Directory containing MCFOST output files
+        P (Params): MCFOST parameter object
+        grid (numpy.ndarray): Spatial grid structure
+        gas_density (numpy.ndarray): Gas density distribution
+        volume (numpy.ndarray): Cell volumes
+
+    Example:
+        >>> disc = Disc(dir="path/to/mcfost/data")
+        >>> r = disc.r()  # Get radial coordinates
+    """
+
     def __init__(self, dir=None, **kwargs):
+        """
+        Initialize a Disc object.
+
+        Args:
+            dir (str): Path to directory containing MCFOST output
+            **kwargs: Additional arguments passed to _read()
+        """
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         if dir[-9:] != "data_disk":
@@ -50,12 +75,24 @@ class Disc:
             print('cannot open volume.fits.gz')
 
     def r(self):
+        """
+        Get radial coordinates of the grid.
+
+        Returns:
+            numpy.ndarray: Radial coordinates in AU
+        """
         if self.grid.ndim > 2:
             return self.grid[0, :, :, :]
         else:
             return np.sqrt(self.grid[0, :] ** 2 + self.grid[1, :] ** 2)
 
     def z(self):
+        """
+        Get vertical coordinates of the grid.
+
+        Returns:
+            numpy.ndarray: Vertical coordinates in AU
+        """
         if self.grid.ndim > 2:
             return self.grid[1, :, :, :]
         else:
@@ -64,13 +101,26 @@ class Disc:
     def add_spiral(
         self, a=30, sigma=10, f=1, theta0=0, rmin=None, rmax=None, n_az=None
     ):
-        """ Add a geometrical spiral on a 2D (or 3D) mcfost density grid
+        """
+        Add a geometrical spiral on a 2D (or 3D) mcfost density grid
         and return a 3D array which can be directly written as a fits
         file for mcfost to read
 
         geometrical spiral r = a (theta - theta0)
         surface density is mutiply by f at the crest of the spiral
         the spiral has a Gaussian profil in (x,y) with sigma given in au
+
+        Args:
+            a (float): Spiral parameter, r = a(θ - θ₀)
+            sigma (float): Width of the spiral in AU
+            f (float): Density enhancement factor at spiral crest
+            theta0 (float): Initial angle in radians
+            rmin (float, optional): Inner radius in AU
+            rmax (float, optional): Outer radius in AU
+            n_az (int, optional): Number of azimuthal points
+
+        Returns:
+            numpy.ndarray: Modified density structure with spiral
         """
 
         if self.grid.ndim <= 2:
@@ -125,12 +175,25 @@ class Disc:
     def add_banana(
            self, r0=None, phi0=None, f=1, delta_r=None, delta_phi=None, n_az=None, sigma=None
     ):
-        """ Add a geometrical banana on a 2D (or 3D) mcfost density grid
+        """
+        Add a geometrical banana on a 2D (or 3D) mcfost density grid
         and return a 3D array which can be directly written as a fits
         file for mcfost to read
 
         surface density is mutiply by (1+f) at the crest of the banana
-        the banana has a Gaussian profil in (r,phi) with sigma given in au, degrees
+        the banana has a Gaussian profile in (r,phi) with sigma given in au, degrees
+
+        Args:
+            r0 (float): Radial position of enhancement in AU
+            phi0 (float): Azimuthal position in degrees
+            f (float): Density enhancement factor
+            delta_r (float): Radial width in AU
+            delta_phi (float): Azimuthal width in degrees
+            n_az (int, optional): Number of azimuthal points
+            sigma (str): Path to sigma data file
+
+        Returns:
+            numpy.ndarray: Modified density structure with banana feature
         """
         phi0 = np.radians(phi0)
         delta_phi = np.radians(delta_phi)

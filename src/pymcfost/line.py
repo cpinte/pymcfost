@@ -22,9 +22,41 @@ from .wake import  plot_wake
 DEFAULT_LINE_FILE = "lines.fits.gz"
 
 class Line:
+    """
+    A class to handle MCFOST spectral line data.
+
+    This class reads and processes MCFOST line radiative transfer outputs,
+    providing methods to plot channel maps, spectra, and calculate moment maps.
+
+    Attributes:
+        dir (str): Directory containing MCFOST output files
+        lines (numpy.ndarray): The line data cube
+        P (Params): MCFOST parameter object
+        pixelscale (float): Image pixel scale in arcsec
+        unit (str): Unit of the line data
+        nx (int): Number of pixels in x direction
+        ny (int): Number of pixels in y direction
+        nv (int): Number of velocity channels
+        velocity (numpy.ndarray): Velocity array in km/s
+        freq (numpy.ndarray): Frequency array in Hz
+        is_casa (bool): Whether the data is in CASA format
+        star_positions (numpy.ndarray): Array of stellar positions
+        extent (list): Image extent for plotting [xmin, xmax, ymin, ymax]
+
+    Example:
+        >>> line = Line(dir="path/to/mcfost/data")
+        >>> line.plot_map(i=0, iaz=0, iTrans=0, iv=10)
+    """
 
     def __init__(self, dir=None, line_file=None, **kwargs):
+        """
+        Initialize a Line object.
 
+        Args:
+            dir (str): Path to directory containing MCFOST output
+            line_file (str, optional): Name of line data file
+            **kwargs: Additional arguments passed to _read()
+        """
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         self.dir = dir
@@ -174,6 +206,21 @@ class Line:
         colors=None,
         colorbar_side="right"
     ):
+        """
+        Plot a channel map or moment map.
+
+        Args:
+            i (int): Inclination index
+            iaz (int): Azimuth angle index
+            iTrans (int): Transition index
+            v (float, optional): Velocity in km/s (alternative to iv)
+            iv (int, optional): Velocity channel index
+            moment (int, optional): Moment to plot (0=integrated intensity, 1=velocity, 2=dispersion)
+            **kwargs: Additional arguments passed to plotting function
+
+        Returns:
+            matplotlib.image.AxesImage: The plotted image
+        """
         # Todo:
         # - print molecular info (eg CO J=3-2)
 
@@ -498,7 +545,16 @@ class Line:
         plot_cont=True,
         subtract_cont=False
     ):
+        """
+        Plot the line spectrum.
 
+        Args:
+            i (int): Inclination index
+            iaz (int): Azimuth angle index
+            iTrans (int): Transition index
+            plot_cont (bool): Whether to plot the continuum level
+            **kwargs: Additional arguments passed to plotting function
+        """
         if self.is_casa:
             line = np.sum(self.lines[:, :, :], axis=(1, 2))
             ylabel = "Flux (Jy)"
@@ -530,9 +586,21 @@ class Line:
                        beam=None, conv_method=None,subtract_cont=False,M0_threshold=None,
                        iv_support=None, v_minmax = None):
         """
-        This returns the moment maps in physical units, ie:
-         - M1 is the average velocity (km/s)
-         - M2 is the velocity dispersion (km/s)
+        Calculate a moment map from the line cube.
+
+        Args:
+            moment (int): Moment to compute:
+                - 0: Integrated intensity
+                - 1: Intensity-weighted velocity
+                - 2: Velocity dispersion
+                - 8: Peak intensity
+                - 9: Velocity at peak intensity
+            iTrans (int): Transition index
+            iv_support (array-like, optional): Velocity channels to include
+            **kwargs: Additional arguments for convolution
+
+        Returns:
+            numpy.ndarray: The computed moment map
         """
         if self.is_casa:
             cube = np.copy(self.lines[:, :, :])
