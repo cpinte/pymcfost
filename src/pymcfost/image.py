@@ -15,11 +15,43 @@ from .parameters import Params, find_parameter_file
 from .utils import *
 
 class Image:
+    """
+    A class to handle MCFOST images and calculate various properties.
+
+    This class reads and processes MCFOST radiative transfer output images, 
+    providing methods to plot them and analyse their properties.
+
+    Attributes:
+        dir (str): Directory containing MCFOST output files
+        image (numpy.ndarray): The image data array
+        P (Params): MCFOST parameter object
+        pixelscale (float): Image pixel scale in arcsec
+        unit (str): Unit of the image data
+        wl (float): Wavelength in microns
+        freq (float): Frequency in Hz
+        nx (int): Number of pixels in x direction
+        ny (int): Number of pixels in y direction
+        is_casa (bool): Whether the image is in CASA format
+        star_positions (numpy.ndarray): Array of stellar positions
+        star_properties (numpy.ndarray): Array of stellar properties
+        extent (list): Image extent for plotting [xmin, xmax, ymin, ymax]
+
+    Example:
+        >>> image = Image(dir="path/to/mcfost/data")
+        >>> image.plot(i=0, iaz=0)
+    """
 
     _RT_file = "RT.fits.gz"
     _MC_file = "MC.fits.gz"
 
     def __init__(self, dir=None, **kwargs):
+        """
+        Initialize an Image object.
+
+        Args:
+            dir (str): Path to directory containing MCFOST output
+            **kwargs: Additional arguments passed to _read()
+        """
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         self.dir = dir
@@ -120,6 +152,66 @@ class Image:
         beam_color='grey',
         mask_color='grey'
     ):
+        """
+        Plot the MCFOST image.
+
+        Args:
+            i (int): Inclination index
+            iaz (int): Azimuth angle index
+            vmin (float, optional): Minimum value for color scale
+            vmax (float, optional): Maximum value for color scale
+            dynamic_range (float): Ratio between maximum and minimum plotted values
+            fpeak (float, optional): Fraction of peak value to use as maximum
+            axes_unit (str): Unit for axes ('arcsec', 'au', or 'pixels')
+            colorbar (bool): Whether to show colorbar
+            colorbar_size (int): Size of colorbar text
+            type (str): Type of image to plot ('I', 'Q', 'U', etc.)
+            scale (str, optional): Color scale ('log', 'lin', or 'sqrt')
+            pola_vector (bool): Whether to plot polarization vectors
+            vector_color (str): Color of polarization vectors
+            nbin (int): Binning factor for polarization vectors
+            psf_FWHM (float, optional): FWHM of Gaussian PSF in arcsec
+            bmaj (float, optional): Beam major axis FWHM in arcsec
+            bmin (float, optional): Beam minor axis FWHM in arcsec
+            bpa (float, optional): Beam position angle in degrees
+            plot_beam (bool, optional): Whether to plot beam
+            beam_position (tuple): Position of beam (x,y) as fraction of plot
+            conv_method (callable, optional): Convolution method to use
+            mask (float, optional): Radius of central mask in arcsec
+            cmap (str, optional): Matplotlib colormap name
+            ax (matplotlib.axes, optional): Axes to plot on
+            no_xlabel (bool): Whether to hide x-axis label
+            no_ylabel (bool): Whether to hide y-axis label
+            no_xticks (bool): Whether to hide x-axis ticks
+            no_yticks (bool): Whether to hide y-axis ticks
+            title (str, optional): Plot title
+            limit (float, optional): Limit for rescaling image
+            limits (list, optional): Limits for rescaling image
+            rescale_r2 (bool): Whether to rescale image by r^2
+            clear (bool): Whether to clear existing plot
+            Tb (bool): Whether to convert image to brightness temperature
+            telescope_diameter (float, optional): Telescope diameter in meters
+            Jy (bool): Whether to convert image to Jy
+            mJy (bool): Whether to convert image to mJy
+            MJy (bool): Whether to convert image to MJy
+            muJy (bool): Whether to convert image to microJy
+            per_arcsec2 (bool): Whether to convert image to flux per arcsec^2
+            per_str (bool): Whether to convert image to flux per str
+            per_beam (bool): Whether to convert image to flux per beam
+            shift_dx (float): Shift in x direction for plotting
+            shift_dy (float): Shift in y direction for plotting
+            plot_stars (bool): Whether to plot star positions
+            sink_particle_size (int): Size of sink particle marker
+            sink_particle_color (str): Color of sink particle marker
+            sink_particle_marker (str, optional): Marker style for sink particles
+            norm (bool): Whether to normalize image
+            interpolation (str, optional): Interpolation method for image
+            beam_color (str): Color of beam
+            mask_color (str): Color of mask
+
+        Returns:
+            matplotlib.image.AxesImage: The plotted image
+        """
         # Todo:
         #  - plot a selected contribution
         #  - add a mask on the star ?
@@ -554,29 +646,21 @@ class Image:
         Mlambda=False,
         color='black',
     ):
+        """
+        Calculate visibility profiles from the image.
 
-        # smoothing, christophe suggest I may need this later
-        #   ou = 1;
-        #   if (!is_void(champ)) {
-        #     size=model.P.map.ny;
-        #     x=indgen(size)(,-:1:size) - (size/2+1);
-        #     y=indgen(size)(-:1:size,) - (size/2+1);
-        #     distance = abs(x,y);
+        Args:
+            i (int): Inclination index
+            iaz (int): Azimuth angle index  
+            hor (bool): Calculate horizontal (True) or vertical (False) profile
+            Jy (bool): Convert flux to Jansky
+            klambda (bool): Use kilolambda units for baselines
+            Mlambda (bool): Use megalambda units for baselines
+            color (str): Color for plotting
 
-        #     ou = (distance * pix_size < 0.5 * champ) ;
-
-        #     if (gauss==1) {
-        #       FWHM = champ / pix_size; // OK : le FWHM est equivalent a la largeur de la porte !!! Cool !
-        #       sigma = FWHM / (2*sqrt(2*log(2))); // en sec
-        #       ou = gauss_kernel(size, sigma) ;
-        #     }
-        #     // write, "Applying a field of view of ", champ, "as" ;
-
-        #     if (champ > 0.5 * im_size) {
-        #       write, "WARNING : image seems small to aply the filed of view accurately" ;
-        #       write, im_size, champ ;
-        #     }
-        #   }
+        Returns:
+            tuple: (baselines, visibilities, 2D FFT of image)
+        """
 
         # error message if klambda and Mlambda sccales are selected
         if klambda and Mlambda:
@@ -644,9 +728,25 @@ class Image:
 
 
     def writeto(self, filename, **kwargs):
+        """
+        Write the last plotted image to a FITS file.
+
+        Args:
+            filename (str): Output filename
+            **kwargs: Additional arguments passed to fits.writeto()
+        """
         fits.writeto(os.path.normpath(os.path.expanduser(filename)),self.last_image, self.header, **kwargs)
 
     def get_planet_rPA(self,iplanet):
+        """
+        Get projected radius and position angle of a planet.
+
+        Args:
+            iplanet (int): Index of the planet
+
+        Returns:
+            tuple: (radius in arcsec, position angle in degrees)
+        """
         "Return the projected radius (arcsec) and PA of planet #iplanet in the image"
         dx, dy = self.star_positions[:,0,0,iplanet] - self.star_positions[:,0,0,0]
         PA = np.rad2deg(np.arctan2(dy,-dx)) - 90

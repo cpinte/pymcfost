@@ -16,6 +16,24 @@ from .run import run
 
 
 class SED:
+    """
+    A class to handle MCFOST spectral energy distributions and temperature structures.
+
+    This class reads and processes MCFOST SED outputs, providing methods to plot SEDs
+    and temperature distributions.
+
+    Attributes:
+        dir (str): Directory containing MCFOST output files
+        basedir (str): Base directory without data_th suffix
+        P (Params): MCFOST parameter object
+        sed (numpy.ndarray): SED data from ray-tracing
+        wl (numpy.ndarray): Wavelength array in microns
+        T (numpy.ndarray): Temperature structure
+
+    Example:
+        >>> sed = SED(dir="path/to/mcfost/data")
+        >>> sed.plot(i=0)  # Plot SED for first inclination
+    """
 
     _sed_th_file = ".sed_th.fits.gz"
     _sed_mc_file = "sed_mc.fits.gz"
@@ -24,6 +42,13 @@ class SED:
     _nlte_temperature_file = "Temperature_nLTE.fits.gz"
 
     def __init__(self, dir=None, **kwargs):
+        """
+        Initialize an SED object.
+
+        Args:
+            dir (str): Path to directory containing MCFOST output
+            **kwargs: Additional arguments passed to _read()
+        """
         # Correct path if needed
         dir = os.path.normpath(os.path.expanduser(dir))
         if dir[-7:] != "data_th":
@@ -82,6 +107,19 @@ class SED:
 
 
     def plot(self, i, iaz=0, MC=False, contrib=False, Av=0, Rv=3.1, color="black", **kwargs):
+        """
+        Plot the spectral energy distribution.
+
+        Args:
+            i (int): Inclination index
+            iaz (int): Azimuth angle index
+            MC (bool): Whether to plot Monte Carlo results
+            contrib (bool): Whether to plot individual contributions
+            Av (float): Extinction in V band
+            Rv (float): Total to selective extinction ratio
+            color (str): Line color
+            **kwargs: Additional arguments passed to plotting function
+        """
 
         # extinction
         if Av > 0:
@@ -123,6 +161,9 @@ class SED:
                 ValueError("There is no contribution data")
 
     def verif(self):
+        """
+        Compare SEDs from step 1 and 2 to verify energy conservation.
+        """
         # Compares the SED from step 1 and step 2 to check if energy is properly conserved
         current_fig = plt.gcf().number
         plt.figure(20)
@@ -131,6 +172,15 @@ class SED:
         plt.figure(current_fig)
 
     def plot_T(self, iaz=0, log=False, Tmin=None, Tmax=None):
+        """
+        Plot the temperature structure.
+
+        Args:
+            iaz (int): Azimuth angle index
+            log (bool): Whether to use logarithmic scale
+            Tmin (float, optional): Minimum temperature to plot
+            Tmax (float, optional): Maximum temperature to plot
+        """
         # For a cylindrical or spherical grid only at the moment
         # Todo:
         #  - automatically compute call mcfost to compute the grid
@@ -208,13 +258,34 @@ class SED:
             plt.ylabel("z [au]")
 
 
-    def plot_Tz(self,r=100.0, dr=5.0, log=False, **kwargs):
+    def plot_Tz(self, r=100.0, dr=5.0, log=False, **kwargs):
+        """
+        Plot vertical temperature profile at specified radius.
+
+        Args:
+            r (float): Radius in AU
+            dr (float): Radial range to average over in AU
+            log (bool): Whether to use logarithmic scale
+            **kwargs: Additional arguments passed to plotting function
+        """
 
         _plot_cutz(self,self.T,r=r,dr=dr,log=log, **kwargs)
         plt.ylabel("T [K]")
 
 
     def plot_Tr(self, h_r=0.05, iaz=0, log=True, **kwargs):
+        """
+        Plot radial temperature profile at specified height.
+
+        Args:
+            h_r (float): Height above midplane in scale heights
+            iaz (int): Azimuth angle index
+            log (bool): Whether to use logarithmic scale
+            **kwargs: Additional arguments passed to plotting function
+
+        Returns:
+            tuple: (radius array, temperature array)
+        """
 
         grid = check_grid(self)
 
@@ -255,4 +326,16 @@ class SED:
         return r_mcfost, T
 
     def spectral_index(self, wl1, wl2, i=0, iaz=0):
+        """
+        Calculate spectral index between two wavelengths.
+
+        Args:
+            wl1 (float): First wavelength in microns
+            wl2 (float): Second wavelength in microns
+            i (int): Inclination index
+            iaz (int): Azimuth angle index
+
+        Returns:
+            float: Spectral index
+        """
         pass
