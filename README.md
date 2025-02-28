@@ -2,6 +2,8 @@
 
 pymcfost is a python interface to the 3D radiative transfer code mcfost. The goal is to provide a simple and light interface to explore and plot a single (or a few) model(s).
 
+[![Documentation Status](https://readthedocs.org/projects/mcfost/badge/?version=latest)](https://pymcfost.readthedocs.io/en/latest/)
+
 pymcfost offers (or will offer) the following functionalities:
 
  - set up continuum and line models,
