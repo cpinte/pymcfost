@@ -755,16 +755,22 @@ class Line:
 
         return cube
 
-    def plot_wake(self,i=0,i_planet=1,HonR=0.1,q=0.25, ax=None, **kwargs):
+    def plot_wake(self,i=0,i_planet=1,HonR=0.1,q=0.25, ax=None, rmax=None, rmin=None, **kwargs):
 
         inclinations = self.P.calc_inclinations()
 
+        print("---- INCLINATION", inclinations[i])
+
+
         # plot_wake uses the dynamite convention
-        if (self.P.map.RT_imax<90):
+        if (np.abs(self.P.map.RT_imax<90)):
             inc = -inclinations[i]
         else:
             inc= 180 -inclinations[i]
 
+        #inc = -inclinations[i]
+
+
         xy = self.star_positions[:,0,0,i_planet]
 
-        plot_wake(xy,inc,-self.P.map.PA,HonR,q, ax=ax, **kwargs)
+        plot_wake(xy,inc,-self.P.map.PA,HonR,q, ax=ax, rmin=rmin, rmax=rmax, **kwargs)

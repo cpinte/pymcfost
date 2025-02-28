@@ -20,7 +20,7 @@ def get_wake_cartesian(rp,phip,npts,rmin,rmax,HonR,q,sign):
     return xx,yy
 
 
-def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,color="black",ax=None):
+def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,rmin=None,rmax=None,color="black",ax=None):
     '''
        plot planet wake
        and rotate to the observational viewpoint
@@ -52,9 +52,13 @@ def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,color="black",ax=None):
     print("plot_wake: rp = ",rp," phi planet = ",phip*180./np.pi)
 
     # radial range over which to plot the wake
-    rmin = 1.e-3
-    rmax = 3.*rp
+    if rmax is None:
+        rmax = 3.*rp
+
+    if rmin is None:
+        rmin = rp/3
     npts = 1000
+
 
 
     # outer wake
@@ -72,7 +76,6 @@ def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,color="black",ax=None):
         zz = np.zeros(npts)
     else:
         zz = z_func(np.hypot(xx,yy))
-    xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
 
     xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
     ax.plot(xx,yy,color=color)
