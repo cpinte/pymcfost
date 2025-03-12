@@ -20,7 +20,7 @@ def get_wake_cartesian(rp,phip,npts,rmin,rmax,HonR,q,sign):
     return xx,yy
 
 
-def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,rmin=None,rmax=None,color="black",ax=None):
+def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,rmin=None,rmax=None,color="black",ax=None, rotation=1, **kwargs):
     '''
        plot planet wake
        and rotate to the observational viewpoint
@@ -62,20 +62,20 @@ def plot_wake(xy_obs,inc,PA,HonR,q,z_func=None,rmin=None,rmax=None,color="black"
 
 
     # outer wake
-    xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmax,HonR,q,np.sign(inc))
+    xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmax,HonR,q,np.sign(inc)*rotation)
     if z_func is None:
         zz = np.zeros(npts)
     else:
         zz = z_func(np.hypot(xx,yy))
     xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
-    ax.plot(xx,yy,color=color)
+    ax.plot(xx,yy,color=color,**kwargs)
 
     # inner wake
-    xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmin,HonR,q,np.sign(inc))
+    xx,yy = get_wake_cartesian(rp,phip,npts,rp,rmin,HonR,q,np.sign(inc)*rotation)
     if z_func is None:
         zz = np.zeros(npts)
     else:
         zz = z_func(np.hypot(xx,yy))
 
     xp,yp,zp = rotate_to_obs_plane(xx,yy,zz,inc,PA)
-    ax.plot(xx,yy,color=color)
+    ax.plot(xx,yy,color=color,**kwargs)
