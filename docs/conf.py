@@ -1,8 +1,8 @@
 # Configuration file for the Sphinx documentation builder.
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src/pymcfost")))
+#import os
+#import sys
+#sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+#sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src/pymcfost")))
 
 
 # -- Project information -----------------------------------------------------

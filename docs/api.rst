@@ -4,7 +4,7 @@ API Reference
 Image
 -----
 
-.. autoclass:: pymcfost.image.Image
+.. automodule:: pymcfost.image.Image
    :members:
    :undoc-members:
    :show-inheritance:
@@ -14,7 +14,7 @@ Image
 Line
 ----
 
-.. autoclass:: pymcfost.line.Line
+.. automodule:: pymcfost.line.Line
    :members:
    :undoc-members:
    :show-inheritance:
@@ -24,7 +24,7 @@ Line
 SED
 ---
 
-.. autoclass:: pymcfost.SED.SED
+.. automodule:: pymcfost.SED.SED
    :members:
    :undoc-members:
    :show-inheritance:
@@ -34,7 +34,7 @@ SED
 Disc Structure
 --------------
 
-.. autoclass:: pymcfost.disc_structure.Disc
+.. automodule:: pymcfost.disc_structure.Disc
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,7 +44,7 @@ Disc Structure
 Dust Model
 ----------
 
-.. autoclass:: pymcfost.dust.Dust_model
+.. automodule:: pymcfost.dust.Dust_model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -73,4 +73,4 @@ CASA Simulations
 .. automodule:: pymcfost.CASA_simdata
    :members:
    :undoc-members:
-   :show-inheritance: 
+   :show-inheritance:
