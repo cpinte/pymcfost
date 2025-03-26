@@ -84,10 +84,16 @@ class Dust_model:
             **kwargs: Additional arguments passed to plotting function
         """
         plt.loglog(self.wl,self.kappa,linewidth=linewidth, color="black")
+        L = [r"$\kappa$"]
+
         if abs:
             plt.loglog(self.wl,self.kappa_abs,linewidth=linewidth, color="red")
+            L.append(r"$\kappa_\mathrm{abs}$")
         if scatt:
             plt.loglog(self.wl,self.kappa_sca,linewidth=linewidth, color="blue")
+            L.append("$\kappa_\mathrm{sca}$")
+
+        plt.legend(L)
 
         plt.xlabel("$\lambda$ [$\mu$m]")
         plt.ylabel("$\kappa$ [cm$^2$/g]")
