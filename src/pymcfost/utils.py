@@ -14,6 +14,16 @@ arcsec = np.pi / 648000
 
 
 def bin_image(im, n, func=np.sum):
+    """Bins an image in blocks of n x n pixels.
+
+    Args:
+        im (ndarray): Input image to bin.
+        n (int): Size of the binning block (n x n).
+        func (callable, optional): Function to apply for binning. Defaults to np.sum.
+
+    Returns:
+        ndarray: Binned image of size im.shape/n.
+    """
     # bin an image in blocks of n x n pixels
     # return a image of size im.shape/n
 
@@ -38,6 +48,15 @@ def bin_image(im, n, func=np.sum):
 
 
 def Wm2_to_Jy(nuFnu, nu):
+    """Convert flux from W.m-2 to Jy.
+
+    Args:
+        nuFnu (float): Flux in W.m-2.
+        nu (float): Frequency in Hz.
+
+    Returns:
+        float: Flux in Jy.
+    """
     '''
     Convert from W.m-2 to Jy
     nu [Hz]
@@ -46,6 +65,15 @@ def Wm2_to_Jy(nuFnu, nu):
 
 
 def Jy_to_Wm2(Fnu, nu):
+    """Convert flux from Jy to W.m-2.
+
+    Args:
+        Fnu (float): Flux in Jy.
+        nu (float): Frequency in Hz.
+
+    Returns:
+        float: Flux in W.m-2.
+    """
     '''
     Convert from Jy to W.m-2
     nu [Hz]
@@ -54,6 +82,17 @@ def Jy_to_Wm2(Fnu, nu):
 
 
 def Jybeam_to_Tb(Fnu, nu, bmaj, bmin):
+    """Convert flux density from Jy/beam to brightness temperature.
+
+    Args:
+        Fnu (float): Flux in Jy.
+        nu (float): Frequency in Hz.
+        bmaj (float): Major axis of the beam in arcsec.
+        bmin (float): Minor axis of the beam in arcsec.
+
+    Returns:
+        float: Brightness temperature in Kelvin.
+    """
     '''
      Convert Flux density in Jy/beam to brightness temperature [K]
      Flux [Jy]
@@ -72,6 +111,16 @@ def Jybeam_to_Tb(Fnu, nu, bmaj, bmin):
 
 
 def Jy_to_Tb(Fnu, nu, pixelscale):
+    """Convert flux density from Jy/pixel to brightness temperature.
+
+    Args:
+        Fnu (float): Flux in Jy.
+        nu (float): Frequency in Hz.
+        pixelscale (float): Pixel scale in arcsec.
+
+    Returns:
+        float: Brightness temperature in Kelvin.
+    """
     '''
      Convert Flux density in Jy/pixel to brightness temperature [K]
      Flux [Jy]
@@ -90,6 +139,16 @@ def Jy_to_Tb(Fnu, nu, pixelscale):
 
 
 def Wm2_to_Tb(nuFnu, nu, pixelscale):
+    """Convert flux from W.m-2/pixel to brightness temperature using full Planck law.
+
+    Args:
+        nuFnu (float): Flux in W.m-2/pixel.
+        nu (float): Frequency in Hz.
+        pixelscale (float): Pixel scale in arcsec.
+
+    Returns:
+        float: Brightness temperature in Kelvin.
+    """
     """Convert flux converted from Wm2/pixel to K using full Planck law.
         Convert Flux density in Jy/beam to brightness temperature [K]
         Flux [W.m-2/pixel]
@@ -107,27 +166,70 @@ def Wm2_to_Tb(nuFnu, nu, pixelscale):
 
 # -- Functions to deal the synthesized beam.
 def _beam_area(self):
+    """Calculate the beam area in arcsec^2.
+
+    Returns:
+        float: Beam area in square arcseconds.
+    """
     """Beam area in arcsec^2"""
     return np.pi * self.bmaj * self.bmin / (4.0 * np.log(2.0))
 
 def _beam_area_str(self):
+    """Calculate the beam area in steradians.
+
+    Returns:
+        float: Beam area in steradians.
+    """
     """Beam area in steradian^2"""
     return self._beam_area() * arcsec ** 2
 
 def _pixel_area(self):
+    """Calculate the pixel area.
+
+    Returns:
+        float: Pixel area.
+    """
     return self.pixelscale ** 2
 
 def _beam_area_pix(self):
+    """Calculate the beam area in pixels.
+
+    Returns:
+        float: Beam area in square pixels.
+    """
     """Beam area in pix^2."""
     return self._beam_area() / self._pixel_area()
 
 
 def telescope_beam(wl,D):
+    """Calculate the telescope beam FWHM.
+
+    Args:
+        wl (float): Wavelength in meters.
+        D (float): Telescope diameter in meters.
+
+    Returns:
+        float: FWHM in arcseconds.
+    """
     """ wl and D in m, returns FWHM in arcsec"""
     return 0.989 * wl/D / 4.84814e-6
 
 
 def make_cut(im, x0,y0,x1,y1,num=None,plot=False):
+    """Make a cut in an image along a line between two points.
+
+    Args:
+        im (ndarray): Input image.
+        x0 (float): Starting x-coordinate in pixels.
+        y0 (float): Starting y-coordinate in pixels.
+        x1 (float): Ending x-coordinate in pixels.
+        y1 (float): Ending y-coordinate in pixels.
+        num (int, optional): Number of points along the cut. If None, uses pixel spacing.
+        plot (bool, optional): Whether to plot the cut line on the image. Defaults to False.
+
+    Returns:
+        ndarray: Values along the cut line.
+    """
     """
     Make a cut in image 'im' along a line between (x0,y0) and (x1,y1)
     x0, y0,x1,y1 are pixel coordinates
@@ -213,11 +315,26 @@ class DustExtinction:
 
 
 def Hill_radius():
+    """Calculate the Hill radius of a planet.
+
+    Note: This function is currently a placeholder and needs to be implemented.
+    The Hill radius is given by: d * (Mplanet/3*Mstar)^(1/3)
+    """
     pass
     #d * (Mplanet/3*Mstar)**(1./3)
 
 
 def splash2mcfost(anglex, angley, anglez):
+    """Convert SPLASH angles to MCFOST angles.
+
+    Args:
+        anglex (float): Rotation angle around x-axis in degrees.
+        angley (float): Rotation angle around y-axis in degrees.
+        anglez (float): Rotation angle around z-axis in degrees.
+
+    Returns:
+        list: [inclination, azimuth, PA] in degrees.
+    """
     #Convert the splash angles to mcfost angles
 
     # Base unit vector
@@ -258,6 +375,17 @@ def splash2mcfost(anglex, angley, anglez):
     return [mcfost_i, mcfost_az, mcfost_PA]
 
 def _rotate_splash(xyz, anglex, angley, anglez):
+    """Rotate coordinates using SPLASH rotation convention.
+
+    Args:
+        xyz (ndarray): [x, y, z] coordinates to rotate.
+        anglex (float): Rotation angle around x-axis in degrees.
+        angley (float): Rotation angle around y-axis in degrees.
+        anglez (float): Rotation angle around z-axis in degrees.
+
+    Returns:
+        ndarray: Rotated [x, y, z] coordinates.
+    """
     # Defines rotations as in splash
     # This function is to rotate the data
 
@@ -293,6 +421,17 @@ def _rotate_splash(xyz, anglex, angley, anglez):
 
 
 def _rotate_splash_axes(xyz, anglex, angley, anglez):
+    """Rotate coordinate axes using SPLASH rotation convention.
+
+    Args:
+        xyz (ndarray): [x, y, z] coordinates to rotate.
+        anglex (float): Rotation angle around x-axis in degrees.
+        angley (float): Rotation angle around y-axis in degrees.
+        anglez (float): Rotation angle around z-axis in degrees.
+
+    Returns:
+        ndarray: Rotated [x, y, z] coordinates.
+    """
     # Defines rotations as in splash, but in reserve order
     # as we rotate the axes instead of the data
 
@@ -369,6 +508,21 @@ def planet_position(model, i_planet, i_star, ):
     return [dist, PA]
 
 def add_colorbar(mappable, shift=None, width=0.05, ax=None, trim_left=0, trim_right=0, side="right",**kwargs):
+    """Add a colorbar to a plot without shrinking the main plot.
+
+    Args:
+        mappable: The mappable object (e.g., image) to create the colorbar for.
+        shift (float, optional): Shift of the colorbar from the plot. Defaults to None.
+        width (float, optional): Width of the colorbar. Defaults to 0.05.
+        ax (matplotlib.axes.Axes, optional): Axes to add the colorbar to. Defaults to None.
+        trim_left (float, optional): Amount to trim from the left. Defaults to 0.
+        trim_right (float, optional): Amount to trim from the right. Defaults to 0.
+        side (str, optional): Side to place the colorbar on. Defaults to "right".
+        **kwargs: Additional arguments passed to colorbar.
+
+    Returns:
+        matplotlib.colorbar.Colorbar: The created colorbar.
+    """
     # creates a color bar that does not shrink the main plot or panel
     # only works for horizontal bars so far
 
@@ -402,6 +556,20 @@ def add_colorbar(mappable, shift=None, width=0.05, ax=None, trim_left=0, trim_ri
         return fig.colorbar(mappable, cax=cax, orientation="vertical",**kwargs)
 
 def get_planet_r_az(disk_PA, disk_inc, planet_r, planet_PA):
+    """Calculate planet parameters for MCFOST from disk and planet parameters.
+
+    Args:
+        disk_PA (float): Disk position angle in degrees.
+        disk_inc (float): Disk inclination in degrees.
+        planet_r (float): Planet projected separation in arcsec or au.
+        planet_PA (float): Planet position angle in degrees.
+
+    Returns:
+        tuple: (mcfost_inc, r, az) where:
+            - mcfost_inc: MCFOST inclination in degrees
+            - r: Deprojected separation in same units as planet_r
+            - az: Planet azimuth in degrees for MCFOST command line
+    """
     # For a given disk PA and inc, and planet PA, and projected separation
     # gives the az to be passed to the planet_az option and the deprojected separation
     # input :
