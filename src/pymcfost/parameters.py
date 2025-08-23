@@ -545,6 +545,94 @@ class Params:
                 )
 
 
+
+    def update_parameter_file(self, inclination=None, stellar_mass=None, scale_height=None,
+                              r_c=None, flaring_exp=None, PA=None, viscosity=None,
+                              vturb=None, gas_mass=None, dust_mass=None, gas_to_dust_ratio=None, vsyst=None,
+                              rin=None, rout=None, surface_density_exp=None, stellar_radius=None,
+                              amin=None, amax=None, stellar_teff=None, molecular_abundance=None,
+                              molecular_abundance_file=None, edge=None, vertical_exp=None, m_gamma_exp=None):
+
+        # Fix inclination parameter reference
+        if inclination is not None:
+            self.map.RT_imin = inclination
+            self.map.RT_imax = inclination
+
+        if PA is not None:
+            self.map.PA = PA
+
+        if r_c is not None:
+            self.zones[0].Rc = r_c
+
+        if flaring_exp is not None:
+            self.zones[0].flaring_exp = flaring_exp
+
+        if scale_height is not None:
+            self.zones[0].h0 = scale_height
+
+        if stellar_mass is not None:
+            self.stars[0].M = stellar_mass
+
+        if stellar_radius is not None:
+            self.stars[0].R = stellar_radius
+
+        if stellar_teff is not None:
+            self.stars[0].Teff = stellar_teff
+
+        if viscosity is not None:
+            self.simu.viscosity = viscosity
+
+        if vturb is not None:
+            self.mol.v_turb = vturb
+
+        if gas_to_dust_ratio is not None:
+            self.zones[0].gas_to_dust_ratio = gas_to_dust_ratio
+
+        if gas_mass is not None:
+            self.zones[0].dust_mass = gas_mass/self.zones[0].gas_to_dust_ratio
+
+        if dust_mass is not None:
+            self.zones[0].dust_mass = dust_mass
+
+        # Disk structure parameters
+        if rin is not None:
+            self.zones[0].Rin = rin
+
+        if rout is not None:
+            self.zones[0].Rout = rout
+
+        if edge is not None:
+            self.zones[0].edge = edge
+
+        if surface_density_exp is not None:
+            self.zones[0].surface_density_exp = surface_density_exp
+
+        if vertical_exp is not None:
+            self.zones[0].vertical_exp = vertical_exp
+
+        if m_gamma_exp is not None:
+            self.zones[0].m_gamma_exp = m_gamma_exp
+
+        # Grain size parameters
+        if amin is not None:
+            self.zones[0].dust[0].amin = amin
+
+        if amax is not None:
+            self.zones[0].dust[0].amax = amax
+
+        # Molecular abundance parameters
+        if molecular_abundance is not None:
+            if self.mol.n_mol > 0:
+                self.mol.molecule[0].abundance = molecular_abundance
+
+        if molecular_abundance_file is not None:
+            if self.mol.n_mol > 0:
+                self.mol.molecule[0].abundance_file = molecular_abundance_file
+
+        return
+
+
+
 def find_parameter_file(directory="./"):
 
     list = glob.glob(directory + "/*.par*")
