@@ -340,90 +340,50 @@ class SED:
         """
         pass
 
+    def convert_to_text(self, sed_text_path, i=0, iaz=0):
+        """
+        Convert MCFOST SED fits file to text format.
+        The created file can be used as a sample file for chi² calculation.
 
-def convert_sed_fits_to_text(sed_fits_path, sed_text_path):
-    """
-    Convert MCFOST SED fits file to text format for chi² calculation.
+        Parameters
+        ----------
+        sed_text_path : str
+            Path where the text file will be saved
+        i : int, optional
+            Inclination index. Defaults to 0.
+        iaz : int, optional
+            Azimuth angle index. Defaults to 0.
 
-    Parameters
-    ----------
-    sed_fits_path : str
-        Path to the MCFOST SED fits file
-    sed_text_path : str
-        Path where the text file will be saved
+        Returns
+        -------
+        str or None
+            Path to the created text file, or None if conversion failed
+        """
+        try:
+            # Use the already loaded SED data
+            if not hasattr(self, 'wl') or not hasattr(self, 'sed'):
+                raise ValueError("SED data not available. Make sure SED files were loaded successfully.")
 
-    Returns
-    -------
-    str or None
-        Path to the created text file, or None if conversion failed
-    """
-    try:
-        # Read the fits file
-        hdul = fits.open(sed_fits_path)
+            # Get the wavelength and flux data
+            wavelength = self.wl
+            flux = self.sed[0, iaz, i, :]  # Get flux for specific inclination and azimuth
 
-        # Extract wavelength and flux data
-        # MCFOST SED fits files typically have wavelength in the header or as a separate extension
-        if len(hdul) > 1:
-            # Try to find wavelength and flux data in extensions
-            wavelength = None
-            flux = None
+            # Convert from W.m-2 to Jy
+            flux_jy = flux * 1e26 / (3e14 / wavelength)
 
-            for i, hdu in enumerate(hdul):
-                if hdu.header.get('EXTNAME', '').upper() == 'WAVELENGTH':
-                    wavelength = hdu.data
-                elif hdu.header.get('EXTNAME', '').upper() == 'FLUX':
-                    flux = hdu.data
-                elif hdu.header.get('EXTNAME', '').upper() == 'SED':
-                    # SED extension might contain both wavelength and flux
-                    if wavelength is None and len(hdu.data.shape) >= 2:
-                        wavelength = hdu.data[0, :]  # First row might be wavelength
-                        flux = hdu.data[1, :]        # Second row might be flux
+            # Write to text file
+            with open(sed_text_path, 'w') as f:
+                f.write("# Wavelength(micron) Flux(Jy)\n")
+                for wl, fl in zip(wavelength, flux_jy):
+                    if fl > 0 and np.isfinite(fl):  # Only write positive, finite values
+                        f.write(f"{wl:.6e} {fl:.6e}\n")
 
-            # If we still don't have wavelength, try to get it from header
-            if wavelength is None:
-                # Try to extract wavelength from header keywords
-                n_wl = hdul[0].header.get('NWL', 0)
-                wl_min = hdul[0].header.get('WL_MIN', 0.1)
-                wl_max = hdul[0].header.get('WL_MAX', 1000.0)
+            print(f"Converted SED to text: {sed_text_path}")
+            return sed_text_path
 
-                if n_wl > 0:
-                    wavelength = np.logspace(np.log10(wl_min), np.log10(wl_max), n_wl)
-                    flux = hdul[0].data
+        except Exception as e:
+            print(f"Error converting SED to text: {e}")
+            return None
 
-            # If we still don't have flux, use the primary data
-            if flux is None:
-                flux = hdul[0].data
-        else:
-            # Single extension - assume it's the flux data
-            flux = hdul[0].data
-            # Try to get wavelength from header
-            n_wl = hdul[0].header.get('NWL', len(flux))
-            wl_min = hdul[0].header.get('WL_MIN', 0.1)
-            wl_max = hdul[0].header.get('WL_MAX', 1000.0)
-            wavelength = np.logspace(np.log10(wl_min), np.log10(wl_max), n_wl)
 
-        hdul.close()
 
-        # Ensure we have the right data
-        if wavelength is None or flux is None:
-            raise ValueError("Could not extract wavelength and flux from SED fits file")
-
-        # Convert to 1D arrays if needed
-        if wavelength.ndim > 1:
-            wavelength = wavelength.flatten()
-        if flux.ndim > 1:
-            flux = flux.flatten()
-
-        # Write to text file
-        with open(sed_text_path, 'w') as f:
-            f.write("# Wavelength(micron) Flux(Jy)\n")
-            for wl, fl in zip(wavelength, flux):
-                if fl > 0 and np.isfinite(fl):  # Only write positive, finite values
-                    f.write(f"{wl:.6e} {fl:.6e}\n")
-
-        print(f"Converted SED fits to text: {sed_text_path}")
-        return sed_text_path
-
-    except Exception as e:
-        print(f"Error converting SED fits to text: {e}")
-        return None
