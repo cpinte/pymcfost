@@ -1,6 +1,7 @@
 import astropy.io.fits as fits
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+import scipy.constants as sc
 import numpy as np
 import os
 
@@ -11,7 +12,7 @@ class Disc:
     """
     A class to handle MCFOST disc structure data.
 
-    This class reads and processes MCFOST disc structure outputs, providing methods 
+    This class reads and processes MCFOST disc structure outputs, providing methods
     to access the spatial grid, gas density, and add geometric features.
 
     Attributes:
@@ -66,6 +67,14 @@ class Disc:
         except OSError:
             print('cannot open gas_density.fits.gz')
 
+        # Read dust density file
+        try:
+            hdu = fits.open(self.dir + "/dust_mass_density.fits.gz")
+            self.dust_density = hdu[0].data
+            hdu.close()
+        except OSError:
+            print('cannot open dust_mass_density.fits.gz')
+
         # Read volume file
         try:
             hdu = fits.open(self.dir + "/volume.fits.gz")
@@ -97,6 +106,30 @@ class Disc:
             return self.grid[1, :, :, :]
         else:
             return self.grid[2, :]
+
+
+    def sigma(self,dust=False):
+        """
+        Compute the surface density of a model
+
+        Returns:
+            numpy.ndarray: surface density in g/cm2
+        """
+        if self.grid.ndim <= 2:
+            raise TypeError("pymcfost cannot compute surface density on a Voronoi mesh yet")
+
+        dz = (self.grid[1,:,1,:] - self.grid[1,:,0,:])[0,] # au
+
+        if dust:
+            S = np.sum(self.dust_density,axis=0)
+        else:
+            S = np.sum(self.gas_density,axis=0)
+
+        print(S.shape)
+        print(dz.shape)
+
+        return S * dz * sc.au*100
+
 
     def add_spiral(
         self, a=30, sigma=10, f=1, theta0=0, rmin=None, rmax=None, n_az=None
@@ -197,7 +230,7 @@ class Disc:
         """
         phi0 = np.radians(phi0)
         delta_phi = np.radians(delta_phi)
-        
+
         sigma_data = fits.open(sigma)[0].data
         if self.grid.ndim <= 2:
             ValueError("Can only add a banana on a cylindrical or spherical grid")
