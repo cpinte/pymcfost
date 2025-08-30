@@ -32,8 +32,8 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
         raise IOError(filename+" does not exist")
 
     # Finding root directory
-    root_dir = "."
     opts = options.split()
+    root_dir = "."
     for i, option in enumerate(opts):
         if option == "-root_dir":
             root_dir = opts[i+1]
@@ -44,7 +44,7 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
 
     if silent:
         if logfile is None:
-            logfile = "mcfost.log"
+            logfile = root_dir+"/mcfost.log"
 
     # Saving output in a log file
     if logfile is not None:

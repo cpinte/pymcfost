@@ -1,5 +1,7 @@
+import os
 import glob
 import numpy as np
+
 
 def _word_to_bool(word):
     """convert a string to boolean according the first 2 characters."""
@@ -80,7 +82,7 @@ class Params:
         self.atomic = Atomic()
         self.stars = []
 
-        self.filename = filename
+        self.filename =  os.path.normpath(os.path.expanduser(filename))
         self._read(**kwargs)
 
     def _read(self):
@@ -546,88 +548,99 @@ class Params:
 
 
 
-    def update_parameter_file(self, inclination=None, stellar_mass=None, scale_height=None,
-                              r_c=None, flaring_exp=None, PA=None, viscosity=None,
-                              vturb=None, gas_mass=None, dust_mass=None, gas_to_dust_ratio=None, vsyst=None,
-                              rin=None, rout=None, surface_density_exp=None, stellar_radius=None,
-                              amin=None, amax=None, stellar_teff=None, molecular_abundance=None,
-                              molecular_abundance_file=None, edge=None, vertical_exp=None, m_gamma_exp=None):
+    def update_parameters(self, params=None, **kwargs):
+        """
+        Update parameter file with values from a dictionary or actual parameter values.
+
+        Parameters
+        ----------
+        params : dict, optional
+            Dictionary containing parameter names and values to update.
+            If None, uses kwargs instead.
+        **kwargs :
+            Individual parameters as keyword arguments.
+        """
+        # Use params dict if provided, otherwise use kwargs
+        if params is not None:
+            param_dict = params
+        else:
+            param_dict = kwargs
 
         # Fix inclination parameter reference
-        if inclination is not None:
-            self.map.RT_imin = inclination
-            self.map.RT_imax = inclination
+        if 'inclination' in param_dict:
+            self.map.RT_imin = param_dict['inclination']
+            self.map.RT_imax = param_dict['inclination']
 
-        if PA is not None:
-            self.map.PA = PA
+        if 'PA' in param_dict:
+            self.map.PA = param_dict['PA']
 
-        if r_c is not None:
-            self.zones[0].Rc = r_c
+        if 'Rc' in param_dict:
+            self.zones[0].Rc = param_dict['Rc']
 
-        if flaring_exp is not None:
-            self.zones[0].flaring_exp = flaring_exp
+        if 'flaring_exp' in param_dict:
+            self.zones[0].flaring_exp = param_dict['flaring_exp']
 
-        if scale_height is not None:
-            self.zones[0].h0 = scale_height
+        if 'h0' in param_dict:
+            self.zones[0].h0 = param_dict['h0']
 
-        if stellar_mass is not None:
-            self.stars[0].M = stellar_mass
+        if 'stellar_mass' in param_dict:
+            self.stars[0].M = param_dict['stellar_mass']
 
-        if stellar_radius is not None:
-            self.stars[0].R = stellar_radius
+        if 'stellar_radius' in param_dict:
+            self.stars[0].R = param_dict['stellar_radius']
 
-        if stellar_teff is not None:
-            self.stars[0].Teff = stellar_teff
+        if 'stellar_Teff' in param_dict:
+            self.stars[0].Teff = param_dict['stellar_Teff']
 
-        if viscosity is not None:
-            self.simu.viscosity = viscosity
+        if 'viscosity' in param_dict:
+            self.simu.viscosity = param_dict['viscosity']
 
-        if vturb is not None:
-            self.mol.v_turb = vturb
+        if 'v_turb' in param_dict:
+            self.mol.v_turb = param_dict['v_turb']
 
-        if gas_to_dust_ratio is not None:
-            self.zones[0].gas_to_dust_ratio = gas_to_dust_ratio
+        if 'gas_to_dust_ratio' in param_dict:
+            self.zones[0].gas_to_dust_ratio = param_dict['gas_to_dust_ratio']
 
-        if gas_mass is not None:
-            self.zones[0].dust_mass = gas_mass/self.zones[0].gas_to_dust_ratio
+        if 'gas_mass' in param_dict:
+            self.zones[0].dust_mass = param_dict['gas_mass']/self.zones[0].gas_to_dust_ratio
 
-        if dust_mass is not None:
-            self.zones[0].dust_mass = dust_mass
+        if 'dust_mass' in param_dict:
+            self.zones[0].dust_mass = param_dict['dust_mass']
 
         # Disk structure parameters
-        if rin is not None:
-            self.zones[0].Rin = rin
+        if 'Rin' in param_dict:
+            self.zones[0].Rin = param_dict['Rin']
 
-        if rout is not None:
-            self.zones[0].Rout = rout
+        if 'Rout' in param_dict:
+            self.zones[0].Rout = param_dict['Rout']
 
-        if edge is not None:
-            self.zones[0].edge = edge
+        if 'edge' in param_dict:
+            self.zones[0].edge = param_dict['edge']
 
-        if surface_density_exp is not None:
-            self.zones[0].surface_density_exp = surface_density_exp
+        if 'surface_density_exp' in param_dict:
+            self.zones[0].surface_density_exp = param_dict['surface_density_exp']
 
-        if vertical_exp is not None:
-            self.zones[0].vertical_exp = vertical_exp
+        if 'vertical_exp' in param_dict:
+            self.zones[0].vertical_exp = param_dict['vertical_exp']
 
-        if m_gamma_exp is not None:
-            self.zones[0].m_gamma_exp = m_gamma_exp
+        if 'm_gamma_exp' in param_dict:
+            self.zones[0].m_gamma_exp = param_dict['m_gamma_exp']
 
         # Grain size parameters
-        if amin is not None:
-            self.zones[0].dust[0].amin = amin
+        if 'amin' in param_dict:
+            self.zones[0].dust[0].amin = param_dict['amin']
 
-        if amax is not None:
-            self.zones[0].dust[0].amax = amax
+        if 'amax' in param_dict:
+            self.zones[0].dust[0].amax = param_dict['amax']
 
         # Molecular abundance parameters
-        if molecular_abundance is not None:
+        if 'molecular_abundance' in param_dict:
             if self.mol.n_mol > 0:
-                self.mol.molecule[0].abundance = molecular_abundance
+                self.mol.molecule[0].abundance = param_dict['molecular_abundance']
 
-        if molecular_abundance_file is not None:
+        if 'molecular_abundance_file' in param_dict:
             if self.mol.n_mol > 0:
-                self.mol.molecule[0].abundance_file = molecular_abundance_file
+                self.mol.molecule[0].abundance_file = param_dict['molecular_abundance_file']
 
         return
 
