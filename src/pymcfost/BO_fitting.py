@@ -116,6 +116,22 @@ def run_optuna_SED(config_file="parameter_config.yaml", n_jobs=1, n_trials=100):
 
     return
 
+
+def load_optuna_study(study_name="SED_fit", journal_path="optuna_journal_storage.log"):
+    """
+    Load an existing Optuna study using the same JournalStorage backend.
+
+    Args:
+        study_name (str): Name of the Optuna study to load. Defaults to "SED_fit".
+        journal_path (str): Path to the journal storage log file. Defaults to "optuna_journal_storage.log".
+
+    Returns:
+        optuna.study.Study: The loaded study instance.
+    """
+    storage = JournalStorage(JournalFileBackend(journal_path))
+    return optuna.load_study(study_name=study_name, storage=storage)
+
+
 if __name__ == "__main__":
     run_optuna()
 
