@@ -52,14 +52,14 @@ class Objective_SED:
             P = copy.deepcopy(self.ref_P)
 
             # Update parameters using the update_parameter_file function
-            P.update_parameters(**params)
+            P.update_parameters(params)
 
             # Write parameter file
             para_file = output_dir+"/optuna.para"
             P.writeto(para_file)
 
             # run mcfost
-            run_mcfost(para_file, options=self.options+" -root_dir "+output_dir, silent=False)
+            run_mcfost(para_file, options=self.options+" -root_dir "+output_dir, silent=True)
 
             # compute_chi2
             mcfost_SED = output_dir+"/data_th"
@@ -83,7 +83,7 @@ class Objective_SED:
 
 
 
-def run_optuna(config_file="parameter_config.yaml", n_jobs=1, n_trials=10):
+def run_optuna_SED(config_file="parameter_config.yaml", n_jobs=1, n_trials=100):
 
     # Load fitting configution file
     with open(config_file) as f:
@@ -107,7 +107,7 @@ def run_optuna(config_file="parameter_config.yaml", n_jobs=1, n_trials=10):
     study = optuna.create_study(
         direction="minimize",
         storage=storage,
-        study_name="alma_fit",
+        study_name="SED_fit",
         load_if_exists=True
     )
 
