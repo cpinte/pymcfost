@@ -11,7 +11,7 @@ except ImportError:
 
 from .parameters import Params, find_parameter_file
 from .disc_structure import _plot_cutz, check_grid
-from .utils import DustExtinction
+from .utils import DustExtinction, Wm2_to_Jy
 from .run import run
 
 
@@ -368,8 +368,10 @@ class SED:
             wavelength = self.wl
             flux = self.sed[0, iaz, i, :]  # Get flux for specific inclination and azimuth
 
-            # Convert from W.m-2 to Jy
-            flux_jy = flux * 1e26 / (3e14 / wavelength)
+            # Convert from W.m-2 to Jy using the utility function
+            # ν = c/λ, where c = 3e14 μm/s
+            nu = 3e14 / wavelength  # frequency in Hz
+            flux_jy = Wm2_to_Jy(flux, nu)
 
             # Write to text file
             with open(sed_text_path, 'w') as f:
