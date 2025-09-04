@@ -3,7 +3,8 @@ import subprocess
 
 _mcfost_bin = "mcfost"
 
-def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False):
+
+def run(filename, options="", delete_previous=False, notebook=False, logfile=None, silent=False, omp_num_threads=None):
     """
     Run MCFOST with specified parameter file and options.
 
@@ -14,6 +15,7 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
         notebook (bool): Whether running in a Jupyter notebook
         logfile (str, optional): File to save MCFOST output
         silent (bool): Whether to suppress output messages
+        omp_num_threads (int, optional): If set, export OMP_NUM_THREADS for the mcfost process
 
     Raises:
         TypeError: If filename is not a string
@@ -22,7 +24,7 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
 
     Example:
         >>> from pymcfost import run
-        >>> run("my_model.para", options="-img 0.8")
+        >>> run("my_model.para", options="-img 0.8", omp_num_threads=8)
     """
 
     if not isinstance(filename, str):
@@ -53,7 +55,12 @@ def run(filename, options="", delete_previous=False, notebook=False, logfile=Non
     if not silent:
         print("pymcfost: Running mcfost ...")
 
-    r = subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True)
+    # Prepare environment with optional OMP_NUM_THREADS
+    env = os.environ.copy()
+    if omp_num_threads is not None:
+        env["OMP_NUM_THREADS"] = str(omp_num_threads)
+
+    r = subprocess.run(_mcfost_bin+" "+filename+" "+options, shell = True, env=env)
     if r.returncode:
         raise OSError("mcfost did not run as expected, check mcfost's output")
 
