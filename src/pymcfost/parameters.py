@@ -566,81 +566,53 @@ class Params:
         else:
             param_dict = kwargs
 
-        # Fix inclination parameter reference
-        if 'inclination' in param_dict:
-            self.map.RT_imin = param_dict['inclination']
-            self.map.RT_imax = param_dict['inclination']
+        # Define parameter mapping: keyword -> (target_object, attribute_name, special_handler)
+        # special_handler is a function that takes (self, value) and performs the update
+        # If None, uses simple attribute assignment
+        parameter_mapping = {
+            'inclination': (self.map, 'RT_imin', lambda self, value: setattr(self.map, 'RT_imin', value) or setattr(self.map, 'RT_imax', value)),
+            'PA': (self.map, 'PA', None),
+            'Rc': (self.zones[0], 'Rc', None),
+            'flaring_exp': (self.zones[0], 'flaring_exp', None),
+            'h0': (self.zones[0], 'h0', None),
+            'stellar_mass': (self.stars[0], 'M', None),
+            'stellar_radius': (self.stars[0], 'R', None),
+            'stellar_Teff': (self.stars[0], 'Teff', None),
+            'viscosity': (self.simu, 'viscosity', None),
+            'v_turb': (self.mol, 'v_turb', None),
+            'gas_to_dust_ratio': (self.zones[0], 'gas_to_dust_ratio', None),
+            'gas_mass': (self.zones[0], 'dust_mass', lambda self, value: setattr(self.zones[0], 'dust_mass', value/self.zones[0].gas_to_dust_ratio)),
+            'dust_mass': (self.zones[0], 'dust_mass', None),
+            'Rin': (self.zones[0], 'Rin', None),
+            'Rout': (self.zones[0], 'Rout', None),
+            'edge': (self.zones[0], 'edge', None),
+            'surface_density_exp': (self.zones[0], 'surface_density_exp', None),
+            'vertical_exp': (self.zones[0], 'vertical_exp', None),
+            'm_gamma_exp': (self.zones[0], 'm_gamma_exp', None),
+            'amin': (self.zones[0].dust[0], 'amin', None),
+            'amax': (self.zones[0].dust[0], 'amax', None),
+            'molecular_abundance': (self.mol.molecule[0], 'abundance', lambda self, value: setattr(self.mol.molecule[0], 'abundance', value) if self.mol.n_mol > 0 else None),
+            'molecular_abundance_file': (self.mol.molecule[0], 'abundance_file', lambda self, value: setattr(self.mol.molecule[0], 'abundance_file', value) if self.mol.n_mol > 0 else None),
+        }
 
-        if 'PA' in param_dict:
-            self.map.PA = param_dict['PA']
+        # Check for non-existing keywords
+        valid_keywords = set(parameter_mapping.keys())
+        provided_keywords = set(param_dict.keys())
+        invalid_keywords = provided_keywords - valid_keywords
+        
+        if invalid_keywords:
+            raise ValueError(f"Invalid keywords found in param_dict: {sorted(invalid_keywords)}. "
+                           f"Valid keywords are: {sorted(valid_keywords)}")
 
-        if 'Rc' in param_dict:
-            self.zones[0].Rc = param_dict['Rc']
-
-        if 'flaring_exp' in param_dict:
-            self.zones[0].flaring_exp = param_dict['flaring_exp']
-
-        if 'h0' in param_dict:
-            self.zones[0].h0 = param_dict['h0']
-
-        if 'stellar_mass' in param_dict:
-            self.stars[0].M = param_dict['stellar_mass']
-
-        if 'stellar_radius' in param_dict:
-            self.stars[0].R = param_dict['stellar_radius']
-
-        if 'stellar_Teff' in param_dict:
-            self.stars[0].Teff = param_dict['stellar_Teff']
-
-        if 'viscosity' in param_dict:
-            self.simu.viscosity = param_dict['viscosity']
-
-        if 'v_turb' in param_dict:
-            self.mol.v_turb = param_dict['v_turb']
-
-        if 'gas_to_dust_ratio' in param_dict:
-            self.zones[0].gas_to_dust_ratio = param_dict['gas_to_dust_ratio']
-
-        if 'gas_mass' in param_dict:
-            self.zones[0].dust_mass = param_dict['gas_mass']/self.zones[0].gas_to_dust_ratio
-
-        if 'dust_mass' in param_dict:
-            self.zones[0].dust_mass = param_dict['dust_mass']
-
-        # Disk structure parameters
-        if 'Rin' in param_dict:
-            self.zones[0].Rin = param_dict['Rin']
-
-        if 'Rout' in param_dict:
-            self.zones[0].Rout = param_dict['Rout']
-
-        if 'edge' in param_dict:
-            self.zones[0].edge = param_dict['edge']
-
-        if 'surface_density_exp' in param_dict:
-            self.zones[0].surface_density_exp = param_dict['surface_density_exp']
-
-        if 'vertical_exp' in param_dict:
-            self.zones[0].vertical_exp = param_dict['vertical_exp']
-
-        if 'm_gamma_exp' in param_dict:
-            self.zones[0].m_gamma_exp = param_dict['m_gamma_exp']
-
-        # Grain size parameters
-        if 'amin' in param_dict:
-            self.zones[0].dust[0].amin = param_dict['amin']
-
-        if 'amax' in param_dict:
-            self.zones[0].dust[0].amax = param_dict['amax']
-
-        # Molecular abundance parameters
-        if 'molecular_abundance' in param_dict:
-            if self.mol.n_mol > 0:
-                self.mol.molecule[0].abundance = param_dict['molecular_abundance']
-
-        if 'molecular_abundance_file' in param_dict:
-            if self.mol.n_mol > 0:
-                self.mol.molecule[0].abundance_file = param_dict['molecular_abundance_file']
+        # Loop over provided parameters and update them
+        for keyword, value in param_dict.items():
+            if keyword in parameter_mapping:
+                target_obj, attr_name, special_handler = parameter_mapping[keyword]
+                
+                if special_handler is not None:
+                    special_handler(self, value)
+                else:
+                    setattr(target_obj, attr_name, value)
 
         return
 
