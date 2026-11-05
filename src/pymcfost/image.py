@@ -165,7 +165,10 @@ class Image:
             axes_unit (str): Unit for axes ('arcsec', 'au', or 'pixels')
             colorbar (bool): Whether to show colorbar
             colorbar_size (int): Size of colorbar text
-            type (str): Type of image to plot ('I', 'Q', 'U', etc.)
+            type (str): Type of image to plot: 'I', 'Q', 'U', 'V', 'P' (linear polarisation degree, %),
+                'PI' (polarised intensity), 'PA' (polarisation angle, deg East of North, IAU), 'Pc'
+                (circular polarisation degree V/I, %), 'Qphi', 'Uphi', or a contribution ('star',
+                'scatt', 'em_th', 'scatt_em_th')
             scale (str, optional): Color scale ('log', 'lin', or 'sqrt')
             pola_vector (bool): Whether to plot polarization vectors
             vector_color (str): Color of polarization vectors
@@ -225,7 +228,7 @@ class Image:
             ax = plt.gca()
             ax.cla()
 
-        pola_needed = type in ['Q', 'U', 'Qphi', 'Uphi', 'P', 'PI', 'PA'] or pola_vector
+        pola_needed = type in ['Q', 'U', 'V', 'Qphi', 'Uphi', 'P', 'PI', 'PA', 'Pc'] or pola_vector
         contrib_needed = type in ['star', 'scatt', 'em_th', 'scatt_em_th']
 
         if pola_needed and contrib_needed:
@@ -304,6 +307,7 @@ class Image:
             I = self.image[0, iaz, i, :, :]
             Q = self.image[1, iaz, i, :, :]
             U = self.image[2, iaz, i, :, :]
+            V = self.image[3, iaz, i, :, :]
         elif contrib_needed:
             if type == "star":
                 I = self.image[n_pola, iaz, i, :, :]
@@ -325,6 +329,7 @@ class Image:
             if pola_needed:
                 Q = conv_method(Q, beam)
                 U = conv_method(U, beam)
+                V = conv_method(V, beam)
 
         # -- Conversion to brightness temperature
         if Tb:
@@ -343,6 +348,7 @@ class Image:
                 if pola_needed:
                     Q = Wm2_to_Jy(Q, self.freq)
                     U = Wm2_to_Jy(U, self.freq)
+                    V = Wm2_to_Jy(V, self.freq)
 
         # -- Conversion to mJy
         if mJy:
@@ -351,6 +357,7 @@ class Image:
                 if pola_needed:
                     Q = Wm2_to_Jy(Q, self.freq) * 1e3
                     U = Wm2_to_Jy(U, self.freq) * 1e3
+                    V = Wm2_to_Jy(V, self.freq) * 1e3
             else:
                 I *= 1e3
 
@@ -361,6 +368,7 @@ class Image:
                 if pola_needed:
                     Q = Wm2_to_Jy(Q, self.freq) * 1e6
                     U = Wm2_to_Jy(U, self.freq) * 1e6
+                    V = Wm2_to_Jy(V, self.freq) * 1e6
             else:
                 I *= 1e6
 
@@ -371,6 +379,7 @@ class Image:
                 if pola_needed:
                     Q = Wm2_to_Jy(Q, self.freq) * 1e-6
                     U = Wm2_to_Jy(U, self.freq) * 1e-6
+                    V = Wm2_to_Jy(V, self.freq) * 1e-6
             else:
                 I *= 1e-6
 
@@ -388,6 +397,9 @@ class Image:
         elif type == 'U':
             im = U
             _scale = 'symlog'
+        elif type == 'V':
+            im = V
+            _scale = 'symlog'
         elif type == 'P':
             I = I + (I == 0.0) * 1e-30
             im = 100 * np.sqrt((Q / I) ** 2 + (U / I) ** 2)
@@ -396,8 +408,15 @@ class Image:
         elif type == 'PI':
             im = np.sqrt(np.float64(Q) ** 2 + np.float64(U) ** 2)
             _scale = 'log'
+        elif type == 'Pc':
+            I = I + (I == 0.0) * 1e-30
+            im = 100 * V / I
+            unit = "%"
+            _scale = 'lin'
         elif type == 'PA':
-            im = (0.5 * np.arctan2(U, Q) + 4*np.pi)%2*np.pi
+            # IAU convention (as written by mcfost): degrees East of North, in [0, 180)
+            im = np.degrees(0.5 * np.arctan2(U, Q)) % 180.0
+            unit = "deg"
             _scale = 'lin'
         elif type in ('Qphi', 'Uphi'):
             X = np.arange(1, self.nx + 1) - self.cx
@@ -478,13 +497,17 @@ class Image:
             unit = ""
 
         # --- Plot range and color scale
+        # V and Pc are signed (can be negative everywhere): symmetric range from max |im|
+        im_max = np.nanmax(np.abs(im)) if type in ("V", "Pc") else im.max()
         if vmax is None:
-            vmax = im.max()
+            vmax = 180.0 if type == "PA" else im_max
         if fpeak is not None:
-            vmax = im.max() * fpeak
+            vmax = im_max * fpeak
         if vmin is None:
-            if type in ["Q", "U"]:
+            if type in ["Q", "U", "V", "Pc"]:
                 vmin = -vmax
+            elif type == "PA":
+                vmin = 0.0
             else:
                 vmin = 1e-3 * vmax
 
@@ -507,7 +530,8 @@ class Image:
 
         # --- Set color map
         if cmap is None:
-            cmap = default_cmap
+            # the polarisation angle wraps at 0 / 180 deg: cyclic colormap
+            cmap = "twilight" if type == "PA" else default_cmap
         try:
             cmap = copy.copy(cm.get_cmap(cmap))
         except:
@@ -566,22 +590,19 @@ class Image:
             Ub = bin_image(U, nbin)
 
             pola = 100 * np.sqrt((Qb / np.maximum(Ib,1e-300)) ** 2 + (Ub / np.maximum(Ib,1e-300)) ** 2)
+            # polarisation angle (IAU): East of North. The image is displayed with North up and East
+            # to the left whatever axes_unit (only the axis labels change), so the vector on screen
+            # is (-sin, cos), with quiver angles='uv' (screen coordinates)
             theta = 0.5 * np.arctan2(Ub, Qb)
-            if xaxis_factor < 0:
-                theta += np.pi/2 #RH - commenting this out to test fix for plotting vecotrs 21/2
-
-            # Ref is N (vertical axis) --> sin, and Est is toward left --> -
-            #pola_x = pola * np.sin(theta)
-            #pola_y = pola * np.cos(theta)
-            # RH - switching sin and cos to test fix for plotting vecotrs 21/2
-            pola_x = pola * np.cos(theta)
-            pola_y = pola * np.sin(theta)
+            pola_x = -pola * np.sin(theta)
+            pola_y = pola * np.cos(theta)
 
             ax.quiver(
                 Xb,
                 Yb,
                 pola_x,
                 pola_y,
+                angles='uv',
                 headwidth=0,
                 headlength=0,
                 headaxislength=0.0,
