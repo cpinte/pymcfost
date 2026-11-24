@@ -257,6 +257,67 @@ Basic Usage
 
 The CASA simulation functions require CASA to be installed on your system.
 
+DustPy intergration
+----------------
+
+| The package is made to transform DustPy result data files into a format that MCFOST can read via a density file.
+| IMPORTANT: Runing a function from this module requires DustPy to be installed on your system.
+| DustPy documentation is available here: https://stammler.github.io/dustpy/1_basics.html
+| And git: https://github.com/stammler/dustpy
+|
+| In order to make this conversion, this module extends vertically the linear density of DustPy. This is done through functions such as : make_density_no_setlling, make_density_Dubrulle, make_density_Fromang, make_density_parametric. 
+|
+| This module also provides functions to make sure your density files are passed correctly into MCFOST. For that purpose, the user needs to run the -disk_struct command in MCFOST.
+
+Genaral usage:
+~~~~~~~~~~~
+1) Use a function to convert DustPy data files into MCFOST readable density maps
+2) Run MCFOST using the command structure : **mcfost 'path_to_para_file' -density_file 'path_to_fits_output_from_step_1' -disk_struct**
+3) Use the control function to make sure the density map is passed correctly
+4) Run MCFOST as in step 2 without -disk_struct
+
+Usage of density function for no settling, Dubrulle, Fromang using the example of no settling (just change the name for the others, usage is the same):
+~~~~~~~~~~~
+
+.. code-block:: python
+
+   from pymcfost import DustPy_integration
+      
+   #If we just want to create the density files:
+   DustPy_integration.make_density_no_settling(path_to_DustPy_data_folder,number of files,number of desired vertical cells) 
+   #A default in MCFOST is 70 vertical cells if you do not know what to choose.
+   
+   #If we want to create the density files, and get help for the parameters that we need to change in MCFOST's para file.
+   Output = DustPy_integration.make_density_no_settling(path_to_DustPy_data_folder,number of files,number of desired vertical cells,1)
+   print(Output) #Output is an array of shape (number of data files, parameters)
+
+Usage of density function for parametric settling:
+~~~~~~~~~~~
+
+.. code-block:: python
+
+   from pymcfost import DustPy_integration
+   
+   #If we just want to create the density files:
+   DustPy_integration.make_density_parametric(path_to_DustPy_data_folder,number of files,number of desired vertical cells,(amix,ηsettl)) 
+   #Parametric settling is a model in which grains up to amix are fully mixed, 
+   #   with large grains increasingly settled with ηsettl (a coef usually negative).
+   #   IMPORTANT: Please provide amix in microns !
+   
+   #If we want to create the density files, and get help for the parameters that we need to change in MCFOST's para file.
+   Output = DustPy_integration.make_density_parametric(path_to_DustPy_data_folder,number of files,number of desired vertical cells,(amix,ηsettl),1)
+   print(Output) #Output is an array of shape (number of data files, parameters).
+
+Usage of control function:
+~~~~~~~~~~~
+
+.. code-block:: python
+
+   from pymcfost import DustPy_integration
+
+   DustPy_integration.check_dustpy_MCFOST_correspondence_2D(path_to_a_density_function_output_fits_file,path_to_data_disk_MCFOST_folder)
+   #It is not recommended to loop this function as it outputs a large number of figures.
+
 Directory Structure
 -------------------
 
