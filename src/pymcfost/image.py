@@ -41,6 +41,7 @@ class Image:
         >>> image.plot(i=0, iaz=0)
     """
 
+    # .fits.gz or .fits: both are accepted (find_fits_file)
     _RT_file = "RT.fits.gz"
     _MC_file = "MC.fits.gz"
 
@@ -68,7 +69,7 @@ class Image:
     def _read(self):
         # Read ray-traced image
         try:
-            hdu = fits.open(self.dir + "/" + self._RT_file)
+            hdu = fits.open(find_fits_file(self.dir, self._RT_file))
             self.image = hdu[0].data
             # Read a few keywords in header
             self.header = hdu[0].header

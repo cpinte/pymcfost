@@ -13,6 +13,27 @@ FWHM_to_sigma = 1.0 / sigma_to_FWHM
 arcsec = np.pi / 648000
 
 
+def find_fits_file(directory, filename):
+    """Path of an mcfost output file, compressed or not.
+
+    Recent mcfost versions write images and line cubes (RT, MC, lines) as .fits by default
+    (.fits.gz with -gzip); older versions write .fits.gz.
+    Returns directory/filename if it exists, otherwise the same name with .gz added or removed if
+    that one exists, otherwise directory/filename (so that the caller reports the expected name).
+    """
+    import os
+    path = os.path.join(directory, filename)
+    if os.path.isfile(path):
+        return path
+    if filename.endswith(".fits.gz"):
+        other = path[:-3]
+    elif filename.endswith(".fits"):
+        other = path + ".gz"
+    else:
+        return path
+    return other if os.path.isfile(other) else path
+
+
 def bin_image(im, n, func=np.sum):
     """Bins an image in blocks of n x n pixels.
 

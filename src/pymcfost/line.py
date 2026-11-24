@@ -16,10 +16,10 @@ except ImportError:
     warnings.warn("progressbar is not present", UserWarning)
 
 from .parameters import Params, find_parameter_file
-from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy, add_colorbar
+from .utils import FWHM_to_sigma, default_cmap, Wm2_to_Tb, Jy_to_Tb,  Wm2_to_Jy, add_colorbar, find_fits_file
 from .wake import  plot_wake
 
-DEFAULT_LINE_FILE = "lines.fits.gz"
+DEFAULT_LINE_FILE = "lines.fits.gz"  # .fits.gz or .fits: both are accepted (find_fits_file)
 
 class Line:
     """
@@ -80,7 +80,7 @@ class Line:
     def _read(self):
         # Read ray-traced image
         try:
-            hdu = fits.open(self.dir + "/" + self._line_file)
+            hdu = fits.open(find_fits_file(self.dir, self._line_file))
             self.lines = hdu[0].data
             # Read a few keywords in header
             self.pixelscale = hdu[0].header['CDELT2'] * 3600.0  # arcsec
